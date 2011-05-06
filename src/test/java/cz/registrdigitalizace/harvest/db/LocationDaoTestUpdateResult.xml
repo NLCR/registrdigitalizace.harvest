@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <LOKACE id="10" digknihovna="examplelib" datumzal="2011-03-10"
+        url="http://example.com/handle/uuid:10" rdigobjektl="10"/>
+    <LOKACE id="11" digknihovna="examplelib" datumzal="2010-04-10"
+        url="http://example.com/handle/uuid:11" rdigobjektl="11"/>
+    <DIGKNIHOVNA id="10" software="kramerius4" protokol="oaipmh" formatdat="rd"
+            encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
+            oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
+    <DLISTS id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
+</dataset>

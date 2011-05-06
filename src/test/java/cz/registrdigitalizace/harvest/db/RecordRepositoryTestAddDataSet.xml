@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <PLAANT_IDS id="1" deskname="cz.incad.rd.DigObjekt"/>
+    <PLAANT_IDS id="10" deskname="cz.incad.rd.Lokace"/>
+    <DIGOBJEKT />
+    <DIGKNIHOVNA id="10" software="kramerius4" protokol="oaipmh" formatdat="rd"
+            encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
+            oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
+    <DLISTS id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
+    <LOKACE />
+    <DIGVAZBY />
+</dataset>

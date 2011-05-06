@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <!-- root u1 -->
+    <DIGVAZBY id="1" potomek="u1" poradi="1" digknihovna="10" />
+    <!-- u1 => u2 -->
+    <DIGVAZBY id="2" predek="1" potomek="u2" poradi="1" digknihovna="10" />
+
+    <!-- root u11 -->
+    <DIGVAZBY id="4" potomek="u11" poradi="1" digknihovna="10" />
+</dataset>

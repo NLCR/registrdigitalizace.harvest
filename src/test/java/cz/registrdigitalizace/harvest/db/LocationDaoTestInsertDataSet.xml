@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <digknihovna id="10" software="kramerius4" protokol="oaipmh" formatdat="rd"
+            encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
+            oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
+    <dlists id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
+    <lokace />
+    <digvazby />
+</dataset>

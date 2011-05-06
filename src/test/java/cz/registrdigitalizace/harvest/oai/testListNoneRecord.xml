@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
+                             http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
+  <responseDate>2011-03-07T18:22:36Z</responseDate>
+  <request verb="ListRecords" metadataPrefix="oai_dc">http://example.org/oaiprovider/</request>
+<ListRecords>
+</ListRecords>
+</OAI-PMH>

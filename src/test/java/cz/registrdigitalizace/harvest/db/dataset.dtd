@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2011 Jan Pokorsky
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<!--
+Data model snapshot.
+-->
+
+<!ELEMENT dataset (
+    digknihovna*,
+    digobjekt*,
+    digvazby*,
+    dlists*,
+    lokace*,
+    plaant_ids*,
+    thumbnails*,
+    xpreddigobj*)>
+
+<!ELEMENT digknihovna EMPTY>
+<!ATTLIST digknihovna
+    id CDATA #REQUIRED
+    software CDATA #IMPLIED
+    protokol CDATA #IMPLIED
+    formatdat CDATA #IMPLIED
+    lastharvest CDATA #IMPLIED
+    oaipmhcommand CDATA #IMPLIED
+    encodinginputxml CDATA #IMPLIED
+    encodingoutputxml CDATA #IMPLIED
+    oaipmhserverbaseurl CDATA #IMPLIED
+    nazevorg CDATA #IMPLIED
+    adresaorg CDATA #IMPLIED
+    kontakt CDATA #IMPLIED
+>
+
+<!ELEMENT digobjekt EMPTY>
+<!ATTLIST digobjekt
+    id CDATA #REQUIRED
+    urnnbn CDATA #IMPLIED
+    XML CDATA #IMPLIED
+    nazev CDATA #IMPLIED
+    rokvyd CDATA #IMPLIED
+    dostupnost CDATA #IMPLIED
+    formatxml CDATA #IMPLIED
+    zdrojxml CDATA #IMPLIED
+    datexml CDATA #IMPLIED
+    autor CDATA #IMPLIED
+    vydavatel CDATA #IMPLIED
+    mistovyd CDATA #IMPLIED
+    isbn CDATA #IMPLIED
+    issn CDATA #IMPLIED
+    uuid CDATA #IMPLIED
+    HANDLER CDATA #IMPLIED
+    signatura CDATA #IMPLIED
+    idzakazky CDATA #IMPLIED
+    formatdokumentu CDATA #IMPLIED
+    druhdokumentu CDATA #IMPLIED
+    pocetkopii CDATA #IMPLIED
+    vizitka CDATA #IMPLIED
+    indexovano CDATA #IMPLIED
+>
+
+<!ELEMENT digvazby EMPTY>
+<!ATTLIST digvazby
+    id CDATA #REQUIRED
+    poradi CDATA #IMPLIED
+    potomek CDATA #IMPLIED
+    digknihovna CDATA #IMPLIED
+    digknihovnamf CDATA #IMPLIED
+    predek CDATA #IMPLIED
+    predekmf CDATA #IMPLIED
+>
+
+<!ELEMENT dlists EMPTY>
+<!ATTLIST dlists
+    id CDATA #REQUIRED
+    classname CDATA #REQUIRED
+    value CDATA #IMPLIED
+    cz CDATA #IMPLIED
+    en CDATA #IMPLIED
+    de CDATA #IMPLIED
+    fr CDATA #IMPLIED
+    poznamka CDATA #IMPLIED
+    use CDATA #IMPLIED
+    poradi CDATA #IMPLIED
+>
+
+<!ELEMENT lokace EMPTY>
+<!ATTLIST lokace
+    id CDATA #REQUIRED
+    digknihovna CDATA #IMPLIED
+    datumzal CDATA #IMPLIED
+    datumkontroly CDATA #IMPLIED
+    url CDATA #IMPLIED
+    XML CDATA #IMPLIED
+    rdigobjektl CDATA #IMPLIED
+    rdigobjektlmf CDATA #IMPLIED
+>
+
+<!ELEMENT plaant_ids EMPTY>
+<!ATTLIST plaant_ids
+    deskname CDATA #REQUIRED
+    id CDATA #REQUIRED
+>
+
+<!ELEMENT thumbnails EMPTY>
+<!ATTLIST thumbnails
+    digobjektid CDATA #REQUIRED
+    mime CDATA #REQUIRED
+    contents CDATA #IMPLIED
+>
+
+<!ELEMENT xpreddigobj EMPTY>
+<!ATTLIST xpreddigobj
+    id CDATA #REQUIRED
+    revizestav CDATA #IMPLIED
+    revizeprac CDATA #IMPLIED
+    revizedate CDATA #IMPLIED
+    rdigobjekt CDATA #IMPLIED
+    rdigobjektmf CDATA #IMPLIED
+    rpredloha CDATA #IMPLIED
+    rpredlohamf CDATA #IMPLIED
+    rpredlohaxdo CDATA #IMPLIED
+    rpredlohaxdomf CDATA #IMPLIED
+>

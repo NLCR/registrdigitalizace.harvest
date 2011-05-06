@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <digobjekt id="1" XML="&lt;record&gt;&lt;/record&gt;" uuid="uuid:1" druhdokumentu="monograph"/>
+<!--  <digobjekt id="1" uuid="uuid:1" druhdokumentu="monograph"/>-->
+    <lokace />
+    <digvazby />
+</dataset>

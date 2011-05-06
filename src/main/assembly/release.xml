@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright (C) 2011 Jan Pokorsky
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+-->
+<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+
+    <id>release</id>
+
+    <formats>
+        <format>tar.gz</format>
+        <format>zip</format>
+    </formats>
+
+    <baseDirectory>${project.name}</baseDirectory>
+
+
+    <fileSets>
+        <!-- / permissions -->
+        <fileSet>
+            <outputDirectory>/</outputDirectory>
+            <directoryMode>755</directoryMode>
+            <includes>
+                <include>./</include>
+            </includes>
+        </fileSet>
+        <!-- /lib permissions -->
+        <fileSet>
+            <outputDirectory>/lib</outputDirectory>
+            <directoryMode>755</directoryMode>
+            <includes>
+                <include>./</include>
+            </includes>
+        </fileSet>
+        <!-- bin -->
+        <fileSet>
+            <directory>${basedir}/src/main/commands</directory>
+            <outputDirectory>/bin</outputDirectory>
+            <fileMode>700</fileMode>
+            <directoryMode>700</directoryMode>
+            <filtered>true</filtered>
+        </fileSet>
+        <!-- conf-->
+        <fileSet>
+            <directory>${basedir}/src/main/config</directory>
+            <outputDirectory>/conf</outputDirectory>
+            <fileMode>600</fileMode>
+            <directoryMode>700</directoryMode>
+            <includes>
+                <include>./</include>
+                <include>*.properties</include>
+            </includes>
+        </fileSet>
+        <!-- create empty logs folder -->
+        <fileSet>
+            <directory>${basedir}/src/main/config</directory>
+            <outputDirectory>/logs</outputDirectory>
+            <directoryMode>0700</directoryMode>
+            <excludes>
+                <exclude>*</exclude>
+            </excludes>
+        </fileSet>
+        <!-- info files -->
+        <fileSet>
+            <directory>${project.basedir}</directory>
+            <outputDirectory>/</outputDirectory>
+            <fileMode>0644</fileMode>
+            <includes>
+                <include>./</include>
+                <include>README*</include>
+                <include>LICENSE*</include>
+                <include>NOTICE*</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/lib</outputDirectory>
+            <scope>runtime</scope>
+            <unpack>false</unpack>
+            <fileMode>644</fileMode>
+            <directoryMode>0755</directoryMode>
+        </dependencySet>
+    </dependencySets>
+    
+</assembly>

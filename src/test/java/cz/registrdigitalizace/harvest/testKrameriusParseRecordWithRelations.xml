@@ -1,0 +1,11 @@
+<dr:record xmlns:dr="http://registrdigitalizace.cz/schemas/drkramerius/v4">
+    <dr:uuid>cd2b2ad0-62d4-11dd-ac0e-000d606f5dc6</dr:uuid>
+    <dr:type>PERIODICAL_VOLUME</dr:type>
+    <dr:descriptor>
+        <mods:modsCollection xmlns:mods="http://www.loc.gov/mods/v3">
+        </mods:modsCollection>
+    </dr:descriptor>
+    <dr:relation>1</dr:relation>
+    <dr:relation>2</dr:relation>
+</dr:record>
+
