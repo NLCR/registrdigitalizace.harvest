@@ -18,4 +18,6 @@
 
     <!-- root u11 -->
     <DIGVAZBY id="4" potomek="u11" poradi="1" digknihovna="10" />
+    <digmetadata />
+    <digmetadata_changes />
 </dataset>

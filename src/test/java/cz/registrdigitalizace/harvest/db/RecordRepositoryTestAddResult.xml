@@ -10,4 +10,9 @@
     <PLAANT_IDS deskname="cz.incad.rd.DigObjekt" id="4"/>
     <PLAANT_IDS deskname="cz.incad.rd.DigVazby" id="3"/>
     <PLAANT_IDS deskname="cz.incad.rd.Lokace" id="11"/>
+
+    <digmetadata id="2" nazev="Periodical" modifikace="1" />
+    <digmetadata id="3" nazev="Volume" modifikace="1" />
+    <digmetadata id="4" nazev="Issue 1" modifikace="1" />
+    <digmetadata_changes />
 </dataset>

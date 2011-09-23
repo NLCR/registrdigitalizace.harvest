@@ -17,4 +17,9 @@
     <DIGVAZBY id="1" potomek="uuid:2" poradi="1" digknihovna="10"/>
     <DIGVAZBY id="2" predek="2" potomek="uuid:3" poradi="1" digknihovna="10"/>
     <DIGVAZBY id="3" predek="3" potomek="uuid:4" poradi="1" digknihovna="10"/>
+
+    <digmetadata id="2" nazev="Periodical" modifikace="0" />
+    <digmetadata id="3" nazev="Volume" modifikace="0" />
+    <digmetadata id="4" nazev="Issue 1" modifikace="0" />
+    <digmetadata_changes />
 </dataset>

@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <digobjekt id="1" uuid="1" />
+    <digobjekt id="2" uuid="2" />
+    <digobjekt id="3" uuid="3" />
+    <digmetadata id="1" nazev="DO1" modifikace="0" />
+    <digmetadata id="3" nazev="DO3" modifikace="0" />
+
+    <digvazby />
+    <lokace />
+    <digmetadata_changes />
+</dataset>

@@ -1,0 +1,17 @@
+select
+ O.ID as ID,
+ REGEXP_REPLACE(TRIM('~' from SYS_CONNECT_BY_PATH(M.NAZEV, '~')), '~+', ', ') as NAZEV,
+ REGEXP_REPLACE(TRIM('~' from SYS_CONNECT_BY_PATH(M.AUTORI, '~')), '~+', ', ') as AUTOR,
+ TRIM('~' from SYS_CONNECT_BY_PATH(M.ISSN, '~')) as ISSN,
+ TRIM('~' from SYS_CONNECT_BY_PATH(M.ISBN, '~')) as ISBN,
+ TRIM('~' from SYS_CONNECT_BY_PATH(M.CCNB, '~')) as CCNB,
+ REGEXP_REPLACE(TRIM('~' from SYS_CONNECT_BY_PATH(M.SIGLA, '~')), '~+', '|') as SIGLA,
+ REGEXP_REPLACE(TRIM('~' from SYS_CONNECT_BY_PATH(M.SIGNATURA, '~')), '~+', '|') as SIGNATURA,
+ REGEXP_REPLACE(TRIM('~' from SYS_CONNECT_BY_PATH(M.VYDAVATELE, '~')), '~+', ', ') as VYDAVATEL,
+ REGEXP_REPLACE(TRIM('~' from SYS_CONNECT_BY_PATH(M.ROKVYD, '~')), '~+', ', ') as ROKVYD
+ from DIGVAZBY V, DIGOBJEKT O, DIGMETADATA M
+ where V.POTOMEK = O.UUID and O.ID = M.ID
+   and O.ID in (select ID from DIGMETADATA_CHANGES where MODIFIKACE > 0)
+ start with V.PREDEK is null
+ connect by prior O.ID = V.PREDEK
+ ORDER SIBLINGS BY PORADI

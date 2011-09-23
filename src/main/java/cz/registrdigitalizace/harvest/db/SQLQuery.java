@@ -40,6 +40,8 @@ final class SQLQuery {
     private static String insertVazby;
     private static String deleteUnrelatedDigiObjekts;
     private static String findMissingThumbnails;
+    private static String selectMetadataHierarchy;
+    private static String insertMetadataChanges;
 
     public static void init() throws IOException {
         CharArrayWriter queryBuilder = new CharArrayWriter(1024);
@@ -47,6 +49,8 @@ final class SQLQuery {
         insertVazby = loadQuery("/sql/insertVazby.sql", queryBuilder);
         deleteUnrelatedDigiObjekts = loadQuery("/sql/deleteUnrelatedDigiObjekts.sql", queryBuilder);
         findMissingThumbnails = loadQuery("/sql/findMissingThumbnails.sql", queryBuilder);
+        selectMetadataHierarchy = loadQuery("/sql/selectMetadataHierarchy.sql", queryBuilder);
+        insertMetadataChanges = loadQuery("/sql/insertMetadataChanges.sql", queryBuilder);
     }
 
     public static String getInsertLokace() {
@@ -63,6 +67,14 @@ final class SQLQuery {
 
     public static String getFindMissingThumbnails() {
         return findMissingThumbnails;
+    }
+
+    public static String getSelectMetadataHierarchy() {
+        return selectMetadataHierarchy;
+    }
+
+    public static String getInsertMetadataChanges() {
+        return insertMetadataChanges;
     }
 
     private static String loadQuery(String filename, CharArrayWriter queryBuilder) throws IOException {

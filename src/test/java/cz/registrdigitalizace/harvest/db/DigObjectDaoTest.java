@@ -187,6 +187,7 @@ public class DigObjectDaoTest {
         r.setUuid(uuid);
         r.setDescriptor(String.format("<record root='%s'><uuid>%s<uuid><name>%s</name></record>", root, uuid, name));
         r.setChildren(Arrays.asList(relations));
+        r.setMetadata(MetadataDaoTest.createNewRecord(null, name, null, null, null, null, null, null, null, null));
         return r;
     }
 

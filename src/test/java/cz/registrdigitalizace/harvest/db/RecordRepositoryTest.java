@@ -49,6 +49,7 @@ public class RecordRepositoryTest {
     private RelationDao relationDao;
     private IdSequenceDao idSequenceDao;
     private LibraryDao libraryDao;
+    private MetadataDao metadataDao;
 
     public RecordRepositoryTest() {
     }
@@ -75,6 +76,8 @@ public class RecordRepositoryTest {
         idSequenceDao.setDataSource(transaction);
         libraryDao = new LibraryDao();
         libraryDao.setDataSource(transaction);
+        metadataDao = new MetadataDao();
+        metadataDao.setDataSource(transaction);
     }
 
     @After
@@ -107,7 +110,7 @@ public class RecordRepositoryTest {
 
                 RecordRepository instance = new RecordRepository(
                         locationDao, digiObjectDao, relationDao,
-                        idSequenceDao, library);
+                        idSequenceDao, metadataDao, library);
                 instance.init();
                 instance.add(periodical);
                 instance.add(volume);
@@ -133,6 +136,7 @@ public class RecordRepositoryTest {
         support.dumpTable(new SortedTable(resultDS.getTable("PLAANT_IDS")));
         Assertion.assertEquals(new SortedTable(expectedDS.getTable("PLAANT_IDS")),
                 new SortedTable(resultDS.getTable("PLAANT_IDS")));
+        Assertion.assertEquals(expectedDS.getTable("DIGMETADATA"), resultDS.getTable("DIGMETADATA"));
     }
 
     @Test
@@ -155,7 +159,7 @@ public class RecordRepositoryTest {
 
                 RecordRepository builder = new RecordRepository(
                         locationDao, digiObjectDao, relationDao,
-                        idSequenceDao, library);
+                        idSequenceDao, metadataDao, library);
                 builder.init();
                 builder.remove(periodical);
                 builder.remove(issue);
@@ -177,6 +181,7 @@ public class RecordRepositoryTest {
         Assertion.assertEquals(expectedDS.getTable("DIGVAZBY"), resultDS.getTable("DIGVAZBY"));
         Assertion.assertEquals(new SortedTable(expectedDS.getTable("PLAANT_IDS")),
                 new SortedTable(resultDS.getTable("PLAANT_IDS")));
+        Assertion.assertEquals(expectedDS.getTable("DIGMETADATA"), resultDS.getTable("DIGMETADATA"));
     }
 
 }

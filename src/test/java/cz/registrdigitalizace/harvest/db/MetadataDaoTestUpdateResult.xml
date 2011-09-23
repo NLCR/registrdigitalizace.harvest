@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<dataset>
+    <digobjekt id="1" uuid="1" />
+    <digobjekt id="2" uuid="2" />
+    <digobjekt id="3" uuid="3" />
+    <digmetadata id="1" nazev="Updated_DO1" issn="issn1" isbn="isbn1" ccnb="ccnb1"
+            sigla="sigla1" signatura="signatura1" autori="autori1"
+            vydavatele="vydavatele1" rokvyd="rokvyd1"
+            modifikace="1" />
+    <digmetadata id="3" nazev="DO3" modifikace="0" />
+</dataset>

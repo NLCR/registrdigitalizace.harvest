@@ -26,7 +26,9 @@ import cz.registrdigitalizace.harvest.db.IdSequenceDao;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.LibraryDao;
 import cz.registrdigitalizace.harvest.db.LocationDao;
+import cz.registrdigitalizace.harvest.db.MetadataDao;
 import cz.registrdigitalizace.harvest.db.RelationDao;
+import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import cz.registrdigitalizace.harvest.oai.ListResult;
 import cz.registrdigitalizace.harvest.oai.Record;
 import cz.registrdigitalizace.harvest.oai.RecordTypeParser;
@@ -44,6 +46,8 @@ import org.openarchives.oai2.StatusType;
  * @author Jan Pokorsky
  */
 public class LibraryHarvest {
+    // parser will be configurable per library at some time in future
+    private static final ModsMetadataParser modsParser = new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET);
     private final Library library;
     private final HarvestTransaction transaction;
     private final IdSequenceDao idSequenceDao = new IdSequenceDao();
@@ -51,6 +55,7 @@ public class LibraryHarvest {
     private final DigObjectDao digiObjectDao = new DigObjectDao();
     private final RelationDao relationDao = new RelationDao();
     private final LibraryDao libraryDao = new LibraryDao();
+    private final MetadataDao metadataDao = new MetadataDao();
     private int addCounter;
     private int removeCounter;
 
@@ -77,7 +82,7 @@ public class LibraryHarvest {
                     processor.remove(record);
                     removeCounter++;
                 } else {
-                    HarvestedRecord metadata = parser.parseMetadata(new KrameriusParser(xmlCtx));
+                    HarvestedRecord metadata = parser.parseMetadata(new KrameriusParser(xmlCtx, modsParser));
                     processor.add(metadata);
                     // parser.parseAbouts();
                     addCounter++;
@@ -124,9 +129,10 @@ public class LibraryHarvest {
         locationDao.setDataSource(transaction);
         relationDao.setDataSource(transaction);
         digiObjectDao.setDataSource(transaction);
+        metadataDao.setDataSource(transaction);
 
         return new RecordRepository(locationDao, digiObjectDao, relationDao,
-                idSequenceDao, library);
+                idSequenceDao, metadataDao, library);
     }
 
 }

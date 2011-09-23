@@ -4,4 +4,6 @@
 <!--  <digobjekt id="1" uuid="uuid:1" druhdokumentu="monograph"/>-->
     <lokace />
     <digvazby />
+    <digmetadata />
+    <digmetadata_changes />
 </dataset>

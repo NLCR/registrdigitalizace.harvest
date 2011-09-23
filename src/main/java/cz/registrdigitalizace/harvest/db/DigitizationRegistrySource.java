@@ -54,7 +54,7 @@ public final class DigitizationRegistrySource {
         this.username = config.getProperty(PROP_USERNAME);
         this.password = config.getProperty(PROP_PASSWORD);
         String driver = config.getProperty(PROP_DRIVER);
-        LOGGER.log(Level.INFO, "url: {0}, driver: {1}", new Object[]{jdbcUrl, driver});
+        LOGGER.log(Level.INFO, "url: {0}, driver: {1}, user: {2}", new Object[]{jdbcUrl, driver, username});
         initDriver(driver);
         try {
             SQLQuery.init();

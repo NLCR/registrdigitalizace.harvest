@@ -11,6 +11,8 @@
     <lokace id="11" digknihovna="examplelib" datumzal="2010-04-10"
         url="http://example.com/handle/uuid:2" rdigobjektl="2"/>
     <digvazby />
+    <digmetadata />
+    <digmetadata_changes />
 
     <thumbnails digobjektid="2" mime="image/jpeg" contents="a2FyZWw="/>
 </dataset>

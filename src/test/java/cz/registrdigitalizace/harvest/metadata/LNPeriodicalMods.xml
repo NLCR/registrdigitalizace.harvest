@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods:modsCollection xmlns:mods="http://www.loc.gov/mods/v3">
+    <mods:mods version="3.3">
+        <mods:identifier type="urn">bdc405b0-e5f9-11dc-bfb2-000d606f5dc6</mods:identifier>
+        <mods:identifier type="sici"/>
+        <mods:identifier type="issn">1802-6265</mods:identifier>
+        <mods:identifier type="coden"/>
+        <mods:subject>
+            <mods:topic/>
+        </mods:subject>
+        <mods:abstract/>
+        <mods:location>
+            <mods:physicalLocation>BOA001</mods:physicalLocation>
+            <mods:shelfLocator>Nov-20.730</mods:shelfLocator>
+            <mods:shelfLocator>Skř.17-0849.021</mods:shelfLocator>
+        </mods:location>
+        <mods:titleInfo>
+            <mods:title>Lidové noviny</mods:title>
+            <mods:subTitle/>
+            <mods:partName/>
+        </mods:titleInfo>
+        <mods:titleInfo type="alternative">
+            <mods:title/>
+        </mods:titleInfo>
+        <mods:titleInfo type="uniform">
+            <mods:title/>
+        </mods:titleInfo>
+        <mods:typeOfResource>text</mods:typeOfResource>
+        <mods:originInfo transliteration="publisher">
+            <mods:place>
+                <mods:placeTerm type="text">Brno</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Vydavatelské družstvo Lidové strany v Brně</mods:publisher>
+            <mods:dateIssued>1893 - 1945</mods:dateIssued>
+        </mods:originInfo>
+        <mods:originInfo transliteration="publisher">
+            <mods:place>
+                <mods:placeTerm type="text">Brno</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Pavel Váša a František Šelepa</mods:publisher>
+            <mods:dateIssued>1894 - 1919</mods:dateIssued>
+        </mods:originInfo>
+        <mods:originInfo transliteration="publisher">
+            <mods:place>
+                <mods:placeTerm type="text">Brno</mods:placeTerm>
+            </mods:place>
+            <mods:publisher>Jaroslav Rejzek</mods:publisher>
+            <mods:dateIssued>1936 - 1945</mods:dateIssued>
+        </mods:originInfo>
+        <mods:originInfo>
+            <mods:issuance>continuing</mods:issuance>
+            <mods:frequency>denně</mods:frequency>
+        </mods:originInfo>
+        <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">cze</mods:languageTerm>
+        </mods:language>
+        <mods:physicalDescription>
+            <mods:form type="technique"/>
+            <mods:extent/>
+            <mods:note>od 2.4.1939 s podnázvem List národního souručenství; od
+            14.3.1942 opět bez podnázvu; následný název titulu Svobodné
+            noviny ISSN 1802-6273 (1945 - 1948);
+            </mods:note>
+        </mods:physicalDescription>
+        <mods:classification authority="ddc"/>
+        <mods:classification authority="udc"/>
+        <mods:part>
+            <mods:detail type="regularsupplement">                
+                <mods:title/>
+            </mods:detail>
+            <mods:detail type="specialSupplement">
+                <mods:title/>
+            </mods:detail>
+        </mods:part>
+        <mods:recordInfo>
+            <mods:recordOrigin/>
+        </mods:recordInfo>
+        <mods:accessCondition type="restrictionOnAccess"/>
+    </mods:mods>
+</mods:modsCollection>

@@ -17,7 +17,6 @@
 
 package cz.registrdigitalizace.harvest.db;
 
-import cz.registrdigitalizace.harvest.db.ThumbnailDao.IterableResult;
 import cz.registrdigitalizace.harvest.db.ThumbnailDao.Thumbnail;
 import org.dbunit.operation.DatabaseOperation;
 import java.io.ByteArrayInputStream;
@@ -117,7 +116,7 @@ public class ThumbnailDaoTest {
         instance.setDataSource(transaction);
         transaction.begin();
 
-        IterableResult result = instance.findMissing();
+        IterableResult<Thumbnail> result = instance.findMissing();
         assertNotNull(result);
         assertTrue(result.hasNextResult());
         Thumbnail nextResult = result.nextResult();

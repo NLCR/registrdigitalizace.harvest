@@ -59,7 +59,7 @@ public final class ThumbnailDao {
      * Returns an iterator over DIGOBJEKTS whose THUMBNAILS should be downloaded.
      * The result contains <b>ALL</b> locations of DIGOBJEKT.
      */
-    public IterableResult findMissing() throws DaoException {
+    public IterableResult<Thumbnail> findMissing() throws DaoException {
         try {
             return doFindMissing();
         } catch (SQLException ex) {
@@ -88,16 +88,15 @@ public final class ThumbnailDao {
         }
     }
     
-    private IterableResult doFindMissing() throws SQLException {
+    private IterableResult<Thumbnail> doFindMissing() throws SQLException {
         Connection conn = source.getConnection();
         Statement stmt = conn.createStatement();
-        boolean failure = true;
+        ResultSet rs = null;
         try {
-            ResultSet rs = stmt.executeQuery(SQLQuery.getFindMissingThumbnails());
-            failure = false;
-            return new IterableResult(rs, stmt);
+            rs = stmt.executeQuery(SQLQuery.getFindMissingThumbnails());
+            return new ThumbnailResult(rs, stmt);
         } finally {
-            if (failure) {
+            if (rs == null) {
                 SQLQuery.tryClose(stmt);
             }
         }
@@ -162,59 +161,15 @@ public final class ThumbnailDao {
         }
     }
 
-    public static final class IterableResult implements Iterable<Thumbnail>, Iterator<Thumbnail> {
+    private static final class ThumbnailResult extends IterableResult<Thumbnail> {
 
-        private ResultSet rs;
-        private Statement stmt;
-        private boolean lastNext = false;
-
-        public IterableResult(ResultSet rs, Statement stmt) {
-            this.rs = rs;
-            this.stmt = stmt;
+        public ThumbnailResult(ResultSet rs, Statement stmt) {
+            super(stmt, rs);
         }
 
         @Override
-        public Iterator<Thumbnail> iterator() {
-            return this;
-        }
-
-        @Override
-        public boolean hasNext() {
+        protected Thumbnail fetchNext() throws DaoException {
             try {
-                return hasNextResult();
-            } catch (DaoException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        @Override
-        public Thumbnail next() {
-            try {
-                return nextResult();
-            } catch (DaoException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException("Not supported.");
-        }
-
-        public boolean hasNextResult() throws DaoException {
-            try {
-                lastNext = rs.next();
-                return lastNext;
-            } catch (SQLException ex) {
-                throw new DaoException(ex);
-            }
-        }
-
-        public Thumbnail nextResult() throws DaoException, NoSuchElementException {
-            try {
-                if (!lastNext && !hasNextResult()) {
-                    throw new NoSuchElementException();
-                }
                 Thumbnail thumbnail = new Thumbnail();
                 thumbnail.setDigiObjId(rs.getBigDecimal("RDIGOBJEKTL"));
                 thumbnail.setUuid(rs.getString("UUID"));
@@ -224,11 +179,5 @@ public final class ThumbnailDao {
                 throw new DaoException(ex);
             }
         }
-
-        public void close() {
-            SQLQuery.tryClose(rs);
-            SQLQuery.tryClose(stmt);
-        }
-
     }
 }

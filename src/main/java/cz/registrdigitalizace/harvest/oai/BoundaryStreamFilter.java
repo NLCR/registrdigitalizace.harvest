@@ -31,9 +31,28 @@ public class BoundaryStreamFilter implements StreamFilter {
     
     private State state = State.INIT;
     private QName boundary;
+    private final boolean acceptLastElement;
 
+    /**
+     * Boundary filter with exclusive boundary.
+     *
+     * @param boundary  element constituting the boundary
+     */
     public BoundaryStreamFilter(QName boundary) {
+        this(boundary, false);
+    }
+
+    /**
+     * Boundary filter.
+     *
+     * @param boundary element constituting the boundary
+     * @param acceptLastElement whether the boundary is exclusive or inclusive.
+     *          e.g. XSLT processing needs inclusive boundary as the reader
+     *          needs to call next on the last element
+     */
+    public BoundaryStreamFilter(QName boundary, boolean acceptLastElement) {
         this.boundary = boundary;
+        this.acceptLastElement = acceptLastElement;
     }
 
 
@@ -57,7 +76,7 @@ public class BoundaryStreamFilter implements StreamFilter {
                 if (reader.getEventType() == XMLEvent.END_ELEMENT) {
                     if (boundary.equals(reader.getName())) {
                         state = State.FINISHED;
-                        return false;
+                        return acceptLastElement;
                     }
                 }
                 return true;

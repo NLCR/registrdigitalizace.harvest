@@ -17,6 +17,9 @@
 
 package cz.registrdigitalizace.harvest;
 
+import cz.registrdigitalizace.harvest.db.Metadata;
+import cz.registrdigitalizace.harvest.metadata.DigobjectType;
+import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import cz.registrdigitalizace.harvest.oai.BoundaryStreamFilter;
 import cz.registrdigitalizace.harvest.oai.BoundaryStreamReader;
 import cz.registrdigitalizace.harvest.oai.MetadataParser;
@@ -32,6 +35,7 @@ import javax.xml.namespace.QName;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.transform.stax.StAXSource;
 
 /**
  * Parses Kramerius 4 OAI export format.
@@ -56,9 +60,11 @@ public final class KrameriusParser implements MetadataParser<HarvestedRecord> {
 
     private final XmlContext xmlContext;
     private XMLStreamReader reader;
+    private final ModsMetadataParser descriptorParser;
 
-    public KrameriusParser(XmlContext xmlContext) {
+    public KrameriusParser(XmlContext xmlContext, ModsMetadataParser descriptorParser) {
         this.xmlContext = xmlContext;
+        this.descriptorParser = descriptorParser;
     }
 
     @Override
@@ -74,6 +80,8 @@ public final class KrameriusParser implements MetadataParser<HarvestedRecord> {
     }
 
     private HarvestedRecord parseRecord() throws XMLStreamException {
+        HarvestedRecord record = new HarvestedRecord();
+
         // ensure we are on <record>
         OaiParser.moveToStartElement(reader, RECORD_QNAME);
         // root
@@ -82,20 +90,17 @@ public final class KrameriusParser implements MetadataParser<HarvestedRecord> {
         // uuid
         OaiParser.moveToNextStartElement(reader, UUID_QNAME);
         String uuid = reader.getElementText().trim();
+        record.setUuid(uuid);
         // type
         OaiParser.moveToNextStartElement(reader, TYPE_QNAME);
         String type = reader.getElementText().trim();
         // mods
-        String descriptor = parseDescriptor();
-//        OaiParser.moveToNextTag(reader);
+        parseDescriptor(record);
         // relations
         reader.next();
         List<String> relations = parseRelations();
 
-        HarvestedRecord record = new HarvestedRecord();
-        record.setUuid(uuid);
         record.setType(type);
-        record.setDescriptor(descriptor);
         record.setRoot(root);
         record.setChildren(relations);
         if (LOG.isLoggable(Level.FINE)) {
@@ -117,24 +122,39 @@ public final class KrameriusParser implements MetadataParser<HarvestedRecord> {
         return relations;
     }
 
-    private String parseDescriptor() throws XMLStreamException {
+    private void parseDescriptor(HarvestedRecord record) throws XMLStreamException {
         OaiParser.moveToNextStartElement(reader, DESCRIPTOR_QNAME);
+        reader.next();
+        if (!OaiParser.moveToStartElement(reader)) {
+            throw new XMLStreamException("Missing descriptor content", reader.getLocation());
+        }
         XMLInputFactory inFactory = xmlContext.getXMLInputFactory();
         XMLStreamReader boundaryReader =
-                new BoundaryStreamReader(reader, new BoundaryStreamFilter(reader.getName()));
+                new BoundaryStreamReader(reader, new BoundaryStreamFilter(reader.getName(), true));
         try {
-            StreamDumpFilter dumpFilter = new StreamDumpFilter(true, xmlContext, reader.getName());
+            StreamDumpFilter dumpFilter = new StreamDumpFilter(true, xmlContext, reader.getName(), true, false);
             XMLStreamReader filteredReader = inFactory.createFilteredReader(
                     boundaryReader, dumpFilter);
             // read content
-            while (filteredReader.hasNext()) {
-                filteredReader.next();
+            DigobjectType dt = descriptorParser.parse(new StAXSource(filteredReader));
+            Metadata metadata = Metadata.create(dt, null);
+            record.setMetadata(metadata);
+            String descriptor = dumpFilter.getDumpedText();
+            record.setDescriptor(descriptor);
+            if (dt == null) {
+                LOG.log(Level.WARNING, "unexpected metadata content for {0}:\n{1}", new Object[] {record.getUuid(), descriptor});
             }
-            return dumpFilter.getDumpedText();
         } catch (IOException ex) {
             throw new XMLStreamException("missing allocator", reader.getLocation(), ex);
         }
 
+        if (reader.getEventType() != XMLStreamReader.END_ELEMENT) {
+            reader.nextTag(); // skip garbage and find </descriptor>
+        }
+
+        if (reader.getEventType() != XMLStreamReader.END_ELEMENT || !DESCRIPTOR_QNAME.equals(reader.getName())) {
+            throw new XMLStreamException("Expected </descriptor>", reader.getLocation());
+        }
     }
 
 }

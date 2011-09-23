@@ -17,6 +17,7 @@
 
 package cz.registrdigitalizace.harvest;
 
+import cz.registrdigitalizace.harvest.db.Metadata;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -30,6 +31,7 @@ public class HarvestedRecord {
     private String uuid;
     private String type;
     private String descriptor;
+    private Metadata metadata;
     private boolean root;
     private transient List<String> childrenUuids;
 
@@ -55,6 +57,14 @@ public class HarvestedRecord {
 
     public void setDescriptor(String descriptor) {
         this.descriptor = descriptor;
+    }
+
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
     }
 
     public String getType() {

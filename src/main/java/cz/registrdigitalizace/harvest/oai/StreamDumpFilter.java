@@ -45,6 +45,8 @@ public final class StreamDumpFilter implements StreamFilter {
 
     private QName trigger;
     private final boolean skipWhitespaces;
+    private final boolean acceptTriggeredEvents;
+    private final boolean excludeTriggerFromDump;
     private State state = State.SEARCHING;
     private XMLEventWriter writer;
     private static final CharArrayWriter charWriter = new CharArrayWriter(2048);
@@ -53,11 +55,27 @@ public final class StreamDumpFilter implements StreamFilter {
     private final XMLEventFactory xmlEventFactory;
 
     public StreamDumpFilter(boolean skipWhitespaces, XmlContext xmlContext, QName trigger) throws IOException {
+        this(skipWhitespaces, xmlContext, trigger, false, true);
+    }
+
+    /**
+     * Dumps trigger element content.
+     *
+     * @param skipWhitespaces skips white spaces from output
+     * @param xmlContext XML context
+     * @param trigger any element inside reader current scope that triggers the filter
+     * @param acceptTriggeredEvents trigger element and its content are (not) accepted by the filter
+     * @param excludeTriggerFromDump excludes trigger element from output
+     * @throws IOException
+     */
+    public StreamDumpFilter(boolean skipWhitespaces, XmlContext xmlContext, QName trigger, boolean acceptTriggeredEvents, boolean excludeTriggerFromDump) throws IOException {
         this.allocator = xmlContext.getXMLEventAllocator();
         this.xmlOutFactory = xmlContext.getXMLOutputFactory();
         this.xmlEventFactory = xmlContext.getXMLEventFactory();
         this.skipWhitespaces = skipWhitespaces;
         this.trigger = trigger;
+        this.acceptTriggeredEvents = acceptTriggeredEvents;
+        this.excludeTriggerFromDump = excludeTriggerFromDump;
     }
 
     public String getDumpedText() {
@@ -71,18 +89,24 @@ public final class StreamDumpFilter implements StreamFilter {
                 if (isTriggerMatched(reader.getName())) {
                     state = State.METADATA;
                     initWriter();
+                    if (!excludeTriggerFromDump) {
+                        writeEvent(reader);
+                    }
                 }
             }
         } else if (state == State.METADATA) {
             if (reader.getEventType() == XMLStreamReader.END_ELEMENT) {
                 if (isTriggerMatched(reader.getName())) {
                     state = State.SEARCHING;
+                    if (!excludeTriggerFromDump) {
+                        writeEvent(reader);
+                    }
                     closeWriter();
                     return true;
                 }
             }
             writeEvent(reader);
-            return false;
+            return acceptTriggeredEvents;
         }
         return true;
     }

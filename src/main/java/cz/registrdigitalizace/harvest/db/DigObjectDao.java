@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 /**
  *
@@ -70,6 +71,56 @@ public class DigObjectDao {
         } finally {
             SQLQuery.tryClose(pstmt);
         }
+    }
+
+    /**
+     * Finds MODS metadata of every digital object.
+     * @param uuid UUID to search
+     * @return collection of 
+     */
+    public IterableResult<DigObject> findMods() throws DaoException {
+        try {
+            return doFindMods();
+        } catch (SQLException ex) {
+            throw new DaoException(ex);
+        }
+    }
+
+    private IterableResult<DigObject> doFindMods() throws SQLException {
+        Connection connection = source.getConnection();
+        PreparedStatement pstmt = connection.prepareStatement(
+                "select ID, \"XML\" from DIGOBJEKT");
+        ResultSet rs = null;
+        try {
+            rs = pstmt.executeQuery();
+            return new FindModsResult(pstmt, rs);
+        } finally {
+            if (rs == null) {
+                SQLQuery.tryClose(pstmt);
+            }
+        }
+    }
+    
+    private static final class FindModsResult extends IterableResult<DigObject> {
+
+        public FindModsResult(Statement stmt, ResultSet rs) {
+            super(stmt, rs);
+        }
+
+        @Override
+        protected DigObject fetchNext() throws DaoException {
+            try {
+                BigDecimal id = rs.getBigDecimal("ID");
+                String xml = rs.getString("XML");
+                DigObject digObject = new DigObject();
+                digObject.setId(id);
+                digObject.setXml(xml);
+                return digObject;
+            } catch (SQLException ex) {
+                throw new DaoException(ex);
+            }
+        }
+    
     }
 
     public void insert(BigDecimal id, String uuid, String type, String xml) throws DaoException {
@@ -131,6 +182,22 @@ public class DigObjectDao {
             Connection connection = source.getConnection();
             PreparedStatement pstmt = connection.prepareStatement(
                     "delete from XPREDDIGOBJ where RDIGOBJEKT in (select ID from DIGOBJEKT where UUID not in (select POTOMEK from DIGVAZBY))");
+            try {
+                pstmt.executeUpdate();
+            } finally {
+                SQLQuery.tryClose(pstmt);
+            }
+
+            pstmt = connection.prepareStatement(
+                    "delete from DIGMETADATA where ID in (select ID from DIGOBJEKT where UUID not in (select POTOMEK from DIGVAZBY))");
+            try {
+                pstmt.executeUpdate();
+            } finally {
+                SQLQuery.tryClose(pstmt);
+            }
+
+            pstmt = connection.prepareStatement(
+                    "delete from DIGMETADATA_CHANGES");
             try {
                 pstmt.executeUpdate();
             } finally {

@@ -19,6 +19,7 @@ package cz.registrdigitalizace.harvest.oai;
 
 import cz.registrdigitalizace.harvest.KrameriusParser;
 import cz.registrdigitalizace.harvest.HarvestedRecord;
+import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import java.net.URL;
 import java.util.Iterator;
 import org.easymock.EasyMock;
@@ -92,7 +93,7 @@ public class HarvesterTest {
                 assertNotNull(parser);
                 HeaderType header = parser.parseHeader();
                 assertNotNull(header);
-                HarvestedRecord parsedMetadata = parser.parseMetadata(new KrameriusParser(xmlContext));
+                HarvestedRecord parsedMetadata = parser.parseMetadata(new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET)));
                 assertNotNull(parsedMetadata);
             }
             assertFalse("hasNext2", iterator.hasNext());

@@ -22,6 +22,7 @@ import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
 import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.LibraryDao;
+import cz.registrdigitalizace.harvest.metadata.MetadataUpdater;
 import cz.registrdigitalizace.harvest.oai.ListResult;
 import cz.registrdigitalizace.harvest.oai.Harvester;
 import cz.registrdigitalizace.harvest.oai.OaiException;
@@ -71,8 +72,14 @@ public final class Harvest {
      */
     public static void main(String[] args) {
         try {
+            CmdLine cmdLine = new CmdLine(args);
             Harvest harvest = new Harvest();
-            harvest.harvest();
+            
+            if (cmdLine.isRegenerateMods()) {
+                harvest.regenerateMetadata();
+            } else {
+                harvest.harvest();
+            }
         } catch (Throwable ex) {
             LOG.log(Level.SEVERE, "Cannot start harvest process", ex);
         }
@@ -83,7 +90,9 @@ public final class Harvest {
         for (Library library : libraries) {
             harvestLibraryAndLog(library);
         }
-
+        
+        updateMetadata();
+        
         ThumbnailHarvest thumbnailHarvest = new ThumbnailHarvest(dataSource, libraries);
         long time = System.currentTimeMillis();
         thumbnailHarvest.harvestThumbnails();
@@ -92,6 +101,23 @@ public final class Harvest {
                 new Object[]{thumbnailHarvest.getTotalNumber(), thumbnailHarvest.getTotalSize(), time});
     }
 
+    public void regenerateMetadata() throws DaoException {
+        MetadataUpdater mu = new MetadataUpdater(dataSource);
+        long time = System.currentTimeMillis();
+        mu.regenerateDigObjects();
+        time = System.currentTimeMillis() - time;
+        LOG.log(Level.INFO, "MODS regeneration status:\n  objects updated: {0}\n  Total size: {1} bytes\n  Time: {2} ms\n",
+                new Object[]{mu.getTotalNumber(), mu.getTotalSize(), time});
+    }
+
+    private void updateMetadata() throws DaoException {
+        MetadataUpdater mu = new MetadataUpdater(dataSource);
+        long time = System.currentTimeMillis();
+        mu.generateModifiedDigObjects();
+        time = System.currentTimeMillis() - time;
+        LOG.log(Level.INFO, "MODS generation status:\n  objects updated: {0}\n  Time: {0} ms\n",
+                new Object[]{mu.getTotalNumber(), time});
+    }
 
     private List<Library> fetchLibraries() throws DaoException {
         LibraryDao libraryDao = new LibraryDao();
@@ -189,6 +215,25 @@ public final class Harvest {
         }
         LOG.log(Level.FINE, "config: {0}", properties.toString());
         return properties;
+    }
+    
+    private static final class CmdLine {
+        
+        private boolean regenerateMods;
+
+        public CmdLine(String[] args) {
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if ("-regenerateMods".equals(arg)) {
+                    this.regenerateMods = true;
+                }
+            }
+        }
+
+        public boolean isRegenerateMods() {
+            return regenerateMods;
+        }
+        
     }
 
 }

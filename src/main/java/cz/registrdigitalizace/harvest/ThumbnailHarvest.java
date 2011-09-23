@@ -20,9 +20,9 @@ package cz.registrdigitalizace.harvest;
 import cz.registrdigitalizace.harvest.db.DaoException;
 import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
 import cz.registrdigitalizace.harvest.db.HarvestTransaction;
+import cz.registrdigitalizace.harvest.db.IterableResult;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.ThumbnailDao;
-import cz.registrdigitalizace.harvest.db.ThumbnailDao.IterableResult;
 import cz.registrdigitalizace.harvest.db.ThumbnailDao.Thumbnail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -72,7 +72,7 @@ public final class ThumbnailHarvest {
             transaction.begin();
             thumbnailDao.deleteUnrelated();
 
-            IterableResult missings = thumbnailDao.findMissing();
+            IterableResult<Thumbnail> missings = thumbnailDao.findMissing();
             try {
                 Thumbnail last = null;
                 while (missings.hasNextResult()) {

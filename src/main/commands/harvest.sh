@@ -14,4 +14,4 @@ JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.config.file=$HARVEST_HOME/conf/logging
 # config
 JAVA_OPTS="$JAVA_OPTS -Dcz.registrdigitalizace.harvest.Harvest.config=$HARVEST_HOME/conf/harvest.properties"
 
-java $JAVA_OPTS -cp "$HARVEST_HOME/lib/*" cz.registrdigitalizace.harvest.Harvest
+java $JAVA_OPTS -cp "$HARVEST_HOME/lib/*" cz.registrdigitalizace.harvest.Harvest $*

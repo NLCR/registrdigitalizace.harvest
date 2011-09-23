@@ -3,6 +3,8 @@
     <digobjekt />
     <lokace />
     <digvazby />
+    <digmetadata />
+    <digmetadata_changes />
 
     <thumbnails digobjektid="1" mime="image/jpeg" contents="a2FyZWw="/>
 </dataset>

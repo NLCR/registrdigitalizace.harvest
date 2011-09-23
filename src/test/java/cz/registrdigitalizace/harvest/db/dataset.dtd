@@ -24,6 +24,8 @@ Data model snapshot.
     digknihovna*,
     digobjekt*,
     digvazby*,
+    digmetadata*,
+    digmetadata_changes*,
     dlists*,
     lokace*,
     plaant_ids*,
@@ -71,6 +73,9 @@ Data model snapshot.
     pocetkopii CDATA #IMPLIED
     vizitka CDATA #IMPLIED
     indexovano CDATA #IMPLIED
+    ccnb CDATA #IMPLIED
+    carkod CDATA #IMPLIED
+    sigla CDATA #IMPLIED
 >
 
 <!ELEMENT digvazby EMPTY>
@@ -82,6 +87,27 @@ Data model snapshot.
     digknihovnamf CDATA #IMPLIED
     predek CDATA #IMPLIED
     predekmf CDATA #IMPLIED
+>
+
+<!ELEMENT digmetadata EMPTY>
+<!ATTLIST digmetadata
+    id CDATA #REQUIRED
+    nazev CDATA #IMPLIED
+    issn CDATA #IMPLIED
+    isbn CDATA #IMPLIED
+    ccnb CDATA #IMPLIED
+    sigla CDATA #IMPLIED
+    signatura CDATA #IMPLIED
+    autori CDATA #IMPLIED
+    vydavatele CDATA #IMPLIED
+    rokvyd CDATA #IMPLIED
+    modifikace CDATA #REQUIRED
+>
+
+<!ELEMENT digmetadata_changes EMPTY>
+<!ATTLIST digmetadata_changes
+    id CDATA #REQUIRED
+    modifikace CDATA #REQUIRED
 >
 
 <!ELEMENT dlists EMPTY>

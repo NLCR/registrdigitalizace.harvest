@@ -17,6 +17,8 @@
 
 package cz.registrdigitalizace.harvest;
 
+import cz.registrdigitalizace.harvest.db.Metadata;
+import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import java.util.Arrays;
 import cz.registrdigitalizace.harvest.oai.XmlContext;
 import java.io.InputStream;
@@ -64,16 +66,18 @@ public class KrameriusParserTest {
     @Test
     public void testParseDrobnustky() throws Exception {
         String filename = "testParseDrobnusky.xml";
-        doTestParse(filename, 0);
+        Metadata m = doTestParse(filename, 0);
+        assertNotNull(m);
+        assertEquals("Drobnůstky", m.getTitle());
     }
 
-    private void doTestParse(String filename, int expectedRelations) throws Exception {
+    private Metadata doTestParse(String filename, int expectedRelations) throws Exception {
         XmlContext xmlContext = new XmlContext();
         InputStream input = KrameriusParserTest.class.getResourceAsStream(filename);
         assertNotNull("missing: " + filename, input);
         XMLStreamReader reader = xmlContext.createStreamParser(input, null);
 
-        KrameriusParser parser = new KrameriusParser(xmlContext);
+        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET));
         HarvestedRecord record = parser.parse(reader);
         assertNotNull(record);
 
@@ -81,6 +85,7 @@ public class KrameriusParserTest {
 //                record.getUuid(), record.getType(), record.isRoot(), record.getDescriptor());
         assertTrue(record.isRoot());
         assertEquals(expectedRelations, record.getChildren().size());
+        return record.getMetadata();
     }
 
     @Test
@@ -91,7 +96,7 @@ public class KrameriusParserTest {
         assertNotNull("missing: " + filename, input);
         XMLStreamReader reader = xmlContext.createStreamParser(input, null);
 
-        KrameriusParser parser = new KrameriusParser(xmlContext);
+        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET));
         HarvestedRecord record = parser.parse(reader);
         assertNotNull("HarvestedRecord", record);
         assertValidRecord(true, "cd2b2ad0-62d4-11dd-ac0e-000d606f5dc6", "MONOGRAPH", Collections.<String>emptyList(), record);
@@ -105,7 +110,7 @@ public class KrameriusParserTest {
         assertNotNull("missing: " + filename, input);
         XMLStreamReader reader = xmlContext.createStreamParser(input, null);
 
-        KrameriusParser parser = new KrameriusParser(xmlContext);
+        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET));
         HarvestedRecord record = parser.parse(reader);
         assertNotNull("HarvestedRecord", record);
         assertValidRecord(false, "cd2b2ad0-62d4-11dd-ac0e-000d606f5dc6", "PERIODICAL_VOLUME",

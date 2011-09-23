@@ -5,6 +5,8 @@
     <dlists />
     <lokace />
     <digvazby />
+    <digmetadata />
+    <digmetadata_changes />
     <thumbnails />
     <xpreddigobj />
 </dataset>

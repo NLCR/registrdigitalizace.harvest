@@ -77,8 +77,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
                 <artifactId>maven-jaxb22-plugin</artifactId>
                 <configuration>
                     <schemaLanguage>XMLSCHEMA</schemaLanguage>
-                    <generatePackage>org.openarchives.oai2</generatePackage>
                     <episode>false</episode>
+                    <extension>true</extension>
+                    <args>
+                        <arg>-Xannotate</arg>
+                    </args>
+                    <plugins>
+                        <!-- xjc does not generate XmlRootElement necessary for JAXBResult usage
+                             see http://java.net/jira/browse/JAXB-690
+                             jaxb2-basics-annotate plugin can work around it (see bindings.xjb)
+                        -->
+                        <plugin>
+                            <groupId>org.jvnet.jaxb2_commons</groupId>
+                            <artifactId>jaxb2-basics-annotate</artifactId>
+                            <version>0.6.2</version>
+                        </plugin>
+                    </plugins>
+
                 </configuration>
                 <executions>
                     <execution>

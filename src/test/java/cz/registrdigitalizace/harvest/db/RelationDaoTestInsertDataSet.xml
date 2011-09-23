@@ -10,4 +10,6 @@
     <dlists id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
     <lokace />
     <digvazby />
+    <digmetadata />
+    <digmetadata_changes />
 </dataset>

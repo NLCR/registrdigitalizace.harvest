@@ -26,6 +26,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Stores harvested records in repository.
+ * It is expected to {@link #init() init} the repository before first usage
+ * and {@link #close() close} it after the last store operation.
  *
  * @author Jan Pokorsky
  */
@@ -37,6 +40,7 @@ public class RecordRepository {
     private final DigObjectDao digiObjectDao;
     private final RelationDao relationDao;
     private final IdSequenceDao idSequenceDao;
+    private final MetadataDao metadataDao;
     private final Library library;
     private final Date inputDate;
     private IdSequence locationSequence;
@@ -46,15 +50,20 @@ public class RecordRepository {
     public RecordRepository(
             LocationDao locationDao, DigObjectDao digiObjectDao,
             RelationDao relationDao, IdSequenceDao idSequenceDao,
+            MetadataDao metadataDao,
             Library library) {
         this.locationDao = locationDao;
         this.digiObjectDao = digiObjectDao;
         this.relationDao = relationDao;
         this.idSequenceDao = idSequenceDao;
+        this.metadataDao = metadataDao;
         this.library = library;
         this.inputDate = new Date(System.currentTimeMillis());
     }
 
+    /**
+     * Makes snapshot of ID sequences.
+     */
     public void init() throws DaoException {
         Map<String, IdSequence> ids = idSequenceDao.find(IdSequence.DIGOBJECT, IdSequence.LOCATION, IdSequence.RELATION);
         digiObjSequence = getSequence(ids, IdSequence.DIGOBJECT);
@@ -71,6 +80,7 @@ public class RecordRepository {
         upsertDigiobject(r);
         upsertLocation(r);
         upsertRelations(r);
+        upsertMetadata(r);
     }
 
     public void remove(HarvestedRecord r) throws DaoException {
@@ -134,8 +144,22 @@ public class RecordRepository {
             digiObjectDao.insert(id, r.getUuid(), r.getType(), r.getDescriptor());
         } else {
             digiObjectDao.update(id, r.getType(), r.getDescriptor());
+            r.getMetadata().setId(id);
         }
         r.setId(id);
+    }
+    
+    private void upsertMetadata(HarvestedRecord r) throws DaoException {
+        Metadata metadata = r.getMetadata();
+        BigDecimal id = r.getId();
+        if (metadata.getId() == null) {
+            // new object
+            metadata.setId(id);
+            metadataDao.insert(metadata);
+        } else {
+            // existing object
+            metadataDao.update(metadata);
+        }
     }
 
 }

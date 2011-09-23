@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mods:modsCollection xmlns:mods="http://www.loc.gov/mods/v3">
+    <mods:mods version="3.3">
+        <mods:titleInfo>
+            <mods:title>[Lectionarium bipartitum]</mods:title>
+        </mods:titleInfo>
+        <mods:name type="personal">
+            <mods:namePart/>
+            <mods:role>
+                <mods:roleTerm type="code">cre</mods:roleTerm>
+                <mods:roleTerm type="text">Author</mods:roleTerm>
+            </mods:role>
+        </mods:name>
+        <mods:typeOfResource>text</mods:typeOfResource>
+        <mods:originInfo>
+            <mods:place>
+                <mods:placeTerm type="text">Česko</mods:placeTerm>
+                <mods:placeTerm type="text">Morava</mods:placeTerm>
+                <mods:placeTerm type="text">Brno</mods:placeTerm>
+            </mods:place>
+            <mods:dateIssued keyDate="yes">1. polovina 15. století.</mods:dateIssued>
+            <mods:issuance>monographic</mods:issuance>
+        </mods:originInfo>
+        <mods:language>
+            <mods:languageTerm authority="iso639-2b" type="code">lat</mods:languageTerm>
+        </mods:language>
+        <mods:physicalDescription>
+            <mods:form>electronic</mods:form>
+            <mods:form type="material">Papír</mods:form>
+            <mods:internetMediaType>jp2</mods:internetMediaType>
+            <mods:extent>515 , 225 mm x 150 mm</mods:extent>
+            <mods:digitalOrigin>reformatted digital</mods:digitalOrigin>
+            <mods:note>Latinská kázání M. Jana Husa a Jana Milíče z Kroměříže.</mods:note>
+        </mods:physicalDescription>
+        <mods:identifier type="signatura">Mk-0000.084</mods:identifier>
+        <mods:location>
+            <mods:physicalLocation>BOA001</mods:physicalLocation>
+            <mods:shelfLocator>Mk-0000.084</mods:shelfLocator>
+            <mods:holdingSimple>
+                <mods:copyInformation>
+                    <mods:form>text</mods:form>
+                    <mods:shelfLocator>Mk-0000.084</mods:shelfLocator>
+                    <mods:electronicLocator/>http://aleph.mzk.cz/F?func=direct&amp;doc_number=001046711&amp;local_base=MZK03&amp;format=999
+                </mods:copyInformation>
+            </mods:holdingSimple>
+            <mods:url>http://kramerius.mzk.cz/search/search/handle/uuid:d609e916-6cbd-41d4-93f8-e425af847c8f</mods:url>
+        </mods:location>
+        <mods:recordInfo>
+            <mods:recordContentSource>BOA001</mods:recordContentSource>
+            <mods:recordOrigin>converted from tei and marc</mods:recordOrigin>
+            <mods:languageOfCataloging>
+                <mods:languageTerm authority="iso639-2b" type="code">cze</mods:languageTerm>
+            </mods:languageOfCataloging>
+            <mods:recordCreationDate encoding="iso8601">2011-08-21</mods:recordCreationDate>
+            <mods:recordChangeDate encoding="iso8601">2011-08-21</mods:recordChangeDate>
+            <mods:recordIdentifier>uuid:d609e916-6cbd-41d4-93f8-e425af847c8f</mods:recordIdentifier>
+        </mods:recordInfo>
+        <mods:classification authority="udc">025.171</mods:classification>
+        <mods:subject>
+            <mods:topic>historické knihovní fondy</mods:topic>
+        </mods:subject>
+        <mods:identifier type="sysno">001046711</mods:identifier>
+        <mods:relatedItem type="series">
+            <mods:titleInfo>
+                <mods:title>Rukopisy Mikulov</mods:title>
+            </mods:titleInfo>
+        </mods:relatedItem>
+    </mods:mods>
+</mods:modsCollection>
