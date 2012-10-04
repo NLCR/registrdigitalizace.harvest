@@ -211,6 +211,14 @@ public class DigObjectDao {
             } finally {
                 SQLQuery.tryClose(pstmt);
             }
+
+            pstmt = connection.prepareStatement(
+                    "delete from LOKACE where RDIGOBJEKTL not in (select ID from DIGOBJEKT)");
+            try {
+                pstmt.executeUpdate();
+            } finally {
+                SQLQuery.tryClose(pstmt);
+            }
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
