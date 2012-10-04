@@ -141,7 +141,28 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
                             <addDefaultSpecificationEntries />
                             <mainClass>cz.registrdigitalizace.harvest.Harvest</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Implementation-Version>build${project.version}-rev${buildNumber}</Implementation-Version>
+                        </manifestEntries>
                     </archive>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <doCheck>false</doCheck>
+                    <doUpdate>false</doUpdate>
                 </configuration>
             </plugin>
 

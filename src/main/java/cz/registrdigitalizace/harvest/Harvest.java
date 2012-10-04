@@ -73,6 +73,11 @@ public final class Harvest {
     public static void main(String[] args) {
         try {
             CmdLine cmdLine = new CmdLine(args);
+            if (cmdLine.isVersion()) {
+                String implementationVersion = Harvest.class.getPackage().getImplementationVersion();
+                System.out.println("harvest, " + implementationVersion);
+                return ;
+            }
             Harvest harvest = new Harvest();
             
             if (cmdLine.isRegenerateMods()) {
@@ -220,18 +225,25 @@ public final class Harvest {
     private static final class CmdLine {
         
         private boolean regenerateMods;
+        private boolean version;
 
         public CmdLine(String[] args) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
                 if ("-regenerateMods".equals(arg)) {
                     this.regenerateMods = true;
+                } else if ("-version".equals(arg)) {
+                    this.version = true;
                 }
             }
         }
 
         public boolean isRegenerateMods() {
             return regenerateMods;
+        }
+
+        public boolean isVersion() {
+            return version;
         }
         
     }
