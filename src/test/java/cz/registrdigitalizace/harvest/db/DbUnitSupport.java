@@ -35,6 +35,7 @@ import org.dbunit.dataset.xml.FlatXmlDataSetBuilder;
 import org.dbunit.ext.oracle.OracleConnection;
 import org.dbunit.ext.postgresql.PostgresqlDataTypeFactory;
 import org.junit.Assert;
+import org.junit.Assume;
 
 /**
  *
@@ -50,6 +51,7 @@ public class DbUnitSupport {
     private Driver driver;
 
     public DbUnitSupport() {
+        verifyDbConfiguration();
         String driverProp = System.getProperty(DigitizationRegistrySource.PROP_DRIVER);
         if ("oracle.jdbc.OracleDriver".equals(driverProp)) {
             driver = Driver.ORACLE;
@@ -60,6 +62,15 @@ public class DbUnitSupport {
         }
         source = new DigitizationRegistrySource(System.getProperties());
 
+    }
+
+    public static void verifyDbConfiguration() {
+        Assume.assumeNotNull(
+                System.getProperty(DigitizationRegistrySource.PROP_URL),
+                System.getProperty(DigitizationRegistrySource.PROP_DRIVER),
+                System.getProperty(DigitizationRegistrySource.PROP_USERNAME),
+                System.getProperty(DigitizationRegistrySource.PROP_PASSWORD)
+                );
     }
 
     public IDatabaseConnection getConnection() throws DatabaseUnitException, SQLException {

@@ -65,10 +65,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
                 <configuration>
                     <systemPropertyVariables>
                         <java.util.logging.config.file>${project.build.testOutputDirectory}/test-logging.properties</java.util.logging.config.file>
+                        <drharvest.jdbc.url>${drharvest.test.jdbc.url}</drharvest.jdbc.url>
+                        <drharvest.jdbc.driver>${drharvest.test.jdbc.driver}</drharvest.jdbc.driver>
+                        <drharvest.jdbc.user>${drharvest.test.jdbc.user}</drharvest.jdbc.user>
+                        <drharvest.jdbc.password>${drharvest.test.jdbc.password}</drharvest.jdbc.password>
                     </systemPropertyVariables>
-                    <excludes>
-                        <exclude>**/db/**</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
 
@@ -139,38 +140,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>drharvest.test.db</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <drharvest.jdbc.url>${drharvest.test.jdbc.url}</drharvest.jdbc.url>
-                                <drharvest.jdbc.driver>${drharvest.test.jdbc.driver}</drharvest.jdbc.driver>
-                                <drharvest.jdbc.user>${drharvest.test.jdbc.user}</drharvest.jdbc.user>
-                                <drharvest.jdbc.password>${drharvest.test.jdbc.password}</drharvest.jdbc.password>
-                            </systemPropertyVariables>
-                            <excludes>
-                                <exclude>none</exclude>
-                            </excludes>
-                            <!-- uncomment includes to run only selected tests -->
-<!--                            <includes>
-                                <include>**/RecordRepositoryTest.java</include>
-                                <include>**/ThumbnailDaoTest.java</include>
-                                <include>**/RelationDaoTest.java</include>
-                                <include>**/HarvestTest.java</include>
-                            </includes>-->
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <dependencies>
         <dependency>

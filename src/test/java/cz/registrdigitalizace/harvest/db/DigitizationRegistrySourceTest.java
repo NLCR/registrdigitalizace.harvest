@@ -38,6 +38,7 @@ public class DigitizationRegistrySourceTest {
 
     @BeforeClass
     public static void setUpClass() throws Exception {
+        DbUnitSupport.verifyDbConfiguration();
     }
 
     @AfterClass
