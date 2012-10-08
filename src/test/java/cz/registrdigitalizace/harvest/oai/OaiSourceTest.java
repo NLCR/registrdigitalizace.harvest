@@ -32,6 +32,8 @@ import static org.junit.Assert.*;
  */
 public class OaiSourceTest {
 
+    private OaiSourceFactory factory;
+
     public OaiSourceTest() {
     }
 
@@ -45,6 +47,7 @@ public class OaiSourceTest {
 
     @Before
     public void setUp() {
+        factory = OaiSourceFactory.getInstance();
     }
 
     @After
@@ -53,7 +56,7 @@ public class OaiSourceTest {
 
     @Test
     public void testPlainUrl() throws Exception {
-        OaiSource inst = OaiSource.createListRecords(
+        OaiSource inst = factory.createListRecords(
                 "http://example.com:8080/oaiprovider/",
                 null, null, null);
         doTestBuildUrl(inst,
@@ -64,7 +67,7 @@ public class OaiSourceTest {
 
     @Test
     public void testUrlFormat() throws Exception {
-        OaiSource inst = OaiSource.createListRecords(
+        OaiSource inst = factory.createListRecords(
                 "http://example.com:8080/oaiprovider/",
                 null, "oai_dc", null);
         doTestBuildUrl(inst,
@@ -75,7 +78,7 @@ public class OaiSourceTest {
 
     @Test
     public void testUrlOtherParams() throws Exception {
-        OaiSource inst = OaiSource.createListRecords(
+        OaiSource inst = factory.createListRecords(
                 "http://example.com:8080/oaiprovider/",
                 null, null, "set=type:periodical");
         doTestBuildUrl(inst,
@@ -86,7 +89,7 @@ public class OaiSourceTest {
 
     @Test
     public void testBuildURL_Format_OtherParams() throws Exception {
-        OaiSource inst = OaiSource.createListRecords(
+        OaiSource inst = factory.createListRecords(
                 "http://example.com:8080/oaiprovider/",
                 null, "oai_dc", "set=type:periodical");
         doTestBuildUrl(inst,

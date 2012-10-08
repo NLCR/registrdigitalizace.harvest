@@ -27,8 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * OAI source builds HTTP requests to harvest meta data.
  *
  * @author Jan Pokorsky
+ * @see <a href='http://www.openarchives.org/OAI/openarchivesprotocol.html#HTTPRequestFormat'>OAI HTTP Request</a>
  */
 public class OaiSource {
 
@@ -41,6 +43,10 @@ public class OaiSource {
         this.verbParameter = verbParameter;
     }
 
+    /**
+     * Gets initial HTTP request.
+     * @return URL
+     */
     public URL getUrl() {
         try {
             return uri.toURL();
@@ -50,6 +56,11 @@ public class OaiSource {
         }
     }
 
+    /**
+     * Gets subsequent HTTP request.
+     * @param resumptionToken resumption token from previous responses.
+     * @return URL
+     */
     public URL getResumptionUrl(String resumptionToken) throws MalformedURLException {
         if (resumptionToken == null || resumptionToken.length() == 0) {
             throw new MalformedURLException("Invalid resumption token" + resumptionToken);
@@ -67,6 +78,10 @@ public class OaiSource {
         }
     }
 
+    /**
+     * Gets response from OAI source.
+     * @param resumptionToken resumption token from previous responses.
+     */
     public InputStream openConnection(String resumptionToken) throws IOException {
         URL url = getResumptionUrl(resumptionToken);
         if (LOG.isLoggable(Level.FINE)) {
@@ -75,6 +90,9 @@ public class OaiSource {
         return openStream(url);
     }
 
+    /**
+     * Gets initial response from OAI source.
+     */
     public InputStream openConnection() throws IOException {
         URL url = getUrl();
         if (LOG.isLoggable(Level.FINE)) {
@@ -90,48 +108,6 @@ public class OaiSource {
         // http://www.openarchives.org/OAI/2.0/guidelines-harvester.htm#FlowControl
         InputStream stream = url.openStream();
         return stream;
-    }
-
-    public static OaiSource createListRecords(String baseUriStr, String fromDate,
-            String metadataPrefix, String otherParams) throws MalformedURLException {
-
-        try {
-            return createListRecordsImpl(baseUriStr, fromDate, metadataPrefix, otherParams);
-        } catch (URISyntaxException ex) {
-            MalformedURLException mex = new MalformedURLException(ex.getLocalizedMessage());
-            mex.initCause(ex);
-            throw mex;
-        }
-    }
-
-    private static OaiSource createListRecordsImpl(String baseUriStr, String fromDate,
-            String metadataPrefix, String otherParams) throws URISyntaxException, MalformedURLException {
-
-        URI baseUri = new URI(baseUriStr);
-        String query = baseUri.getQuery();
-        if (query != null) {
-            LOG.log(Level.WARNING, "Ignoring query part: {0}", baseUriStr);
-        }
-        String verbParameter = "verb=ListRecords";
-        StringBuilder oaiQuery = new StringBuilder(verbParameter);
-        if (fromDate != null && fromDate.length() > 0) {
-            oaiQuery.append("&from=").append(fromDate);
-        }
-        if (metadataPrefix != null && metadataPrefix.length() > 0) {
-            oaiQuery.append("&metadataPrefix=").append(metadataPrefix);
-        }
-        if (otherParams != null && otherParams.length() > 0) {
-            if (otherParams.charAt(0) != '&') {
-                oaiQuery.append('&');
-            }
-            oaiQuery.append(otherParams);
-        }
-
-        baseUri = new URI(baseUri.getScheme(), baseUri.getUserInfo(),
-                baseUri.getHost(), baseUri.getPort(), baseUri.getPath(),
-                oaiQuery.toString(), baseUri.getFragment());
-        baseUri.toURL(); // make sure getUrl will pass
-        return new OaiSource(baseUri, verbParameter);
     }
 
 }

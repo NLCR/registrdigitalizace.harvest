@@ -17,6 +17,7 @@
 
 package cz.registrdigitalizace.harvest.db;
 
+import java.io.File;
 import java.math.BigDecimal;
 
 /**
@@ -37,6 +38,7 @@ public final class Library {
     private String baseUrl;
     /** OAIPMHCOMMAND */
     private String queryParameters;
+    private transient File cacheFolder;
 
     /** checks library fields and returns error message in case of any illegal field */
     public String validate() {
@@ -99,6 +101,14 @@ public final class Library {
 
     public void setQueryParameters(String queryParameters) {
         this.queryParameters = queryParameters;
+    }
+
+    public File getCacheFolder() {
+        return cacheFolder;
+    }
+
+    public void setCacheFolder(File cacheFolder) {
+        this.cacheFolder = cacheFolder;
     }
 
     @Override

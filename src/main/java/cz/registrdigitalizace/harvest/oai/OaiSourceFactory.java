@@ -17,15 +17,25 @@
 
 package cz.registrdigitalizace.harvest.oai;
 
+import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
+ * Factory building various OAI sources.
  *
  * @author Jan Pokorsky
  */
 public class OaiSourceFactory {
-    
+
+    /**
+     * System property to provide custom factory class.
+     */
     public static final String FACTORY_PROP = "cz.registrdigitalizace.harvest.oai.OaiSourceFactory";
+    private static final Logger LOG = Logger.getLogger(OaiSourceFactory.class.getName());
 
     public static OaiSourceFactory getInstance() {
         String className = System.getProperty(FACTORY_PROP, FACTORY_PROP);
@@ -44,10 +54,65 @@ public class OaiSourceFactory {
     public OaiSource createListRecords(String baseUriStr, String fromDate,
             String metadataPrefix, String otherParams) throws OaiException {
         try {
-            return OaiSource.createListRecords(baseUriStr, fromDate, metadataPrefix, otherParams);
+            return createListRecordsImpl(baseUriStr, fromDate, metadataPrefix, otherParams);
+        } catch (URISyntaxException ex) {
+            throw new OaiException(ex);
         } catch (MalformedURLException ex) {
             throw new OaiException(ex);
         }
+    }
+
+    /**
+     * Creates OAI source to read cached responses from file system.
+     * @param cache cache folder
+     * @return OAI source
+     * @see #createCachedSource
+     */
+    public OaiSource createSourceFromCache(File cache) {
+        return new OaiLocalReadSource(cache);
+    }
+
+    /**
+     * Creates OAI source that dumps responses to file system. It is necessary
+     * to iterate all records fetched with e.g. {@link Harvester#getListRecords}
+     * to fill the cache.
+     * @param src remote OAI source to fetch responses
+     * @param cache folder to store responses. Folder must exist an be empty.
+     * @return OAI source
+     * @see #createSourceFromCache
+     */
+    public OaiSource createCachedSource(OaiSource src, File cache) {
+        return new OaiLocalWriteSource(src, cache);
+    }
+
+    static OaiSource createListRecordsImpl(String baseUriStr, String fromDate,
+            String metadataPrefix, String otherParams) throws URISyntaxException, MalformedURLException {
+
+        URI baseUri = new URI(baseUriStr);
+        String query = baseUri.getQuery();
+        if (query != null) {
+            LOG.log(Level.WARNING, "Ignoring query part: {0}", baseUriStr);
+        }
+        String verbParameter = "verb=ListRecords";
+        StringBuilder oaiQuery = new StringBuilder(verbParameter);
+        if (fromDate != null && fromDate.length() > 0) {
+            oaiQuery.append("&from=").append(fromDate);
+        }
+        if (metadataPrefix != null && metadataPrefix.length() > 0) {
+            oaiQuery.append("&metadataPrefix=").append(metadataPrefix);
+        }
+        if (otherParams != null && otherParams.length() > 0) {
+            if (otherParams.charAt(0) != '&') {
+                oaiQuery.append('&');
+            }
+            oaiQuery.append(otherParams);
+        }
+
+        baseUri = new URI(baseUri.getScheme(), baseUri.getUserInfo(),
+                baseUri.getHost(), baseUri.getPort(), baseUri.getPath(),
+                oaiQuery.toString(), baseUri.getFragment());
+        baseUri.toURL(); // make sure getUrl will pass
+        return new OaiSource(baseUri, verbParameter);
     }
 
 }

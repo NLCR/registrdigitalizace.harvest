@@ -23,16 +23,20 @@ import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.LibraryDao;
 import cz.registrdigitalizace.harvest.metadata.MetadataUpdater;
-import cz.registrdigitalizace.harvest.oai.ListResult;
 import cz.registrdigitalizace.harvest.oai.Harvester;
+import cz.registrdigitalizace.harvest.oai.ListResult;
 import cz.registrdigitalizace.harvest.oai.OaiException;
 import cz.registrdigitalizace.harvest.oai.OaiSource;
 import cz.registrdigitalizace.harvest.oai.OaiSourceFactory;
 import cz.registrdigitalizace.harvest.oai.Record;
 import cz.registrdigitalizace.harvest.oai.XmlContext;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -57,14 +61,21 @@ public final class Harvest {
     private final DigitizationRegistrySource dataSource;
     private final XmlContext xmlCtx = new XmlContext();
     private final OaiSourceFactory oaiFactory;
+    private final Configuration conf;
+    private File sessionCache;
 
     public Harvest() {
         this(OaiSourceFactory.getInstance());
     }
 
     Harvest(OaiSourceFactory oaiFactory) {
+        this(oaiFactory, new Configuration());
+    }
+
+    Harvest(OaiSourceFactory oaiFactory, Configuration conf) {
         this.oaiFactory = oaiFactory;
         this.dataSource = new DigitizationRegistrySource(resolveConfig());
+        this.conf = conf;
     }
 
     /**
@@ -72,16 +83,19 @@ public final class Harvest {
      */
     public static void main(String[] args) {
         try {
-            CmdLine cmdLine = new CmdLine(args);
-            if (cmdLine.isVersion()) {
+            Configuration conf = Configuration.fromCmdLine(args);
+            if (conf.isVersion()) {
                 String implementationVersion = Harvest.class.getPackage().getImplementationVersion();
                 System.out.println("harvest, " + implementationVersion);
                 return ;
+            } else if (conf.isHelp()) {
+                System.out.println(Configuration.help());
+                return ;
             }
-            Harvest harvest = new Harvest();
+            Harvest harvest = new Harvest(OaiSourceFactory.getInstance(), conf);
             
-            if (cmdLine.isRegenerateMods()) {
-                harvest.regenerateMetadata();
+            if (conf.isRegenerateMods()) {
+                harvest.updateMetadata();
             } else {
                 harvest.harvest();
             }
@@ -90,13 +104,21 @@ public final class Harvest {
         }
     }
 
+    /**
+     * Harvests meta data descriptors from digital libraries, computes selected
+     * meta data and updates thumbnails.
+     */
     public void harvest() throws DaoException, IOException {
+        this.sessionCache = null;
         List<Library> libraries = fetchLibraries();
         for (Library library : libraries) {
             harvestLibraryAndLog(library);
         }
-        
-        updateMetadata();
+
+        if (conf.isHarvestToCache()) {
+            return;
+        }
+        computeMetadata();
         
         ThumbnailHarvest thumbnailHarvest = new ThumbnailHarvest(dataSource, libraries);
         long time = System.currentTimeMillis();
@@ -106,7 +128,11 @@ public final class Harvest {
                 new Object[]{thumbnailHarvest.getTotalNumber(), thumbnailHarvest.getTotalSize(), time});
     }
 
-    public void regenerateMetadata() throws DaoException {
+    /**
+     * Removes all selected meta data and computes them again from persisted XML descriptors.
+     * <p>No harvest is run.
+     */
+    public void updateMetadata() throws DaoException {
         MetadataUpdater mu = new MetadataUpdater(dataSource);
         long time = System.currentTimeMillis();
         mu.regenerateDigObjects();
@@ -115,7 +141,10 @@ public final class Harvest {
                 new Object[]{mu.getTotalNumber(), mu.getTotalSize(), time});
     }
 
-    private void updateMetadata() throws DaoException {
+    /**
+     * Computes selected meta data from just harvested and persisted XML descriptors.
+     */
+    private void computeMetadata() throws DaoException {
         MetadataUpdater mu = new MetadataUpdater(dataSource);
         long time = System.currentTimeMillis();
         mu.generateModifiedDigObjects();
@@ -145,7 +174,12 @@ public final class Harvest {
             LOG.log(Level.SEVERE, null, ex);
         }
     }
-    private void harvestLibrary(Library library) throws OaiException, DaoException, JAXBException, XMLStreamException {
+
+    /**
+     * Harvests library meta data and persists them in DB.
+     * <p>The persistence is optional.
+     */
+    private void harvestLibrary(Library library) throws OaiException, DaoException, JAXBException, XMLStreamException, IOException {
         LOG.log(Level.INFO, "Harvesting {0}", library);
         long time = System.currentTimeMillis();
         OaiSource oaiSource = resolveOaiSource(library);
@@ -155,18 +189,85 @@ public final class Harvest {
         Harvester harvester = new Harvester(oaiSource, xmlCtx);
         ListResult<Record> oaiRecords = harvester.getListRecords(true);
         try {
-            LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource);
-            libraryHarvest.harvest(oaiRecords, xmlCtx);
-            time = System.currentTimeMillis() - time;
-            LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2} ms\n",
-                    new Object[]{libraryHarvest.getAddRecordCount(), libraryHarvest.getRemoveRecordCount(), time});
+            if (conf.isHarvestToCache()) {
+                cacheRecords(library, oaiRecords, time);
+            } else {
+                if (conf.isHarvestWithCache()) {
+                    cacheRecords(library, oaiRecords, time);
+                    oaiRecords.close();
+                    oaiSource = oaiFactory.createSourceFromCache(library.getCacheFolder());
+                    harvester = new Harvester(oaiSource, xmlCtx);
+                    oaiRecords = harvester.getListRecords(true);
+                }
+                persistRecords(library, oaiRecords, time);
+            }
         } finally {
             oaiRecords.close();
         }
-
     }
 
-    private OaiSource resolveOaiSource(Library library) {
+    /** Iterates records to get them persisted */
+    private void persistRecords(Library library, ListResult<Record> oaiRecords, long time)
+            throws DaoException, JAXBException, XMLStreamException {
+
+        LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource);
+        libraryHarvest.harvest(oaiRecords, xmlCtx);
+        time = System.currentTimeMillis() - time;
+        LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2} ms\n",
+                new Object[]{libraryHarvest.getAddRecordCount(), libraryHarvest.getRemoveRecordCount(), time});
+    }
+
+    /** Iterates records to get them cached */
+    private void cacheRecords(Library library, ListResult<Record> oaiRecords, long time) {
+        int count = 0;
+        for (Record record : oaiRecords) {
+            ++count;
+        }
+        time = System.currentTimeMillis() - time;
+        LOG.log(Level.INFO, "Harvest status:\n  Records cached: {0}\n  Time: {1} ms\n  Cache: {2}\n",
+                new Object[]{count, time, library.getCacheFolder()});
+    }
+
+    /**
+     * Folder to store given library harvest from this session.
+     */
+    private File createCacheFolder(Library library) throws FileNotFoundException {
+        File cache = new File(getCacheFolder(), String.valueOf(library.getId()));
+        cache.mkdirs();
+        return cache;
+    }
+
+    /**
+     * Folder to store all harvests from this session.
+     */
+    private File getCacheFolder() throws FileNotFoundException {
+        if (sessionCache == null) {
+            String session = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+            sessionCache = new File(getCacheRootFolder(), session);
+            sessionCache.mkdir();
+        }
+        return sessionCache;
+    }
+
+    /**
+     * Folder to store all harvests.
+     */
+    private File getCacheRootFolder() throws FileNotFoundException {
+        String cachePath = conf.getCacheRoot();
+        File cache = new File(cachePath);
+        cache.mkdirs();
+        if (!cache.exists() || !cache.isDirectory()) {
+            throw new FileNotFoundException(cache.toString());
+        }
+        return cache;
+    }
+
+    private OaiSource resolveOaiSource(Library library) throws IOException {
+        if (conf.isHarvesFromCache()) {
+            String cachePath = conf.getCachePath();
+            File cache = new File(cachePath);
+            return oaiFactory.createSourceFromCache(cache);
+        }
         String validate = library.validate();
         if (validate != null) {
             LOG.log(Level.WARNING, "{1}: {0}", new Object[]{validate, library});
@@ -174,9 +275,15 @@ public final class Harvest {
         }
         if ("oaipmh".equals(library.getHarvestProtocol())) {
             try {
-                return oaiFactory.createListRecords(
+                OaiSource src = oaiFactory.createListRecords(
                         library.getBaseUrl(), library.getLastHarvest(),
                         library.getMetadataFormat(), library.getQueryParameters());
+                if (conf.isHarvestToCache() || conf.isHarvestWithCache()) {
+                    File cache = createCacheFolder(library);
+                    src = oaiFactory.createCachedSource(src, cache);
+                    library.setCacheFolder(cache);
+                }
+                return src;
             } catch (OaiException ex) {
                 LOG.log(Level.WARNING, "Invalid OAI URL ''{0}''\n  {1}",
                         new Object[]{ex.getLocalizedMessage(), library});
@@ -220,32 +327,6 @@ public final class Harvest {
         }
         LOG.log(Level.FINE, "config: {0}", properties.toString());
         return properties;
-    }
-    
-    private static final class CmdLine {
-        
-        private boolean regenerateMods;
-        private boolean version;
-
-        public CmdLine(String[] args) {
-            for (int i = 0; i < args.length; i++) {
-                String arg = args[i];
-                if ("-regenerateMods".equals(arg)) {
-                    this.regenerateMods = true;
-                } else if ("-version".equals(arg)) {
-                    this.version = true;
-                }
-            }
-        }
-
-        public boolean isRegenerateMods() {
-            return regenerateMods;
-        }
-
-        public boolean isVersion() {
-            return version;
-        }
-        
     }
 
 }
