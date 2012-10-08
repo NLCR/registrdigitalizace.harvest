@@ -20,32 +20,33 @@ package cz.registrdigitalizace.harvest;
 import cz.registrdigitalizace.harvest.db.DaoException;
 import cz.registrdigitalizace.harvest.db.DigObjectDao;
 import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
-import cz.registrdigitalizace.harvest.db.RecordRepository;
 import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.IdSequenceDao;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.LibraryDao;
 import cz.registrdigitalizace.harvest.db.LocationDao;
 import cz.registrdigitalizace.harvest.db.MetadataDao;
+import cz.registrdigitalizace.harvest.db.RecordRepository;
 import cz.registrdigitalizace.harvest.db.RelationDao;
 import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import cz.registrdigitalizace.harvest.oai.ListResult;
 import cz.registrdigitalizace.harvest.oai.Record;
 import cz.registrdigitalizace.harvest.oai.RecordTypeParser;
 import cz.registrdigitalizace.harvest.oai.XmlContext;
+import java.util.Iterator;
 import javax.xml.bind.JAXBException;
 import javax.xml.stream.XMLStreamException;
 import org.openarchives.oai2.HeaderType;
 import org.openarchives.oai2.StatusType;
 
 /**
- *
  * Parses harvested OAI records and persists them together with the time
  * of the harvest.
  *
  * @author Jan Pokorsky
  */
 public class LibraryHarvest {
+    
     // parser will be configurable per library at some time in future
     private static final ModsMetadataParser modsParser = new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET);
     private final Library library;
@@ -68,29 +69,11 @@ public class LibraryHarvest {
         transaction.begin();
         boolean rollback = true;
         try {
-            libraryDao.setDataSource(transaction);
-            RecordRepository processor = createProcessor();
-            processor.init();
+            persistRecords(listRecords.iterator(), xmlCtx);
 
+            libraryDao.setDataSource(transaction);
             String harvestDate = listRecords.getResponseDate().toString();
             library.setLastHarvest(harvestDate);
-            for (Record oairecord : listRecords) {
-                RecordTypeParser parser = oairecord.getParser();
-                HeaderType headerType = parser.parseHeader();
-                if (headerType.getStatus() == StatusType.DELETED) {
-                    HarvestedRecord record = resolveDeleteRecord(headerType.getIdentifier());
-                    processor.remove(record);
-                    removeCounter++;
-                } else {
-                    HarvestedRecord metadata = parser.parseMetadata(new KrameriusParser(xmlCtx, modsParser));
-                    processor.add(metadata);
-                    // parser.parseAbouts();
-                    addCounter++;
-                }
-            }
-
-            processor.close();
-
             libraryDao.update(library);
 
             transaction.commit();
@@ -104,6 +87,33 @@ public class LibraryHarvest {
 
     }
 
+    private void persistRecords(Iterator<Record> recordIterator, XmlContext xmlCtx)
+            throws DaoException, JAXBException, XMLStreamException {
+        
+        if (!recordIterator.hasNext()) {
+            return ;
+        }
+        RecordRepository processor = createProcessor();
+        processor.init();
+
+        while (recordIterator.hasNext()) {
+            Record oairecord = recordIterator.next();
+            RecordTypeParser parser = oairecord.getParser();
+            HeaderType headerType = parser.parseHeader();
+            if (headerType.getStatus() == StatusType.DELETED) {
+                HarvestedRecord record = resolveDeleteRecord(headerType.getIdentifier());
+                processor.remove(record);
+                removeCounter++;
+            } else {
+                HarvestedRecord metadata = parser.parseMetadata(new KrameriusParser(xmlCtx, modsParser));
+                processor.add(metadata);
+                // parser.parseAbouts();
+                addCounter++;
+            }
+        }
+        processor.close();
+    }
+
     public int getAddRecordCount() {
         return addCounter;
     }
@@ -115,9 +125,6 @@ public class LibraryHarvest {
     private HarvestedRecord resolveDeleteRecord(String identifier) {
         // XXX make UUID parse more robust
         int lastIndexOf = identifier.lastIndexOf(':');
-        if (lastIndexOf > 0) {
-
-        }
         String uuid = (lastIndexOf > 0) ? identifier.substring(lastIndexOf) : identifier;
         HarvestedRecord rec = new HarvestedRecord();
         rec.setUuid(uuid);
