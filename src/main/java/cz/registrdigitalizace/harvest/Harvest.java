@@ -263,10 +263,15 @@ public final class Harvest {
     }
 
     private OaiSource resolveOaiSource(Library library) throws IOException {
-        if (conf.isHarvesFromCache()) {
+        if (conf.isHarvestFromCache()) {
             String cachePath = conf.getCachePath();
             File cache = new File(cachePath);
-            return oaiFactory.createSourceFromCache(cache);
+            File libraryCache = new File(cache, String.valueOf(library.getId()));
+            if (!libraryCache.exists()) {
+                LOG.log(Level.WARNING, "Missing library cache: {0}", libraryCache);
+                return null;
+            }
+            return oaiFactory.createSourceFromCache(libraryCache);
         }
         String validate = library.validate();
         if (validate != null) {

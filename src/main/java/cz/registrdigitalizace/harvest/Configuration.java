@@ -20,7 +20,17 @@ package cz.registrdigitalizace.harvest;
  * Harvest configuration.
  */
 final class Configuration {
-    private boolean harvesFromCache;
+
+    private static final String UPDATE_METADATA = "-updateMetadata";
+    private static final String VERSION = "-version";
+    private static final String HARVEST_TO_CACHE = "-harvestToCache";
+    private static final String HARVEST_FROM_CACHE = "-harvestFromCache";
+    private static final String HARVEST_WITH_CACHE = "-harvestWithCache";
+    private static final String CACHE_ROOT = "-cacheRoot";
+    private static final String HELP = "-help";
+    private static final String H = "-h";
+    
+    private boolean harvestFromCache;
     private boolean harvestToCache;
     private boolean harvestWithCache;
     private boolean help;
@@ -35,30 +45,32 @@ final class Configuration {
         String action = null;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if ("-updateMetadata".equals(arg)) {
+            if (UPDATE_METADATA.equals(arg)) {
                 action = checkSingleOption(action, arg);
                 conf.regenerateMods = true;
-            } else if ("-version".equals(arg)) {
+            } else if (VERSION.equals(arg)) {
                 conf.version = true;
-            } else if ("-harvestToCache".equals(arg)) {
+            } else if (HARVEST_TO_CACHE.equals(arg)) {
                 action = checkSingleOption(action, arg);
                 conf.harvestToCache = true;
-            } else if ("-harvestFromCache".equals(arg)) {
+            } else if (HARVEST_FROM_CACHE.equals(arg)) {
                 action = checkSingleOption(action, arg);
-                conf.harvesFromCache = true;
-            } else if ("-harvestWithCache".equals(arg)) {
+                conf.harvestFromCache = true;
+                if (i + 1 >= args.length) {
+                    throw new IllegalArgumentException("Missing session cache folder!");
+                }
+                conf.cachePath = args[++i];
+            } else if (HARVEST_WITH_CACHE.equals(arg)) {
                 action = checkSingleOption(action, arg);
                 conf.harvestWithCache = true;
-            } else if ("-cachePath".equals(arg) && i < args.length + 1) {
-                conf.cachePath = args[++i];
-            } else if ("-cacheRoot".equals(arg) && i < args.length + 1) {
+            } else if (CACHE_ROOT.equals(arg)) {
+                if (i + 1 >= args.length) {
+                    throw new IllegalArgumentException("Missing cache root folder!");
+                }
                 conf.cacheRoot = args[++i];
-            } else if ("-help".equals(arg) || "-h".equals(arg)) {
+            } else if (HELP.equals(arg) || H.equals(arg)) {
                 conf.help = true;
             }
-        }
-        if (conf.isHarvesFromCache() && conf.cachePath == null) {
-            throw new IllegalStateException("Missing cache path!");
         }
         return conf;
     }
@@ -67,26 +79,25 @@ final class Configuration {
         String tab = "  ";
         String nltab = "\n" + tab;
         String nltabtab = "\n" + tab + tab;
-        return "harvest [-version | -h | -updateMetadata]"
-                + "\nharvest -harvestToCache [-cacheRoot <folder>] | -harvestWithCache [-cacheRoot <folder>]"
-                + "\nharvest -harvestFromCache -cachePath <folder>"
+        return String.format("harvest [%s | %s | %s]", VERSION, HELP, UPDATE_METADATA)
+                + String.format("\nharvest %s [%s <folder>] | %s [%s <folder>]",
+                        HARVEST_TO_CACHE, CACHE_ROOT, HARVEST_WITH_CACHE, CACHE_ROOT)
+                + "\nharvest -harvestFromCache <folder>"
                 + "\n\nWithout options it harvests data from remote OAI sources (DIGKNIHOVNA table) and writes them to DB."
                 + "\n\nOptions:"
-                + nltab + "-updateMetadata"
+                + nltab + UPDATE_METADATA
                 + nltabtab + "Recomputes meta data from already harvested XML inside DB. No harvest"
-                + nltab + "-version"
+                + nltab + VERSION
                 + nltabtab + "Prints program version."
-                + nltab + "-help, -h"
+                + nltab + HELP + ", " + H
                 + nltabtab + "Prints this help."
-                + nltab + "-harvestToCache"
+                + nltab + HARVEST_TO_CACHE
                 + nltabtab + "Harvests data to local cache. None data are written to DB."
-                + nltab + "-harvestWithCache"
+                + nltab + HARVEST_WITH_CACHE
                 + nltabtab + "Harvests data to local cache and then writes it to DB."
-                + nltab + "-harvestFromCache"
-                + nltabtab + "Reads already harvested data from -cachePath and writes it to DB."
-                + nltab + "-cachePath <folder>"
-                + nltabtab + "Path to harvested data."
-                + nltab + "-cacheRoot <folder>"
+                + nltab + String.format("%s <folder>", HARVEST_FROM_CACHE)
+                + nltabtab + "Reads already harvested data from foilder containing session cache and writes it to DB."
+                + nltab + String.format("%s <folder>", CACHE_ROOT)
                 + nltabtab + "Path to store  all harvested data. -Djava.io.tmp/harvest_cache is default path."
                 + "\n\n";
     }
@@ -99,8 +110,8 @@ final class Configuration {
         return version;
     }
 
-    public boolean isHarvesFromCache() {
-        return harvesFromCache;
+    public boolean isHarvestFromCache() {
+        return harvestFromCache;
     }
 
     public boolean isHarvestToCache() {
@@ -121,9 +132,13 @@ final class Configuration {
 
     public String getCacheRoot() {
         if (cacheRoot == null) {
-            cacheRoot = System.getProperty("java.io.tmpdir") + "/harvest_cache";
+            cacheRoot = defaultCacheRoot();
         }
         return cacheRoot;
+    }
+
+    static String defaultCacheRoot() {
+        return System.getProperty("java.io.tmpdir") + "/harvest_cache";
     }
 
     private static String checkSingleOption(String option, String arg) {
