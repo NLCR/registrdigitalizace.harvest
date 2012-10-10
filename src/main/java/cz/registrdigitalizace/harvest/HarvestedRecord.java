@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
+ * OAI record.
  *
  * @author Jan Pokorsky
  */
@@ -32,41 +33,74 @@ public class HarvestedRecord {
     private String type;
     private String descriptor;
     private Metadata metadata;
+    @Deprecated
     private boolean root;
     private transient List<String> childrenUuids;
 
+    /**
+     * Gets ID of persisted record or {@code null} if not yet persisted.
+     * @return ID
+     */
     public BigDecimal getId() {
         return id;
     }
 
+    /**
+     * Sets ID of persisted record.
+     */
     public void setId(BigDecimal id) {
         this.id = id;
     }
 
+    /**
+     * Signals root record of the harvested hierarchy.
+     * @deprecated It is no more necessary as RelationDao consider each
+     *      harvested record as root and DigitalObject.removeUnrelated
+     *      clears false roots when all records are available from OAI responses.
+     */
+    @Deprecated
     public boolean isRoot() {
         return root;
     }
 
+    /** @see #isRoot */
+    @Deprecated
     public void setRoot(boolean root) {
         this.root = root;
     }
 
+    /**
+     * Gets meta data content as harvested.
+     */
     public String getDescriptor() {
         return descriptor;
     }
 
+    /**
+     * Sets meta data content as harvested.
+     */
     public void setDescriptor(String descriptor) {
         this.descriptor = descriptor;
     }
 
+    /**
+     * Gets parsed selected meta data.
+     */
     public Metadata getMetadata() {
         return metadata;
     }
 
+    /**
+     * Sets parsed selected meta data.
+     */
     public void setMetadata(Metadata metadata) {
         this.metadata = metadata;
     }
 
+    /**
+     * Gets document type (PERIODICAL, ...).
+     * @return
+     */
     public String getType() {
         return type;
     }
@@ -83,10 +117,18 @@ public class HarvestedRecord {
         this.uuid = uuid;
     }
 
+    /**
+     * Gets UUIDs of harvested child relations.
+     * @return list of UUIDs
+     */
     public List<String> getChildren() {
         return childrenUuids;
     }
 
+    /**
+     * Sets UUIDs of harvested child relations.
+     * @param childrenUuids  list of UUIDs
+     */
     public void setChildren(List<String> childrenUuids) {
         this.childrenUuids = childrenUuids;
     }

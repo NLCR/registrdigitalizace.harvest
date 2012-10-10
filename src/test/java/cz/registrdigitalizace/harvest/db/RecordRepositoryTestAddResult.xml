@@ -6,9 +6,11 @@
     <LOKACE id="11" digknihovna="examplelib" datumzal="${currentDate}" rdigobjektl="4" />
     <DIGVAZBY id="1" potomek="uuid:2" poradi="1" digknihovna="10"/>
     <DIGVAZBY id="2" predek="2" potomek="uuid:3" poradi="1" digknihovna="10"/>
-    <DIGVAZBY id="3" predek="3" potomek="uuid:4" poradi="1" digknihovna="10"/>
+    <!--<DIGVAZBY id="3" potomek="uuid:3" poradi="1" digknihovna="10"/>--> <!--removed as not root; DigObjectDao.removeUnrelated-->
+    <DIGVAZBY id="4" predek="3" potomek="uuid:4" poradi="1" digknihovna="10"/>
+    <!--<DIGVAZBY id="5" potomek="uuid:4" poradi="1" digknihovna="10"/>--> <!--removed as not root; DigObjectDao.removeUnrelated-->
     <PLAANT_IDS deskname="cz.incad.rd.DigObjekt" id="4"/>
-    <PLAANT_IDS deskname="cz.incad.rd.DigVazby" id="3"/>
+    <PLAANT_IDS deskname="cz.incad.rd.DigVazby" id="5"/>
     <PLAANT_IDS deskname="cz.incad.rd.Lokace" id="11"/>
 
     <digmetadata id="2" nazev="Periodical" modifikace="1" />

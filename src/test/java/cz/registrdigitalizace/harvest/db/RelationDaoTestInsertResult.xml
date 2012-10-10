@@ -2,5 +2,7 @@
 <dataset>
     <digvazby id="1" potomek="u1" poradi="1" digknihovna="10" />
     <digvazby id="2" predek="1" potomek="u2" poradi="1" digknihovna="10" />
-    <digvazby id="3" predek="2" potomek="u10" poradi="1" digknihovna="10" />
+    <digvazby id="3" potomek="u2" poradi="1" digknihovna="10" />
+    <digvazby id="4" predek="2" potomek="u10" poradi="1" digknihovna="10" />
+    <digvazby id="5" potomek="u10" poradi="1" digknihovna="10" />
 </dataset>

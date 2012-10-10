@@ -177,10 +177,21 @@ public class DigObjectDao {
     /**
      * Removes all digitized objects without any existing relation.
      */
-    public void removeUnrelated() throws DaoException {
+    public void removeUnrelated(BigDecimal libraryId) throws DaoException {
         try {
             Connection connection = source.getConnection();
+            // remove false roots that are actually children
             PreparedStatement pstmt = connection.prepareStatement(
+                    "delete from DIGVAZBY where ID in (select ID from DIGVAZBY where PREDEK is null and DIGKNIHOVNA=? and POTOMEK in (select POTOMEK from DIGVAZBY where PREDEK is not null and DIGKNIHOVNA=?))");
+            try {
+                pstmt.setBigDecimal(1, libraryId);
+                pstmt.setBigDecimal(2, libraryId);
+                pstmt.executeUpdate();
+            } finally {
+                SQLQuery.tryClose(pstmt);
+            }
+
+            pstmt = connection.prepareStatement(
                     "delete from XPREDDIGOBJ where RDIGOBJEKT in (select ID from DIGOBJEKT where UUID not in (select POTOMEK from DIGVAZBY))");
             try {
                 pstmt.executeUpdate();

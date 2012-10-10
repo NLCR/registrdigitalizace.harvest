@@ -101,7 +101,7 @@ public class RecordRepository {
     }
 
     public void close() throws DaoException {
-        digiObjectDao.removeUnrelated();
+        digiObjectDao.removeUnrelated(library.getId());
         upsertSequence(digiObjSequence);
         upsertSequence(locationSequence);
         upsertSequence(relationSequence);

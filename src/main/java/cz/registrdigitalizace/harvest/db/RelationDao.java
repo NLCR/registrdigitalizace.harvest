@@ -45,28 +45,15 @@ public class RelationDao {
 
     private void doInsert(IdSequence relationId, HarvestedRecord rec, BigDecimal libraryId) throws SQLException, DaoException {
         Connection connection = source.getConnection();
-        int order = 1;
         PreparedStatement pstmt = connection.prepareStatement(
                 "insert into DIGVAZBY (ID, PREDEK, POTOMEK, PORADI, DIGKNIHOVNA) values (?, ?, ?, ?, ?)");
         try {
-            if (rec.isRoot()) {
-                int col = 1;
-                pstmt.setBigDecimal(col++, relationId.increment());
-                pstmt.setBigDecimal(col++, null);
-                pstmt.setString(col++, rec.getUuid());
-                pstmt.setInt(col++, 1);
-                pstmt.setBigDecimal(col++, libraryId);
-                pstmt.addBatch();
-            }
+            // every new object consider as root not to crash on unexpected hierarchies
+            // see DigObjectDao.removeUnrelated that deletes false roots
+            insertRelation(pstmt, relationId.increment(), null, rec.getUuid(), 1, libraryId);
+            int order = 1;
             for (String uuid : rec.getChildren()) {
-                int col = 1;
-                pstmt.setBigDecimal(col++, relationId.increment());
-                pstmt.setBigDecimal(col++, rec.getId());
-                pstmt.setString(col++, uuid);
-                pstmt.setInt(col++, order);
-                pstmt.setBigDecimal(col++, libraryId);
-                pstmt.addBatch();
-                order++;
+                insertRelation(pstmt, relationId.increment(), rec.getId(), uuid, order++, libraryId);
             }
             int[] results = pstmt.executeBatch();
             for (int result : results) {
@@ -77,6 +64,18 @@ public class RelationDao {
         } finally {
             SQLQuery.tryClose(pstmt);
         }
+    }
+
+    private void insertRelation(PreparedStatement pstmt, BigDecimal relationId,
+            BigDecimal parentId, String child, int order, BigDecimal libraryId) throws SQLException {
+
+        int col = 1;
+        pstmt.setBigDecimal(col++, relationId);
+        pstmt.setBigDecimal(col++, parentId);
+        pstmt.setString(col++, child);
+        pstmt.setInt(col++, order);
+        pstmt.setBigDecimal(col++, libraryId);
+        pstmt.addBatch();
     }
 
     public void delete(HarvestedRecord rec, BigDecimal libraryId) throws DaoException {
