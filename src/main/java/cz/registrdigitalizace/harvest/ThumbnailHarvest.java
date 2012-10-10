@@ -130,7 +130,7 @@ public final class ThumbnailHarvest {
             URI uri = URI.create(lib.getBaseUrl());
             uri = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(),
                     uri.getPort(),
-                    "/search/img", "uuid=" + t.getUuid() + "&stream=IMG_THUMB&action=GETRAW",
+                    "/search/img", "uuid=uuid:" + t.getUuid() + "&stream=IMG_THUMB&action=GETRAW",
                     null);
             URL url = uri.toURL();
 //            dump.write(url.toExternalForm().getBytes());
