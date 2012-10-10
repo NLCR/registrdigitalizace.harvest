@@ -16,6 +16,7 @@
  */
 package cz.registrdigitalizace.harvest.db;
 
+import cz.registrdigitalizace.harvest.Utils;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -182,7 +183,7 @@ public class MetadataDao {
             }
             long end = System.currentTimeMillis() - start;
             LOG.log(Level.FINE, "update of {1} object(s) finished after: {0} ",
-                    new Object[] {elapsedTime(end), updateNumber});
+                    new Object[] {Utils.elapsedTime(end), updateNumber});
             
             try {
                 resetChangesStmt.executeUpdate();
@@ -203,24 +204,16 @@ public class MetadataDao {
             LOG.fine("delete from DIGMETADATA_CHANGES");
             stmt.executeUpdate("delete from DIGMETADATA_CHANGES");
             long end = System.currentTimeMillis() - start;
-            LOG.log(Level.FINE, "delete finished after: {0}", elapsedTime(end));
+            LOG.log(Level.FINE, "delete finished after: {0}", Utils.elapsedTime(end));
 
             start = System.currentTimeMillis();
             LOG.fine("insert DIGMETADATA_CHANGES");
             stmt.executeUpdate(SQLQuery.getInsertMetadataChanges());
             end = System.currentTimeMillis() - start;
-            LOG.log(Level.FINE, "insert finished after: {0}", elapsedTime(end));
+            LOG.log(Level.FINE, "insert finished after: {0}", Utils.elapsedTime(end));
         } finally {
             SQLQuery.tryClose(stmt);
         }
-    }
-
-    public static String elapsedTime(long time) {
-        long msecs = time % 1000;
-        long secs = time % (1000 * 60) / 1000;
-        long mins = time % (1000 * 60 * 60) / 1000 / 60;
-        long hours = time % (1000 * 60 * 60 * 24) / 1000 / 60 / 60;
-        return String.format("%02d:%02d:%02d.%03d", hours, mins, secs, msecs);
     }
     
 }
