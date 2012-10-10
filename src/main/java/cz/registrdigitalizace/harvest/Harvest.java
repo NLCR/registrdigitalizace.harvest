@@ -124,7 +124,7 @@ public final class Harvest {
         long time = System.currentTimeMillis();
         thumbnailHarvest.harvestThumbnails();
         time = System.currentTimeMillis() - time;
-        LOG.log(Level.INFO, "Thumbnail harvest status:\n  Thumbnails downloaded: {0}\n  Total size: {1} bytes\n  Time: {2} ms\n",
+        LOG.log(Level.INFO, "Thumbnail harvest status:\n  Thumbnails downloaded: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
                 new Object[]{thumbnailHarvest.getTotalNumber(), thumbnailHarvest.getTotalSize(), Utils.elapsedTime(time)});
     }
 
@@ -137,7 +137,7 @@ public final class Harvest {
         long time = System.currentTimeMillis();
         mu.regenerateDigObjects();
         time = System.currentTimeMillis() - time;
-        LOG.log(Level.INFO, "MODS regeneration status:\n  objects updated: {0}\n  Total size: {1} bytes\n  Time: {2} ms\n",
+        LOG.log(Level.INFO, "MODS regeneration status:\n  objects updated: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
                 new Object[]{mu.getTotalNumber(), mu.getTotalSize(), Utils.elapsedTime(time)});
     }
 
@@ -149,7 +149,7 @@ public final class Harvest {
         long time = System.currentTimeMillis();
         mu.generateModifiedDigObjects();
         time = System.currentTimeMillis() - time;
-        LOG.log(Level.INFO, "MODS generation status:\n  objects updated: {0}\n  Time: {0} ms\n",
+        LOG.log(Level.INFO, "MODS generation status:\n  objects updated: {0}\n  Time: {1}\n",
                 new Object[]{mu.getTotalNumber(), Utils.elapsedTime(time)});
     }
 
@@ -213,8 +213,8 @@ public final class Harvest {
         LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource);
         libraryHarvest.harvest(oaiRecords, xmlCtx);
         time = System.currentTimeMillis() - time;
-        LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2} ms\n",
-                new Object[]{libraryHarvest.getAddRecordCount(), libraryHarvest.getRemoveRecordCount(), time});
+        LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2}\n",
+                new Object[]{libraryHarvest.getAddRecordCount(), libraryHarvest.getRemoveRecordCount(), Utils.elapsedTime(time)});
     }
 
     /** Iterates records to get them cached */
@@ -224,7 +224,7 @@ public final class Harvest {
             ++count;
         }
         time = System.currentTimeMillis() - time;
-        LOG.log(Level.INFO, "Harvest status:\n  Records cached: {0}\n  Time: {1} ms\n  Cache: {2}\n",
+        LOG.log(Level.INFO, "Harvest status:\n  Records cached: {0}\n  Time: {1}\n  Cache: {2}\n",
                 new Object[]{count, Utils.elapsedTime(time), library.getCacheFolder()});
     }
 
