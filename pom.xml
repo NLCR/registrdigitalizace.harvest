@@ -32,8 +32,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
     </licenses>
 
     <scm>
-        <connection>scm:svn:http://registrdigitalizace.googlecode.com/svn/harvest/trunk</connection>
-        <developerConnection>scm:svn:https://registrdigitalizace.googlecode.com/svn/harvest/trunk</developerConnection>
+        <connection>scm:git:https://code.google.com/p/registrdigitalizace.harvest</connection>
+        <developerConnection>scm:git:https://code.google.com/p/registrdigitalizace.harvest</developerConnection>
     </scm>
   
     <properties>
