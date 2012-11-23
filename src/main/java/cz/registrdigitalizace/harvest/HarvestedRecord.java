@@ -136,8 +136,9 @@ public class HarvestedRecord {
     @Override
     public String toString() {
         int length = descriptor == null ? 0 : descriptor.length();
-        return String.format("HarvestedRecord[id:%s, uuid:%s, type:%s, root:%s, children:%s, xml.length:%s]",
-                id, uuid, type, root, childrenUuids, length);
+        return String.format("HarvestedRecord[id:%s, uuid:%s, type:%s, root:%s"
+                + ", children:%s, xml.length:%s,\n  %s]",
+                id, uuid, type, root, childrenUuids, length, metadata);
     }
 
 }

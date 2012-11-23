@@ -77,10 +77,16 @@ public class RecordRepository {
     }
 
     public void add(HarvestedRecord r) throws DaoException {
-        upsertDigiobject(r);
-        upsertLocation(r);
-        upsertRelations(r);
-        upsertMetadata(r);
+        try {
+            upsertDigiobject(r);
+            upsertLocation(r);
+            upsertRelations(r);
+            upsertMetadata(r);
+        } catch (Exception ex) {
+            String details = r.toString();
+            details += "\n\n" + r.getDescriptor();
+            throw new DaoException(details, ex);
+        }
     }
 
     public void remove(HarvestedRecord r) throws DaoException {

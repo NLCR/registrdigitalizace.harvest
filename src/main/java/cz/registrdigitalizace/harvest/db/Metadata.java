@@ -119,6 +119,15 @@ public class Metadata {
         this.yearOfPublication = yearOfPublication;
     }
 
+    @Override
+    public String toString() {
+        return "Metadata{" + "id=" + id + ", title=" + title
+                + ", authors=" + authors + ", publishers=" + publishers
+                + ", issn=" + issn + ", isbn=" + isbn + ", ccnb=" + ccnb
+                + ", sigla=" + sigla + ", signature=" + signature
+                + ", yearOfPublication=" + yearOfPublication + '}';
+    }
+
     public static Metadata create(DigobjectType dt, BigDecimal digObjectId) {
         Metadata m = new Metadata();
         m.setId(digObjectId);

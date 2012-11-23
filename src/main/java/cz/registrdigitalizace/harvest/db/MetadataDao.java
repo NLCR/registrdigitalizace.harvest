@@ -143,7 +143,7 @@ public class MetadataDao {
                         String authors = rs.getString("AUTOR");
                         String issn = rs.getString("ISSN");
                         String isbn = rs.getString("ISBN");
-                        String ccnb = rs.getString("ISBN");
+                        String ccnb = rs.getString("CCNB");
                         String siglas = rs.getString("SIGLA");
                         String signatures = rs.getString("SIGNATURA");
                         String publishers = rs.getString("VYDAVATEL");
