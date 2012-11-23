@@ -96,6 +96,8 @@ public final class Harvest {
             
             if (conf.isRegenerateMods()) {
                 harvest.updateMetadata();
+            } else if (conf.isUpdateThumbnails()) {
+                harvest.updateThumbnails();
             } else {
                 harvest.harvest();
             }
@@ -139,6 +141,20 @@ public final class Harvest {
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "MODS regeneration status:\n  objects updated: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
                 new Object[]{mu.getTotalNumber(), mu.getTotalSize(), Utils.elapsedTime(time)});
+    }
+
+    /**
+     * Removes thumbnail of deleted digital objects and fetches missing.
+     * <p>No harvest is run.
+     */
+    public void updateThumbnails() throws DaoException, IOException {
+        List<Library> libraries = fetchLibraries();
+        ThumbnailHarvest thumbnailHarvest = new ThumbnailHarvest(dataSource, libraries);
+        long time = System.currentTimeMillis();
+        thumbnailHarvest.harvestThumbnails();
+        time = System.currentTimeMillis() - time;
+        LOG.log(Level.INFO, "Thumbnail harvest status:\n  Thumbnails downloaded: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
+                new Object[]{thumbnailHarvest.getTotalNumber(), thumbnailHarvest.getTotalSize(), Utils.elapsedTime(time)});
     }
 
     /**

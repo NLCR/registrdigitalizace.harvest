@@ -22,6 +22,7 @@ package cz.registrdigitalizace.harvest;
 final class Configuration {
 
     private static final String UPDATE_METADATA = "-updateMetadata";
+    private static final String UPDATE_THUMBNAILS = "-updateThumbnails";
     private static final String VERSION = "-version";
     private static final String HARVEST_TO_CACHE = "-harvestToCache";
     private static final String HARVEST_FROM_CACHE = "-harvestFromCache";
@@ -35,6 +36,7 @@ final class Configuration {
     private boolean harvestWithCache;
     private boolean help;
     private boolean regenerateMods;
+    private boolean updateThumbnails;
     private boolean version;
     private String cachePath;
     private String cacheRoot;
@@ -48,6 +50,9 @@ final class Configuration {
             if (UPDATE_METADATA.equals(arg)) {
                 action = checkSingleOption(action, arg);
                 conf.regenerateMods = true;
+            } else if (UPDATE_THUMBNAILS.equals(arg)) {
+                action = checkSingleOption(action, arg);
+                conf.updateThumbnails = true;
             } else if (VERSION.equals(arg)) {
                 conf.version = true;
             } else if (HARVEST_TO_CACHE.equals(arg)) {
@@ -79,7 +84,7 @@ final class Configuration {
         String tab = "  ";
         String nltab = "\n" + tab;
         String nltabtab = "\n" + tab + tab;
-        return String.format("harvest [%s | %s | %s]", VERSION, HELP, UPDATE_METADATA)
+        return String.format("harvest [%s | %s | %s | %s]", VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS)
                 + String.format("\nharvest %s [%s <folder>] | %s [%s <folder>]",
                         HARVEST_TO_CACHE, CACHE_ROOT, HARVEST_WITH_CACHE, CACHE_ROOT)
                 + "\nharvest -harvestFromCache <folder>"
@@ -87,6 +92,8 @@ final class Configuration {
                 + "\n\nOptions:"
                 + nltab + UPDATE_METADATA
                 + nltabtab + "Recomputes meta data from already harvested XML inside DB. No harvest"
+                + nltab + UPDATE_THUMBNAILS
+                + nltabtab + "Removes thumbnail of deleted digital objects and fetches missing. No harvest"
                 + nltab + VERSION
                 + nltabtab + "Prints program version."
                 + nltab + HELP + ", " + H
@@ -135,6 +142,10 @@ final class Configuration {
             cacheRoot = defaultCacheRoot();
         }
         return cacheRoot;
+    }
+
+    public boolean isUpdateThumbnails() {
+        return updateThumbnails;
     }
 
     static String defaultCacheRoot() {

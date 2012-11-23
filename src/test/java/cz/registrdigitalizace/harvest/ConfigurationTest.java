@@ -52,21 +52,21 @@ public class ConfigurationTest {
     public void testHelp() {
         String[] args = {"-help"};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(true, false, false, false, null, false, false, null, result);
+        assertConfiguration(true, false, false, false, false, null, false, false, null, result);
     }
 
     @Test
     public void testVerison() {
         String[] args = {"-version"};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, true, false, false, null, false, false, null, result);
+        assertConfiguration(false, true, false, false, false, null, false, false, null, result);
     }
 
     @Test
     public void testUpdateMetadata() {
         String[] args = {"-updateMetadata"};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, false, true, false, null, false, false, null, result);
+        assertConfiguration(false, false, true, false, false, null, false, false, null, result);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -80,7 +80,7 @@ public class ConfigurationTest {
         String path = "/tmp";
         String[] args = {"-harvestFromCache", path};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, false, false, true, path, false, false, null, result);
+        assertConfiguration(false, false, false, false, true, path, false, false, null, result);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -93,7 +93,7 @@ public class ConfigurationTest {
     public void testHarvestToCache() {
         String[] args = {"-harvestToCache"};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, false, false, false, null, true, false, null, result);
+        assertConfiguration(false, false, false, false, false, null, true, false, null, result);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ConfigurationTest {
         String path = "/tmp";
         String[] args = {"-harvestToCache", "-cacheRoot", path};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, false, false, false, null, true, false, path, result);
+        assertConfiguration(false, false, false, false, false, null, true, false, path, result);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -114,7 +114,7 @@ public class ConfigurationTest {
     public void testHarvestWithCache() {
         String[] args = {"-harvestWithCache"};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, false, false, false, null, false, true, null, result);
+        assertConfiguration(false, false, false, false, false, null, false, true, null, result);
     }
 
     @Test
@@ -122,7 +122,7 @@ public class ConfigurationTest {
         String path = "/tmp";
         String[] args = {"-harvestWithCache", "-cacheRoot", path};
         Configuration result = Configuration.fromCmdLine(args);
-        assertConfiguration(false, false, false, false, null, false, true, path, result);
+        assertConfiguration(false, false, false, false, false, null, false, true, path, result);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -131,8 +131,15 @@ public class ConfigurationTest {
         Configuration result = Configuration.fromCmdLine(args);
     }
 
+    @Test
+    public void testUpdateThumbnails() {
+        String[] args = {"-updateThumbnails"};
+        Configuration result = Configuration.fromCmdLine(args);
+        assertConfiguration(false, false, false, true, false, null, false, false, null, result);
+    }
+
     private void assertConfiguration(boolean isHelp, boolean isVersion,
-            boolean isUpdateMetadata,
+            boolean isUpdateMetadata, boolean isUpdateThumbnails,
             boolean isHarvestFromCache, String cachePath,
             boolean isHarvestToCache, boolean isHarvestWithCache,
             String cacheRoot,
@@ -141,6 +148,7 @@ public class ConfigurationTest {
         assertEquals("isHelp", isHelp, conf.isHelp());
         assertEquals("isVersion", isVersion, conf.isVersion());
         assertEquals("isUpdateMetadata", isUpdateMetadata, conf.isRegenerateMods());
+        assertEquals("isUpdateThumbnails", isUpdateThumbnails, conf.isUpdateThumbnails());
         assertEquals("isHarvestFromCache", isHarvestFromCache, conf.isHarvestFromCache());
         assertEquals("cachePath", cachePath, conf.getCachePath());
         if (cacheRoot == null) {
