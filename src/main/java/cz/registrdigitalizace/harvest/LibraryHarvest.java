@@ -59,10 +59,12 @@ public class LibraryHarvest {
     private final MetadataDao metadataDao = new MetadataDao();
     private int addCounter;
     private int removeCounter;
+    private final boolean dryRun;
 
-    public LibraryHarvest(Library library, DigitizationRegistrySource source) {
+    public LibraryHarvest(Library library, DigitizationRegistrySource source, boolean dryRun) {
         this.library = library;
         this.transaction = new HarvestTransaction(source);
+        this.dryRun = dryRun;
     }
 
     public void harvest(ListResult<Record> listRecords, XmlContext xmlCtx) throws DaoException, JAXBException, XMLStreamException {
@@ -76,8 +78,10 @@ public class LibraryHarvest {
             library.setLastHarvest(harvestDate);
             libraryDao.update(library);
 
-            transaction.commit();
-            rollback = false;
+            if (!dryRun) {
+                transaction.commit();
+                rollback = false;
+            }
         } finally {
             if (rollback) {
                 transaction.rollback();

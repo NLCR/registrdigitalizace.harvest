@@ -117,7 +117,7 @@ public final class Harvest {
             harvestLibraryAndLog(library);
         }
 
-        if (conf.isHarvestToCache()) {
+        if (conf.isDryRun() || conf.isHarvestToCache()) {
             return;
         }
         computeMetadata();
@@ -226,7 +226,7 @@ public final class Harvest {
     private void persistRecords(Library library, ListResult<Record> oaiRecords, long time)
             throws DaoException, JAXBException, XMLStreamException {
 
-        LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource);
+        LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource, conf.isDryRun());
         libraryHarvest.harvest(oaiRecords, xmlCtx);
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2}\n",

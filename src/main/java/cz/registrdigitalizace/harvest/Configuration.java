@@ -28,9 +28,11 @@ final class Configuration {
     private static final String HARVEST_FROM_CACHE = "-harvestFromCache";
     private static final String HARVEST_WITH_CACHE = "-harvestWithCache";
     private static final String CACHE_ROOT = "-cacheRoot";
+    private static final String DRY_RUN = "-dryRun";
     private static final String HELP = "-help";
     private static final String H = "-h";
     
+    private boolean dryRun;
     private boolean harvestFromCache;
     private boolean harvestToCache;
     private boolean harvestWithCache;
@@ -73,6 +75,8 @@ final class Configuration {
                     throw new IllegalArgumentException("Missing cache root folder!");
                 }
                 conf.cacheRoot = args[++i];
+            } else if (DRY_RUN.equals(arg)) {
+                conf.dryRun = true;
             } else if (HELP.equals(arg) || H.equals(arg)) {
                 conf.help = true;
             }
@@ -84,7 +88,7 @@ final class Configuration {
         String tab = "  ";
         String nltab = "\n" + tab;
         String nltabtab = "\n" + tab + tab;
-        return String.format("harvest [%s | %s | %s | %s]", VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS)
+        return String.format("harvest [%s | %s | %s | %s | %s]", VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS, DRY_RUN)
                 + String.format("\nharvest %s [%s <folder>] | %s [%s <folder>]",
                         HARVEST_TO_CACHE, CACHE_ROOT, HARVEST_WITH_CACHE, CACHE_ROOT)
                 + "\nharvest -harvestFromCache <folder>"
@@ -106,6 +110,8 @@ final class Configuration {
                 + nltabtab + "Reads already harvested data from foilder containing session cache and writes it to DB."
                 + nltab + String.format("%s <folder>", CACHE_ROOT)
                 + nltabtab + "Path to store  all harvested data. -Djava.io.tmp/harvest_cache is default path."
+                + nltab + DRY_RUN
+                + nltabtab + "Use to test storage of newly harvested records. Rollbacks DB modifications."
                 + "\n\n";
     }
 
@@ -146,6 +152,10 @@ final class Configuration {
 
     public boolean isUpdateThumbnails() {
         return updateThumbnails;
+    }
+
+    public boolean isDryRun() {
+        return dryRun;
     }
 
     static String defaultCacheRoot() {
