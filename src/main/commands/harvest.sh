@@ -1,7 +1,8 @@
 #!/bin/sh
 
 HARVEST_HOME=
-JAVA_OPTS=""
+# use eg -Xmx200m for max heap
+JAVA_OPTS="-XX:+HeapDumpOnOutOfMemoryError"
 
 if [ "$HARVEST_HOME" = "" ] ; then
     echo "Missing HARVEST_HOME property."
