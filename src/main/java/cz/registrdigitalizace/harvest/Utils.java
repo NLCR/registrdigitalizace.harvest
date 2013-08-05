@@ -16,6 +16,8 @@
  */
 package cz.registrdigitalizace.harvest;
 
+import java.util.List;
+
 /**
  * Various helpers.
  *
@@ -29,6 +31,17 @@ public final class Utils {
         long mins = time % (1000 * 60 * 60) / 1000 / 60;
         long hours = time % (1000 * 60 * 60 * 24) / 1000 / 60 / 60;
         return String.format("%02d:%02d:%02d.%03d", hours, mins, secs, msecs);
+    }
+
+    public static String toString(List<String> messages, String delimiter) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : messages) {
+            if (sb.length() > 0) {
+                sb.append(delimiter);
+            }
+            sb.append(s);
+        }
+        return sb.toString();
     }
 
 }

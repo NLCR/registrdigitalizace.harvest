@@ -72,7 +72,7 @@ public class ConfigurationTest {
     @Test(expected = IllegalArgumentException.class)
     public void testUpdateMetadataAndHarvestFromCache() {
         String[] args = {"-updateMetadata", "-harvestFromCache"};
-        Configuration result = Configuration.fromCmdLine(args);
+        Configuration.parseCmdLine(new Configuration(), args);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class ConfigurationTest {
     @Test(expected = IllegalArgumentException.class)
     public void testHarvestFromCacheWithoutPath() {
         String[] args = {"-harvestFromCache"};
-        Configuration result = Configuration.fromCmdLine(args);
+        Configuration.parseCmdLine(new Configuration(), args);
     }
 
     @Test
@@ -107,7 +107,7 @@ public class ConfigurationTest {
     @Test(expected = IllegalArgumentException.class)
     public void testHarvestToCacheMissingRoot() {
         String[] args = {"-harvestToCache", "-cacheRoot"};
-        Configuration result = Configuration.fromCmdLine(args);
+        Configuration.parseCmdLine(new Configuration(), args);
     }
 
     @Test
@@ -128,7 +128,7 @@ public class ConfigurationTest {
     @Test(expected = IllegalArgumentException.class)
     public void testHarvestWithCacheMissingRoot() {
         String[] args = {"-harvestWithCache", "-cacheRoot"};
-        Configuration result = Configuration.fromCmdLine(args);
+        Configuration.parseCmdLine(new Configuration(), args);
     }
 
     @Test

@@ -16,6 +16,9 @@
  */
 package cz.registrdigitalizace.harvest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Harvest configuration.
  */
@@ -42,10 +45,20 @@ final class Configuration {
     private boolean version;
     private String cachePath;
     private String cacheRoot;
+    private List<String> errors = new ArrayList<String>();
 
     /** build configuration from command line */
     public static Configuration fromCmdLine(String[] args) {
         Configuration conf = new Configuration();
+        try {
+            parseCmdLine(conf, args);
+        } catch (IllegalArgumentException ex) {
+            conf.addError(ex.getLocalizedMessage());
+        }
+        return conf;
+    }
+
+    static void parseCmdLine(Configuration conf, String[] args) throws IllegalArgumentException {
         String action = null;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -79,9 +92,15 @@ final class Configuration {
                 conf.dryRun = true;
             } else if (HELP.equals(arg) || H.equals(arg)) {
                 conf.help = true;
+            } else {
+                conf.addError(String.format("Unknown parameter '%s'", arg));
             }
         }
-        return conf;
+    }
+
+    private void addError(String msg) {
+        errors.add(msg);
+        help = true;
     }
 
     public static String help() {
@@ -156,6 +175,10 @@ final class Configuration {
 
     public boolean isDryRun() {
         return dryRun;
+    }
+
+    public List<String> getErrors() {
+        return errors;
     }
 
     static String defaultCacheRoot() {

@@ -84,7 +84,13 @@ public final class Harvest {
     public static void main(String[] args) {
         try {
             Configuration conf = Configuration.fromCmdLine(args);
-            if (conf.isVersion()) {
+            if (!conf.getErrors().isEmpty()) {
+                String errMsg = Utils.toString(conf.getErrors(), "\n");
+                System.out.println(errMsg);
+                System.out.println();
+                System.out.println(Configuration.help());
+                throw new IllegalStateException(errMsg);
+            } else if (conf.isVersion()) {
                 String implementationVersion = Harvest.class.getPackage().getImplementationVersion();
                 System.out.println("harvest, " + implementationVersion);
                 return ;
