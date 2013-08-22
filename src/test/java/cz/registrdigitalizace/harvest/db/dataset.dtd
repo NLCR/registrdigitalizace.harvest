@@ -35,17 +35,24 @@ Data model snapshot.
 <!ELEMENT digknihovna EMPTY>
 <!ATTLIST digknihovna
     id CDATA #REQUIRED
-    software CDATA #IMPLIED
-    protokol CDATA #IMPLIED
-    formatdat CDATA #IMPLIED
-    lastharvest CDATA #IMPLIED
-    oaipmhcommand CDATA #IMPLIED
+    adresaorg CDATA #IMPLIED
     encodinginputxml CDATA #IMPLIED
     encodingoutputxml CDATA #IMPLIED
-    oaipmhserverbaseurl CDATA #IMPLIED
+    formatdat CDATA #IMPLIED
+    lastharvest CDATA #IMPLIED
     nazevorg CDATA #IMPLIED
-    adresaorg CDATA #IMPLIED
+    oaipmhcommand CDATA #IMPLIED
+    oaipmhserverbaseurl CDATA #IMPLIED
     kontakt CDATA #IMPLIED
+    protokol CDATA #IMPLIED
+    software CDATA #IMPLIED
+    nazev CDATA #IMPLIED
+    zkratka CDATA #IMPLIED
+    urldigknihovny CDATA #IMPLIED
+    moznostisklizeni CDATA #IMPLIED
+    stav CDATA #IMPLIED
+    rprispevatel_digknihovna CDATA #IMPLIED
+    rprispevatel_digknihovnamf CDATA #IMPLIED
 >
 
 <!ELEMENT digobjekt EMPTY>
@@ -76,6 +83,7 @@ Data model snapshot.
     ccnb CDATA #IMPLIED
     carkod CDATA #IMPLIED
     sigla CDATA #IMPLIED
+    tnfilename CDATA #IMPLIED
 >
 
 <!ELEMENT digvazby EMPTY>
