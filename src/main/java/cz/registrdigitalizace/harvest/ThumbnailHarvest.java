@@ -18,6 +18,7 @@
 package cz.registrdigitalizace.harvest;
 
 import cz.registrdigitalizace.harvest.db.DaoException;
+import cz.registrdigitalizace.harvest.db.DigObjectDao;
 import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
 import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.IterableResult;
@@ -26,7 +27,6 @@ import cz.registrdigitalizace.harvest.db.ThumbnailDao;
 import cz.registrdigitalizace.harvest.db.ThumbnailDao.Thumbnail;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -38,6 +38,8 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Downloads missing thumbnails of digitized objects and cleans up thumbnails
@@ -48,14 +50,14 @@ import java.util.logging.Logger;
 public final class ThumbnailHarvest {
     private static final Logger LOG = Logger.getLogger(ThumbnailHarvest.class.getName());
     private static final int MAX_THUMBNAIL_SIZE = 10 * 1024 * 1024; // 10 MB
-    
+    private static final Pattern FILENAME_PATTERN = Pattern.compile("filename=([^;]*)");
+
     private final DigitizationRegistrySource dataSource;
     private final List<Library> libraries;
     private int counter;
     private long sizeCounter;
     private final ShareableBuffer bufferedThumbnail = new ShareableBuffer(50 * 1024);
     private final byte[] buffer = new byte[20 * 1024];
-//    private FileOutputStream dump;
 
     public ThumbnailHarvest(DigitizationRegistrySource dataSource, List<Library> libraries) {
         this.dataSource = dataSource;
@@ -63,10 +65,11 @@ public final class ThumbnailHarvest {
     }
 
     public void harvestThumbnails() throws DaoException, IOException {
-//        dump = new FileOutputStream("/tmp/mzk-urls.txt");
         HarvestTransaction transaction = new HarvestTransaction(dataSource);
         ThumbnailDao thumbnailDao = new ThumbnailDao();
         thumbnailDao.setDataSource(transaction);
+        DigObjectDao digObjectDao = new DigObjectDao();
+        digObjectDao.setDataSource(transaction);
         boolean rollback = true;
         try {
             transaction.begin();
@@ -82,7 +85,8 @@ public final class ThumbnailHarvest {
                     }
                     Library lib = findLibrary(thumbnail.getLibraryId());
                     URL url = thumbnailUrl(lib, thumbnail);
-                    boolean ok = downloadThumbnail(url, thumbnail, thumbnailDao);
+                    ThumbnailSnapshot thumbSnapshot = downloadThumbnail(url);
+                    boolean ok = saveThumbnailSnapshot(digObjectDao, thumbnailDao, thumbnail, thumbSnapshot);
                     if (ok) {
                         last = thumbnail;
                         if (counter % 200 == 0) {
@@ -100,7 +104,6 @@ public final class ThumbnailHarvest {
             transaction.commit();
             rollback = false;
         } finally {
-//            dump.close();
             if (rollback) {
                 transaction.rollback();
             }
@@ -130,55 +133,68 @@ public final class ThumbnailHarvest {
             URI uri = URI.create(lib.getBaseUrl());
             uri = new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(),
                     uri.getPort(),
-                    "/search/img", "uuid=uuid:" + t.getUuid() + "&stream=IMG_THUMB&action=GETRAW",
+                    "/search/img", "pid=uuid:" + t.getUuid() + "&stream=IMG_THUMB&action=GETRAW&asFile=true",
                     null);
             URL url = uri.toURL();
-//            dump.write(url.toExternalForm().getBytes());
-//            dump.write('\n');
             return url;
         } catch (URISyntaxException ex) {
             throw new IOException(ex);
         }
     }
 
-    private boolean downloadThumbnail(URL url, Thumbnail thumbnail, ThumbnailDao thumbnailDao) throws DaoException, IOException {
+    ThumbnailSnapshot downloadThumbnail(URL url) throws IOException {
         String contentType = null;
         String contentEncoding = null;
-        Integer contentLength = null;
         Integer responseCode = null;
-        ByteArrayInputStream thumbnailSnapshot = null;
         String errMsg = null;
         try {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
             responseCode = conn.getResponseCode();
             contentType = conn.getContentType();
-            contentLength = conn.getContentLength();
             contentEncoding = conn.getContentEncoding();
-            if (contentLength < 0) {
-                LOG.log(Level.WARNING, "{0} => response: {1}, length: {2}, type: {3}",
-                        new Object[]{url.toString(), responseCode, contentLength, contentType});
-            }
+            String contentDisposition = conn.getHeaderField("Content-disposition");
             errMsg = dumpErrorStream(conn.getErrorStream(), contentEncoding);
-            thumbnailSnapshot = makeSnapshot(conn.getInputStream());
+            ThumbnailSnapshot snapshot = makeSnapshot(conn.getInputStream());
+            snapshot.setFilename(resolveFilename(contentDisposition));
+            snapshot.setMimeType(contentType);
+            snapshot.setUrl(url);
+            return snapshot;
         } catch (IOException ex) {
             String msg = String.format(
-                    "%s\nresponseCode: %s, contentLength: %s, contentType: %s,"
+                    "%s\nresponseCode: %s, contentType: %s,"
                         + " contentEncoding: %s, ErrorStream.content:\n%s\n",
-                    url, responseCode, contentLength, contentType,
+                    url, responseCode, contentType,
                     contentEncoding, errMsg);
             LOG.log(Level.SEVERE, msg, ex);
+            return null;
+        }
+    }
+
+    private boolean saveThumbnailSnapshot(
+            DigObjectDao digObjectDao,
+            ThumbnailDao thumbnailDao,
+            Thumbnail thumbnail,
+            ThumbnailSnapshot snapshot) throws DaoException, IOException {
+
+        if (snapshot == null) {
             return false;
         }
+        InputStream content = snapshot.getContent();
         try {
-            // use real length
-            contentLength = thumbnailSnapshot.available(); // XXX not reliable
-            thumbnailDao.insert(thumbnail.getDigiObjId(), contentType, thumbnailSnapshot, contentLength);
+            int contentLength = snapshot.getContentLength();
+            thumbnailDao.insert(thumbnail.getDigiObjId(),
+                    snapshot.getMimeType(), content, contentLength);
+            int updateThumb = digObjectDao.updateThumbFilename(thumbnail.getDigiObjId(), snapshot.getFilename());
+            if (updateThumb != 1) {
+                LOG.log(Level.WARNING, "filename update of unkonw object: {0}, id: {1}, url: {2}",
+                        new Object[] {updateThumb, thumbnail.getDigiObjId(), snapshot.getUrl()});
+            }
             sizeCounter += contentLength;
             counter++;
             return true;
         } finally {
-            thumbnailSnapshot.close();
+            content.close();
         }
     }
 
@@ -208,16 +224,22 @@ public final class ThumbnailHarvest {
         return "";
     }
 
-    private ByteArrayInputStream makeSnapshot(InputStream inputStream) throws IOException {
+    private ThumbnailSnapshot makeSnapshot(InputStream inputStream) throws IOException {
+        
         try {
-            ByteArrayInputStream thumbnailSnapshot = readThumbnail(inputStream);
-            return thumbnailSnapshot;
+            readThumbnail(inputStream);
+            ByteArrayInputStream thumbnailContent = new ByteArrayInputStream(
+                    bufferedThumbnail.getBuf(), 0, bufferedThumbnail.size());
+            ThumbnailSnapshot snapshot = new ThumbnailSnapshot();
+            snapshot.setContentLength(thumbnailContent.available());
+            snapshot.setContent(thumbnailContent);
+            return snapshot;
         } finally {
             inputStream.close();
         }
     }
 
-    private ByteArrayInputStream readThumbnail(InputStream is) throws IOException {
+    private void readThumbnail(InputStream is) throws IOException {
         LOG.log(Level.FINEST, "available: {0}", is.available());
         bufferedThumbnail.reset();
         for (int length; (length = is.read(buffer)) > 0;) {
@@ -226,7 +248,25 @@ public final class ThumbnailHarvest {
             }
             bufferedThumbnail.write(buffer, 0, length);
         }
-        return new ByteArrayInputStream(bufferedThumbnail.getBuf(), 0, bufferedThumbnail.size());
+    }
+
+    /**
+     * @see <a href='http://www.ietf.org/rfc/rfc2183.txt'>RFC 2183</a>
+     */
+    static String resolveFilename(String contentDispositionHeader) {
+        String filename = null;
+        if (contentDispositionHeader == null || contentDispositionHeader.isEmpty()) {
+            return filename;
+        }
+        Matcher matcher = FILENAME_PATTERN.matcher(contentDispositionHeader);
+        if (matcher.find()) {
+            filename = matcher.group(1);
+            int dotIdx;
+            if (filename != null && (dotIdx = filename.lastIndexOf('.')) > 0) {
+                filename = filename.substring(0, dotIdx);
+            }
+        }
+        return filename;
     }
 
     /**
@@ -240,6 +280,59 @@ public final class ThumbnailHarvest {
 
         public byte[] getBuf() {
             return buf;
+        }
+
+    }
+
+    static final class ThumbnailSnapshot {
+        
+        private String mimeType;
+        private InputStream content;
+        private int contentLength;
+        private String filename;
+        private URL url;
+
+        public ThumbnailSnapshot() {
+        }
+
+        public String getMimeType() {
+            return mimeType;
+        }
+
+        public void setMimeType(String mimeType) {
+            this.mimeType = mimeType;
+        }
+
+        public InputStream getContent() {
+            return content;
+        }
+
+        public void setContent(InputStream content) {
+            this.content = content;
+        }
+
+        public int getContentLength() {
+            return contentLength;
+        }
+
+        public void setContentLength(int contentLength) {
+            this.contentLength = contentLength;
+        }
+
+        public String getFilename() {
+            return filename;
+        }
+
+        public void setFilename(String filename) {
+            this.filename = filename;
+        }
+
+        public URL getUrl() {
+            return url;
+        }
+
+        public void setUrl(URL url) {
+            this.url = url;
         }
 
     }

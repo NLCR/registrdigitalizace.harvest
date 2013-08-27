@@ -174,6 +174,28 @@ public class DigObjectDao {
         }
     }
 
+    public int updateThumbFilename(BigDecimal id, String thumbFilename) throws DaoException {
+        try {
+            return doUpdateThumbFilename(id, thumbFilename);
+        } catch (SQLException ex) {
+            throw new DaoException(ex);
+        }
+    }
+
+    private int doUpdateThumbFilename(BigDecimal id, String thumbFilename) throws SQLException {
+        Connection connection = source.getConnection();
+        PreparedStatement pstmt = connection.prepareStatement(
+                "update DIGOBJEKT set TNFILENAME = ? where ID = ?");
+        try {
+            int col = 1;
+            pstmt.setString(col++, thumbFilename);
+            pstmt.setBigDecimal(col++, id);
+            return pstmt.executeUpdate();
+        } finally {
+            SQLQuery.tryClose(pstmt);
+        }
+    }
+
     /**
      * Removes all digitized objects without any existing relation.
      */
