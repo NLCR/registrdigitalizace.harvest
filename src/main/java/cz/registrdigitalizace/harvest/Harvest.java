@@ -202,12 +202,13 @@ public final class Harvest {
      * <p>The persistence is optional.
      */
     private void harvestLibrary(Library library) throws OaiException, DaoException, JAXBException, XMLStreamException, IOException {
-        LOG.log(Level.INFO, "Harvesting {0}", library);
         long time = System.currentTimeMillis();
         OaiSource oaiSource = resolveOaiSource(library);
         if (oaiSource == null) {
+            LOG.log(Level.FINE, "Skip {0}", library);
             return ;
         }
+        LOG.log(Level.INFO, "Harvesting {0}", library);
         Harvester harvester = new Harvester(oaiSource, xmlCtx);
         ListResult<Record> oaiRecords = harvester.getListRecords(true);
         try {
@@ -297,7 +298,7 @@ public final class Harvest {
         }
         String validate = library.validate();
         if (validate != null) {
-            LOG.log(Level.WARNING, "{1}: {0}", new Object[]{validate, library});
+            LOG.log(Level.FINE, "{1}: {0}", new Object[]{validate, library});
             return null;
         }
         if ("oaipmh".equals(library.getHarvestProtocol())) {
@@ -316,9 +317,6 @@ public final class Harvest {
                         new Object[]{ex.getLocalizedMessage(), library});
                 return null;
             }
-        } else {
-            LOG.log(Level.WARNING, "Unknown protocol ''{0}''\n  {1}",
-                    new Object[]{library.getHarvestProtocol(), library});
         }
         return null;
     }
@@ -332,7 +330,7 @@ public final class Harvest {
     private static Properties resolveConfig() {
         Properties properties = System.getProperties();
         String configPath = properties.getProperty(CONFIG_PROPERTY);
-        LOG.log(Level.FINE, "CONFIG_PROPERTY: {0}", configPath);
+        LOG.log(Level.FINEST, "CONFIG_PROPERTY: {0}", configPath);
         if (configPath != null) {
             InputStreamReader reader = null;
             try {
@@ -352,7 +350,7 @@ public final class Harvest {
                 System.exit(1);
             }
         }
-        LOG.log(Level.FINE, "config: {0}", properties.toString());
+        LOG.log(Level.FINEST, "config: {0}", properties.toString());
         return properties;
     }
 
