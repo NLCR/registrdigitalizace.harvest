@@ -350,7 +350,9 @@ public final class Harvest {
                 LOG.log(Level.SEVERE, null, ex);
             } finally {
                 try {
-                    reader.close();
+                    if (reader != null) {
+                        reader.close();
+                    }
                 } catch (IOException ex) {
                     LOG.log(Level.SEVERE, null, ex);
                 }
