@@ -16,6 +16,8 @@
  */
 package cz.registrdigitalizace.harvest;
 
+import java.math.BigDecimal;
+import java.util.Set;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
@@ -143,6 +145,16 @@ public class ConfigurationTest {
         String[] args = {"-dryRun"};
         Configuration result = Configuration.fromCmdLine(args);
         assertConfiguration(false, false, true, false, false, false, null, false, false, null, result);
+    }
+
+    @Test
+    public void testParseIds() {
+        BigDecimal[] expected = {new BigDecimal(1), new BigDecimal(2), new BigDecimal(3)};
+        Set<BigDecimal> ids = Configuration.parseIds("1,2,3");
+        assertArrayEquals(expected, ids.toArray());
+
+        ids = Configuration.parseIds("1 , 2  ,+3 ");
+        assertArrayEquals(expected, ids.toArray());
     }
 
     private void assertConfiguration(boolean isHelp, boolean isVersion,

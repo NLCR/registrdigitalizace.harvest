@@ -202,6 +202,15 @@ public final class Harvest {
      * <p>The persistence is optional.
      */
     private void harvestLibrary(Library library) throws OaiException, DaoException, JAXBException, XMLStreamException, IOException {
+        if (conf.getIncludeLibraries().isEmpty()) {
+            if (conf.getExcludeLibraries().contains(library.getId())) {
+                return ;
+            }
+        } else {
+            if (!conf.getIncludeLibraries().contains(library.getId())) {
+                return ;
+            }
+        }
         long time = System.currentTimeMillis();
         OaiSource oaiSource = resolveOaiSource(library);
         if (oaiSource == null) {

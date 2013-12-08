@@ -16,8 +16,12 @@
  */
 package cz.registrdigitalizace.harvest;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Harvest configuration.
@@ -32,6 +36,8 @@ final class Configuration {
     private static final String HARVEST_WITH_CACHE = "-harvestWithCache";
     private static final String CACHE_ROOT = "-cacheRoot";
     private static final String DRY_RUN = "-dryRun";
+    private static final String EXCLUDES = "-excludes";
+    private static final String INCLUDES = "-includes";
     private static final String HELP = "-help";
     private static final String H = "-h";
     
@@ -46,6 +52,8 @@ final class Configuration {
     private String cachePath;
     private String cacheRoot;
     private List<String> errors = new ArrayList<String>();
+    private Set<BigDecimal> includeLibraries = Collections.emptySet();
+    private Set<BigDecimal> excludeLibraries = Collections.emptySet();
 
     /** build configuration from command line */
     public static Configuration fromCmdLine(String[] args) {
@@ -90,12 +98,36 @@ final class Configuration {
                 conf.cacheRoot = args[++i];
             } else if (DRY_RUN.equals(arg)) {
                 conf.dryRun = true;
+            } else if (INCLUDES.equals(arg)) {
+                if (i + 1 >= args.length) {
+                    throw new IllegalArgumentException("Missing list of IDs!");
+                } else if (!conf.excludeLibraries.isEmpty()) {
+                    throw new IllegalArgumentException("Do not mix includes with excludes!");
+                }
+                conf.includeLibraries = parseIds(args[++i]);
+            } else if (EXCLUDES.equals(arg)) {
+                if (i + 1 >= args.length) {
+                    throw new IllegalArgumentException("Missing list of IDs!");
+                } else if (!conf.includeLibraries.isEmpty()) {
+                    throw new IllegalArgumentException("Do not mix includes with excludes!");
+                }
+                conf.excludeLibraries = parseIds(args[++i]);
             } else if (HELP.equals(arg) || H.equals(arg)) {
                 conf.help = true;
             } else {
                 conf.addError(String.format("Unknown parameter '%s'", arg));
             }
         }
+    }
+
+    static Set<BigDecimal> parseIds(String idsArg) {
+        String[] ids = idsArg.split("\\s*,\\s*");
+        LinkedHashSet<BigDecimal> result = new LinkedHashSet<BigDecimal>(ids.length);
+        for (String id : ids) {
+            id = id.trim();
+            result.add(new BigDecimal(id));
+        }
+        return result;
     }
 
     private void addError(String msg) {
@@ -107,7 +139,9 @@ final class Configuration {
         String tab = "  ";
         String nltab = "\n" + tab;
         String nltabtab = "\n" + tab + tab;
-        return String.format("harvest [%s | %s | %s | %s | %s]", VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS, DRY_RUN)
+        return String.format("harvest [%s | %s | %s | %s | %s | %s <libIds> | %s <libIds>]",
+                        VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS, DRY_RUN,
+                        INCLUDES, EXCLUDES)
                 + String.format("\nharvest %s [%s <folder>] | %s [%s <folder>]",
                         HARVEST_TO_CACHE, CACHE_ROOT, HARVEST_WITH_CACHE, CACHE_ROOT)
                 + "\nharvest -harvestFromCache <folder>"
@@ -131,6 +165,10 @@ final class Configuration {
                 + nltabtab + "Path to store  all harvested data. -Djava.io.tmp/harvest_cache is default path."
                 + nltab + DRY_RUN
                 + nltabtab + "Use to test storage of newly harvested records. Rollbacks DB modifications."
+                + nltab + INCLUDES + " <libIds>"
+                + nltabtab + "Use to include only list of library IDs."
+                + nltab + EXCLUDES + " <libIds>"
+                + nltabtab + "Use to exclude list of library IDs from processing."
                 + "\n\n";
     }
 
@@ -179,6 +217,22 @@ final class Configuration {
 
     public List<String> getErrors() {
         return errors;
+    }
+
+    /**
+     * Gets a set of library IDs to exclude from processing.
+     * @return empty set stands for include all
+     */
+    public Set<BigDecimal> getExcludeLibraries() {
+        return excludeLibraries;
+    }
+
+    /**
+     * Gets a set of library IDs to include from processing.
+     * @return empty set stands for include all
+     */
+    public Set<BigDecimal> getIncludeLibraries() {
+        return includeLibraries;
     }
 
     static String defaultCacheRoot() {
