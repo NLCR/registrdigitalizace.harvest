@@ -17,6 +17,7 @@
 package cz.registrdigitalizace.harvest.db;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import org.dbunit.Assertion;
 import org.dbunit.dataset.ITable;
 import org.dbunit.operation.DatabaseOperation;
@@ -99,6 +100,24 @@ public class MetadataDaoTest {
 //        support.dumpTable(resultDS.getTable("DIGMETADATA"));
 //        support.dumpTable(expectedDS.getTable("DIGMETADATA"));
         Assertion.assertEquals(expectedDS, resultDS);
+    }
+
+    @Test
+    public void testInsertLargeValues() throws Exception {
+        IDataSet initialDS = support.loadFlatXmlDataStream(getClass(), "MetadataDaoTestDataSet.xml", true);
+        DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
+        char[] chars = new char[3000];
+        Arrays.fill(chars, 'č');
+        String longString = String.valueOf(chars);
+        Metadata m = createNewRecord(BigDecimal.valueOf(2), longString, longString,
+                longString, longString, longString, longString, longString, longString, longString);
+        try {
+            transaction.begin();
+            dao.insert(m);
+            transaction.commit();
+        } finally {
+            transaction.close();
+        }
     }
 
     @Test

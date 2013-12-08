@@ -17,6 +17,9 @@
 package cz.registrdigitalizace.harvest.db;
 
 import cz.registrdigitalizace.harvest.Utils;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -67,15 +70,15 @@ public class MetadataDao {
             try {
                 int i = 1;
                 stmt.setBigDecimal(i++, m.getId());
-                stmt.setString(i++, m.getTitle());
-                stmt.setString(i++, m.getIssn());
-                stmt.setString(i++, m.getIsbn());
-                stmt.setString(i++, m.getCcnb());
-                stmt.setString(i++, m.getSigla());
-                stmt.setString(i++, m.getSignature());
-                stmt.setString(i++, m.getAuthors());
-                stmt.setString(i++, m.getPublishers());
-                stmt.setString(i++, m.getYearOfPublication());
+                stmt.setString(i++, value(m.getTitle(), "title", 2000, m));
+                stmt.setString(i++, value(m.getIssn(), "issn", 255, m));
+                stmt.setString(i++, value(m.getIsbn(), "isbn", 255, m));
+                stmt.setString(i++, value(m.getCcnb(), "ccnb", 255, m));
+                stmt.setString(i++, value(m.getSigla(), "sigla", 255, m));
+                stmt.setString(i++, value(m.getSignature(), "signature", 2000, m));
+                stmt.setString(i++, value(m.getAuthors(), "authors", 2000, m));
+                stmt.setString(i++, value(m.getPublishers(), "publishers", 2000, m));
+                stmt.setString(i++, value(m.getYearOfPublication(), "yearOfPublication", 255, m));
                 stmt.setInt(i++, 1);
                 stmt.executeUpdate();
             } finally {
@@ -95,15 +98,15 @@ public class MetadataDao {
                     + " where ID=?");
             try {
                 int i = 1;
-                stmt.setString(i++, m.getTitle());
-                stmt.setString(i++, m.getIssn());
-                stmt.setString(i++, m.getIsbn());
-                stmt.setString(i++, m.getCcnb());
-                stmt.setString(i++, m.getSigla());
-                stmt.setString(i++, m.getSignature());
-                stmt.setString(i++, m.getAuthors());
-                stmt.setString(i++, m.getPublishers());
-                stmt.setString(i++, m.getYearOfPublication());
+                stmt.setString(i++, value(m.getTitle(), "title", 2000, m));
+                stmt.setString(i++, value(m.getIssn(), "issn", 255, m));
+                stmt.setString(i++, value(m.getIsbn(), "isbn", 255, m));
+                stmt.setString(i++, value(m.getCcnb(), "ccnb", 255, m));
+                stmt.setString(i++, value(m.getSigla(), "sigla", 255, m));
+                stmt.setString(i++, value(m.getSignature(), "signature", 2000, m));
+                stmt.setString(i++, value(m.getAuthors(), "authors", 2000, m));
+                stmt.setString(i++, value(m.getPublishers(), "publishers", 2000, m));
+                stmt.setString(i++, value(m.getYearOfPublication(), "yearOfPublication", 255, m));
                 stmt.setInt(i++, 1);
                 stmt.setBigDecimal(i++, m.getId());
                 stmt.executeUpdate();
@@ -214,6 +217,42 @@ public class MetadataDao {
         } finally {
             SQLQuery.tryClose(stmt);
         }
+    }
+
+    private String value(String value, String name, int limit, Metadata m) {
+        if (value != null && value.length() > limit / 3) {
+            try {
+                Utf8LengthStream ls = new Utf8LengthStream();
+                OutputStreamWriter w = new OutputStreamWriter(ls, "UTF-8");
+                int endIndex = -1;
+                for (int i = 0; i < value.length(); i++) {
+                    w.write(value.charAt(i));
+                    w.flush();
+                    if (endIndex < 0 && ls.length > limit) {
+                        endIndex = i;
+                    }
+                }
+                if (endIndex >= 0) {
+                    LOG.log(Level.WARNING, String.format("%s: length: %s, limit:%s, value: %s\n%s",
+                            name, ls.length, limit, value, m), new IllegalStateException());
+                    value = value.substring(0, endIndex);
+                }
+            } catch (IOException ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+        return value;
+    }
+
+    private static final class Utf8LengthStream extends OutputStream {
+
+        int length = 0;
+
+        @Override
+        public void write(int b) throws IOException {
+            ++length;
+        }
+
     }
     
 }
