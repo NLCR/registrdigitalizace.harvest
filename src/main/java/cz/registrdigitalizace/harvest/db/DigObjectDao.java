@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 
 /**
  *
@@ -42,22 +43,26 @@ public class DigObjectDao {
     /**
      * Finds ID for particular UUID.
      * @param uuid UUID to search
-     * @return DIGIOBJEKT.ID
+     * @return DIGOBJEKT.ID
      */
-    public BigDecimal find(String uuid) throws DaoException {
+    public BigDecimal find(BigDecimal libraryId, String uuid) throws DaoException {
         try {
-            return doFind(uuid);
+            return doFind(libraryId, uuid);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    private BigDecimal doFind(String uuid) throws SQLException {
+    private BigDecimal doFind(BigDecimal libraryId, String uuid) throws SQLException {
+        if (uuid == null || libraryId == null) {
+            throw new IllegalArgumentException(String.format("uuid: %s, lib: %s", uuid, libraryId));
+        }
         Connection connection = source.getConnection();
         PreparedStatement pstmt = connection.prepareStatement(
-                "select ID from DIGOBJEKT where UUID = ?");
+                "select ID from DIGOBJEKT where UUID = ? and RDIGKNIHOVNA_DIGOBJEKT = ?");
         try {
             pstmt.setString(1, uuid);
+            pstmt.setBigDecimal(2, libraryId);
             ResultSet rs = pstmt.executeQuery();
             try {
                 if (rs.next()) {
@@ -74,25 +79,24 @@ public class DigObjectDao {
     }
 
     /**
-     * Finds MODS metadata of every digital object.
-     * @param uuid UUID to search
-     * @return collection of 
+     * Finds MODS metadata of every digital object of a library.
      */
-    public IterableResult<DigObject> findMods() throws DaoException {
+    public IterableResult<DigObject> findMods(Library library) throws DaoException {
         try {
-            return doFindMods();
+            return doFindMods(library);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    private IterableResult<DigObject> doFindMods() throws SQLException {
+    private IterableResult<DigObject> doFindMods(Library library) throws SQLException {
         Connection connection = source.getConnection();
         PreparedStatement pstmt = connection.prepareStatement(
-                "select ID, \"XML\" from DIGOBJEKT");
+                "select ID, \"XML\" from DIGOBJEKT where RDIGKNIHOVNA_DIGOBJEKT = ?");
         ResultSet rs = null;
         try {
             rs = pstmt.executeQuery();
+            pstmt.setBigDecimal(1, library.getId());
             return new FindModsResult(pstmt, rs);
         } finally {
             if (rs == null) {
@@ -123,50 +127,66 @@ public class DigObjectDao {
     
     }
 
-    public void insert(BigDecimal id, String uuid, String type, String xml) throws DaoException {
+    public void insert(BigDecimal libraryId, BigDecimal id, String uuid,
+            String type, String xml, String xmlNs, String objState, boolean isLeaf) throws DaoException {
         try {
-            doInsert(id, uuid, type, xml);
+            doInsert(libraryId, id, uuid, type, xml, xmlNs, objState, isLeaf);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    private void doInsert(BigDecimal id, String uuid, String type, String xml) throws SQLException {
+    private void doInsert(BigDecimal libraryId, BigDecimal id, String uuid,
+            String type, String xml, String xmlNs, String objState, boolean isLeaf) throws SQLException {
         Connection connection = source.getConnection();
         PreparedStatement pstmt = connection.prepareStatement(
                 "insert into DIGOBJEKT"
-                + " (ID, UUID, DRUHDOKUMENTU, \"XML\")"
-                + " values (?, ?, ?, ?)");
+                + " (ID, UUID, DRUHDOKUMENTU, \"XML\", FORMATXML, STAV, ZALDATE, EDIDATE, RDIGKNIHOVNA_DIGOBJEKT, ISLEAF)"
+                + " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        final Timestamp now = new Timestamp(System.currentTimeMillis());
         try {
             int col = 1;
             pstmt.setBigDecimal(col++, id);
             pstmt.setString(col++, uuid);
             pstmt.setString(col++, type);
             pstmt.setString(col++, xml);
+            pstmt.setString(col++, xmlNs);
+            pstmt.setString(col++, objState);
+            pstmt.setTimestamp(col++, now); // ZALDATE
+            pstmt.setTimestamp(col++, now); // EDIDATE == ZALDATE
+            pstmt.setBigDecimal(col++, libraryId);
+            pstmt.setInt(col++, isLeaf ? 1 : 0);
             SQLQuery.assertRows(1, pstmt.executeUpdate());
         } finally {
             SQLQuery.tryClose(pstmt);
         }
     }
 
-    public void update(BigDecimal id, String type, String xml) throws DaoException {
+    public void update(BigDecimal id, String type, String xml, String xmlNs, boolean isLeaf) throws DaoException {
         try {
-            doUpdate(id, type, xml);
+            doUpdate(id, type, xml, xmlNs, isLeaf);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    private void doUpdate(BigDecimal id, String type, String xml) throws SQLException {
+    private void doUpdate(BigDecimal id, String type, String xml, String xmlNs, boolean isLeaf) throws SQLException {
         Connection connection = source.getConnection();
         PreparedStatement pstmt = connection.prepareStatement(
                 "update DIGOBJEKT"
-                + " set DRUHDOKUMENTU = ?, \"XML\" = ?"
+                + " set DRUHDOKUMENTU = ?, \"XML\" = ?,"
+                + " FORMATXML = ?,"
+                + " EDIDATE = ?,"
+                + " ISLEAF = ?"
                 + " where ID = ?");
         try {
             int col = 1;
             pstmt.setString(col++, type);
             pstmt.setString(col++, xml);
+            pstmt.setString(col++, xmlNs);
+            pstmt.setTimestamp(col++, new Timestamp(System.currentTimeMillis()));
+            pstmt.setInt(col++, isLeaf ? 1 : 0);
+            // where
             pstmt.setBigDecimal(col++, id);
             SQLQuery.assertRows(1, pstmt.executeUpdate());
         } finally {
@@ -174,23 +194,25 @@ public class DigObjectDao {
         }
     }
 
-    public int updateThumbFilename(BigDecimal id, String thumbFilename) throws DaoException {
+    public boolean updateState(BigDecimal id, String state) throws DaoException {
         try {
-            return doUpdateThumbFilename(id, thumbFilename);
+            return doUpdateState(id, state);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    private int doUpdateThumbFilename(BigDecimal id, String thumbFilename) throws SQLException {
+    private boolean doUpdateState(BigDecimal id, String state) throws SQLException {
         Connection connection = source.getConnection();
         PreparedStatement pstmt = connection.prepareStatement(
-                "update DIGOBJEKT set TNFILENAME = ? where ID = ?");
+                "update DIGOBJEKT set STAV = ?, EDIDATE = ? where ID = ?");
         try {
             int col = 1;
-            pstmt.setString(col++, thumbFilename);
+            pstmt.setString(col++, state);
+            pstmt.setTimestamp(col++, new Timestamp(System.currentTimeMillis()));
+            // where
             pstmt.setBigDecimal(col++, id);
-            return pstmt.executeUpdate();
+            return pstmt.executeUpdate() == 1;
         } finally {
             SQLQuery.tryClose(pstmt);
         }
@@ -214,44 +236,25 @@ public class DigObjectDao {
             }
 
             pstmt = connection.prepareStatement(
-                    "delete from XPREDDIGOBJ where RDIGOBJEKT in (select ID from DIGOBJEKT where UUID not in (select POTOMEK from DIGVAZBY))");
+                    "delete from XPREDDIGOBJ where RDIGOBJEKT in (select ID from DIGOBJEKT where RDIGKNIHOVNA_DIGOBJEKT=? and UUID not in (select POTOMEK from DIGVAZBY where DIGKNIHOVNA=?))");
             try {
+                pstmt.setBigDecimal(1, libraryId);
+                pstmt.setBigDecimal(2, libraryId);
                 pstmt.executeUpdate();
             } finally {
                 SQLQuery.tryClose(pstmt);
             }
 
-            pstmt = connection.prepareStatement(
-                    "delete from DIGMETADATA where ID in (select ID from DIGOBJEKT where UUID not in (select POTOMEK from DIGVAZBY))");
-            try {
-                pstmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(pstmt);
-            }
+//            pstmt = connection.prepareStatement(
+//                    "delete from DIGOBJEKT where RDIGKNIHOVNA_DIGOBJEKT=? and UUID not in (select POTOMEK from DIGVAZBY where DIGKNIHOVNA=?)");
+//            try {
+//                pstmt.setBigDecimal(1, libraryId);
+//                pstmt.setBigDecimal(2, libraryId);
+//                pstmt.executeUpdate();
+//            } finally {
+//                SQLQuery.tryClose(pstmt);
+//            }
 
-            pstmt = connection.prepareStatement(
-                    "delete from DIGMETADATA_CHANGES");
-            try {
-                pstmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(pstmt);
-            }
-
-            pstmt = connection.prepareStatement(
-                    "delete from DIGOBJEKT where UUID not in (select POTOMEK from DIGVAZBY)");
-            try {
-                pstmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(pstmt);
-            }
-
-            pstmt = connection.prepareStatement(
-                    "delete from LOKACE where RDIGOBJEKTL not in (select ID from DIGOBJEKT)");
-            try {
-                pstmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(pstmt);
-            }
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }

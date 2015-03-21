@@ -121,6 +121,12 @@ public class DbUnitSupport {
         return stream;
     }
 
+    public void printSchema() throws Exception {
+        FlatDtdDataSet.write(getConnection().createDataSet(new String[] {
+            "digobjekt", "metadata",
+        }), System.out);
+    }
+
     public void printTableAsFlatXml(String... tableNames) throws Exception {
         if (tableNames == null || tableNames.length == 0) {
             throw new IllegalStateException();

@@ -16,6 +16,7 @@
  */
 package cz.registrdigitalizace.harvest.metadata;
 
+import cz.registrdigitalizace.harvest.db.Metadata;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -40,13 +41,13 @@ import javax.xml.transform.stream.StreamSource;
  * Parses MODS metadata of digital object. It uses XSL transformation
  * to {@link DigobjectType digobject} schema
  * in order to simplify customization for different libraries content
- * at some time in the future. For now it is optimized for MZK MODS.
+ * at some time in the future. For now it is optimized for NDK and K4 MODS.
  *
  * @author Jan Pokorsky
  */
 public final class ModsMetadataParser {
     
-    public static final String MZK_STYLESHEET =  "mods3-digobjekt.xsl";
+    public static final String STYLESHEET =  "mods3-metadata.xsl";
     private static final Logger LOG = Logger.getLogger(ModsMetadataParser.class.getName());
     
     private Transformer transformer;
@@ -64,7 +65,7 @@ public final class ModsMetadataParser {
     }
 
     private void initUnmarshaler() throws JAXBException {
-        JAXBContext jaxbCtx = JAXBContext.newInstance(DigobjectType.class);
+        JAXBContext jaxbCtx = JAXBContext.newInstance(Metadata.class);
         digObjReader = jaxbCtx.createUnmarshaller();
     }
 
@@ -77,15 +78,15 @@ public final class ModsMetadataParser {
         transformer = tfactory.newTransformer(new StreamSource(xslt.toExternalForm()));
     }
     
-    public DigobjectType parse(InputStream modsxml) {
+    public Metadata parse(InputStream modsxml) {
         return parse(new StreamSource(modsxml));
     }
     
-    public DigobjectType parse(Reader modsxml) {
+    public Metadata parse(Reader modsxml) {
         return parse(new StreamSource(modsxml));
     }
-    
-    public DigobjectType parse(Source src) {
+
+    public Metadata parse(Source src) {
         try {
             JAXBResult result = new JAXBResult(digObjReader);
             if (LOG.isLoggable(Level.FINE)) {
@@ -95,9 +96,9 @@ public final class ModsMetadataParser {
             } else {
                 transformer.transform(src, result);
             }
-            DigobjectType dobj = (DigobjectType) result.getResult();
+            Metadata dobj = (Metadata) result.getResult();
             if (LOG.isLoggable(Level.FINE)) {
-            LOG.fine(toString(dobj));
+                LOG.fine(String.valueOf(dobj));
             }
             return dobj;
         } catch (TransformerException ex) {
@@ -120,22 +121,5 @@ public final class ModsMetadataParser {
             throw new IllegalStateException(ex);
         }
     }
-    
-    public static String toString(DigobjectType dobj) {
-        if (dobj == null) {
-            return "null";
-        }
-        return String.format("DigobjectType[\n title: %s,\n isbn: %s, issn: %s, ccnb: %s,\n"
-                    + " author: %s,\n publisher: %s,\n signature: %s, sigla: %s, year: %s]",
-                    dobj.getTitle(),
-                    dobj.getIsbn(),
-                    dobj.getIssn(),
-                    dobj.getCcnb(),
-                    dobj.getAuthor(),
-                    dobj.getPublisher(),
-                    dobj.getSignature(),
-                    dobj.getSigla(),
-                    dobj.getYear());
-    }
-    
+
 }

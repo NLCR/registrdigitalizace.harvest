@@ -93,7 +93,7 @@ public class HarvesterTest {
                 assertNotNull(parser);
                 HeaderType header = parser.parseHeader();
                 assertNotNull(header);
-                HarvestedRecord parsedMetadata = parser.parseMetadata(new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET)));
+                HarvestedRecord parsedMetadata = parser.parseMetadata(new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.STYLESHEET)));
                 assertNotNull(parsedMetadata);
             }
             assertFalse("hasNext2", iterator.hasNext());

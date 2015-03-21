@@ -83,7 +83,7 @@ public class DigObjectDaoTest {
             String type = "monograph";
             String xml = "<record></record>";
             try {
-                dao.insert(BigDecimal.valueOf(1), uuid, type, xml);
+                dao.insert(null, BigDecimal.valueOf(1), uuid, type, xml, "namespace", null, true);
                 transaction.commit();
             } catch (DaoException ex) {
                 transaction.rollback();
@@ -109,7 +109,7 @@ public class DigObjectDaoTest {
             String type = "monograph";
             String xml = "<record></record>";
             try {
-                dao.insert(BigDecimal.valueOf(1), uuid, type, xml);
+                dao.insert(BigDecimal.ONE, BigDecimal.valueOf(1), uuid, type, xml, "namespace", null, true);
                 fail("duplicate key value violates unique constraint \"digobjekt_pkey\"");
                 transaction.commit();
             } catch (DaoException ex) {
@@ -136,7 +136,7 @@ public class DigObjectDaoTest {
         try {
             String uuid = "uuid:1";
             try {
-                BigDecimal result = dao.find(uuid);
+                BigDecimal result = dao.find(BigDecimal.valueOf(1), uuid);
                 assertEquals(BigDecimal.ONE, result);
                 transaction.commit();
             } catch (DaoException ex) {
@@ -159,7 +159,7 @@ public class DigObjectDaoTest {
         try {
             String uuid = "uuid:1";
             try {
-                BigDecimal result = dao.find(uuid);
+                BigDecimal result = dao.find(BigDecimal.valueOf(1), uuid);
                 assertNull(result);
                 transaction.commit();
             } catch (DaoException ex) {
@@ -187,7 +187,7 @@ public class DigObjectDaoTest {
         r.setUuid(uuid);
         r.setDescriptor(String.format("<record root='%s'><uuid>%s<uuid><name>%s</name></record>", root, uuid, name));
         r.setChildren(Arrays.asList(relations));
-        r.setMetadata(MetadataDaoTest.createNewRecord(null, name, null, null, null, null, null, null, null, null));
+        r.setMetadata(MetadataDaoTest.createNewRecord(id, name, null, null, null, null, null, null, null, null));
         return r;
     }
 

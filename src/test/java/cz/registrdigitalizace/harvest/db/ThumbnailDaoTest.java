@@ -80,7 +80,7 @@ public class ThumbnailDaoTest {
         instance.setDataSource(transaction);
         transaction.begin();
 //        instance.insert(digiObjId, mimeType, buf);
-        instance.insert(digiObjId, mimeType, contents, buf.length);
+        instance.insert(digiObjId, "fname", mimeType, contents, buf.length);
         transaction.commit();
         transaction.close();
         IDataSet resultDS = support.getConnection().createDataSet(new String[]{"THUMBNAILS"});
@@ -94,6 +94,7 @@ public class ThumbnailDaoTest {
     public void testDeleteUnrelated() throws Exception {
         IDataSet initialDS = support.loadFlatXmlDataStream(getClass(), "ThumbnailDaoTestDeleteDataSet.xml", true);
         DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
+        IDataSet expectedDS = support.loadFlatXmlDataStream(getClass(), "ThumbnailDaoTestDeleteResult.xml", true);
 
         ThumbnailDao instance = new ThumbnailDao();
         instance.setDataSource(transaction);
@@ -104,7 +105,8 @@ public class ThumbnailDaoTest {
         transaction.commit();
         transaction.close();
 
-        assertEquals(0, support.getConnection().getRowCount("THUMBNAILS"));
+        IDataSet resultDS = support.getConnection().createDataSet(new String[]{"THUMBNAILS"});
+        Assertion.assertEquals(expectedDS, resultDS);
     }
 
     @Test

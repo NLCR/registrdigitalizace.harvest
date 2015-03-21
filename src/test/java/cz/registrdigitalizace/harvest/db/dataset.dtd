@@ -24,10 +24,8 @@ Data model snapshot.
     digknihovna*,
     digobjekt*,
     digvazby*,
-    digmetadata*,
-    digmetadata_changes*,
     dlists*,
-    lokace*,
+    metadata*,
     plaant_ids*,
     thumbnails*,
     xpreddigobj*)>
@@ -58,32 +56,18 @@ Data model snapshot.
 <!ELEMENT digobjekt EMPTY>
 <!ATTLIST digobjekt
     id CDATA #REQUIRED
-    urnnbn CDATA #IMPLIED
-    XML CDATA #IMPLIED
-    nazev CDATA #IMPLIED
-    rokvyd CDATA #IMPLIED
-    dostupnost CDATA #IMPLIED
-    formatxml CDATA #IMPLIED
-    zdrojxml CDATA #IMPLIED
-    datexml CDATA #IMPLIED
-    autor CDATA #IMPLIED
-    vydavatel CDATA #IMPLIED
-    mistovyd CDATA #IMPLIED
-    isbn CDATA #IMPLIED
-    issn CDATA #IMPLIED
-    uuid CDATA #IMPLIED
-    HANDLER CDATA #IMPLIED
-    signatura CDATA #IMPLIED
-    idzakazky CDATA #IMPLIED
-    formatdokumentu CDATA #IMPLIED
     druhdokumentu CDATA #IMPLIED
-    pocetkopii CDATA #IMPLIED
-    vizitka CDATA #IMPLIED
-    indexovano CDATA #IMPLIED
-    ccnb CDATA #IMPLIED
-    carkod CDATA #IMPLIED
-    sigla CDATA #IMPLIED
-    tnfilename CDATA #IMPLIED
+    formatxml CDATA #IMPLIED
+    XML CDATA #IMPLIED
+    uuid CDATA #IMPLIED
+    isleaf CDATA #IMPLIED
+    rpredloha_digobjekt CDATA #IMPLIED
+    rpredloha_digobjektmf CDATA #IMPLIED
+    stav CDATA #IMPLIED
+    zaldate CDATA #IMPLIED
+    edidate CDATA #IMPLIED
+    rdigknihovna_digobjekt CDATA #IMPLIED
+    rdigknihovna_digobjektmf CDATA #IMPLIED
 >
 
 <!ELEMENT digvazby EMPTY>
@@ -97,25 +81,14 @@ Data model snapshot.
     predekmf CDATA #IMPLIED
 >
 
-<!ELEMENT digmetadata EMPTY>
-<!ATTLIST digmetadata
+<!ELEMENT metadata EMPTY>
+<!ATTLIST metadata
     id CDATA #REQUIRED
-    nazev CDATA #IMPLIED
-    issn CDATA #IMPLIED
-    isbn CDATA #IMPLIED
-    ccnb CDATA #IMPLIED
-    sigla CDATA #IMPLIED
-    signatura CDATA #IMPLIED
-    autori CDATA #IMPLIED
-    vydavatele CDATA #IMPLIED
-    rokvyd CDATA #IMPLIED
-    modifikace CDATA #REQUIRED
->
-
-<!ELEMENT digmetadata_changes EMPTY>
-<!ATTLIST digmetadata_changes
-    id CDATA #REQUIRED
-    modifikace CDATA #REQUIRED
+    value CDATA #IMPLIED
+    valid CDATA #IMPLIED
+    reliefname CDATA #IMPLIED
+    rdigobjekt_metadata CDATA #IMPLIED
+    rdigobjekt_metadatamf CDATA #IMPLIED
 >
 
 <!ELEMENT dlists EMPTY>
@@ -132,18 +105,6 @@ Data model snapshot.
     poradi CDATA #IMPLIED
 >
 
-<!ELEMENT lokace EMPTY>
-<!ATTLIST lokace
-    id CDATA #REQUIRED
-    digknihovna CDATA #IMPLIED
-    datumzal CDATA #IMPLIED
-    datumkontroly CDATA #IMPLIED
-    url CDATA #IMPLIED
-    XML CDATA #IMPLIED
-    rdigobjektl CDATA #IMPLIED
-    rdigobjektlmf CDATA #IMPLIED
->
-
 <!ELEMENT plaant_ids EMPTY>
 <!ATTLIST plaant_ids
     deskname CDATA #REQUIRED
@@ -153,6 +114,7 @@ Data model snapshot.
 <!ELEMENT thumbnails EMPTY>
 <!ATTLIST thumbnails
     digobjektid CDATA #REQUIRED
+    tnfilename CDATA #REQUIRED
     mime CDATA #REQUIRED
     contents CDATA #IMPLIED
 >

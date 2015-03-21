@@ -18,7 +18,6 @@
 package cz.registrdigitalizace.harvest;
 
 import cz.registrdigitalizace.harvest.db.DaoException;
-import cz.registrdigitalizace.harvest.db.DigObjectDao;
 import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
 import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.IterableResult;
@@ -68,8 +67,6 @@ public final class ThumbnailHarvest {
         HarvestTransaction transaction = new HarvestTransaction(dataSource);
         ThumbnailDao thumbnailDao = new ThumbnailDao();
         thumbnailDao.setDataSource(transaction);
-        DigObjectDao digObjectDao = new DigObjectDao();
-        digObjectDao.setDataSource(transaction);
         boolean rollback = true;
         try {
             transaction.begin();
@@ -86,7 +83,7 @@ public final class ThumbnailHarvest {
                     Library lib = findLibrary(thumbnail.getLibraryId());
                     URL url = thumbnailUrl(lib, thumbnail);
                     ThumbnailSnapshot thumbSnapshot = downloadThumbnail(url);
-                    boolean ok = saveThumbnailSnapshot(digObjectDao, thumbnailDao, thumbnail, thumbSnapshot);
+                    boolean ok = saveThumbnailSnapshot(thumbnailDao, thumbnail, thumbSnapshot);
                     if (ok) {
                         last = thumbnail;
                         if (counter % 200 == 0) {
@@ -172,7 +169,6 @@ public final class ThumbnailHarvest {
     }
 
     private boolean saveThumbnailSnapshot(
-            DigObjectDao digObjectDao,
             ThumbnailDao thumbnailDao,
             Thumbnail thumbnail,
             ThumbnailSnapshot snapshot) throws DaoException, IOException {
@@ -183,13 +179,8 @@ public final class ThumbnailHarvest {
         InputStream content = snapshot.getContent();
         try {
             int contentLength = snapshot.getContentLength();
-            thumbnailDao.insert(thumbnail.getDigiObjId(),
+            thumbnailDao.insert(thumbnail.getDigiObjId(), snapshot.getFilename(),
                     snapshot.getMimeType(), content, contentLength);
-            int updateThumb = digObjectDao.updateThumbFilename(thumbnail.getDigiObjId(), snapshot.getFilename());
-            if (updateThumb != 1) {
-                LOG.log(Level.WARNING, "filename update of unkonw object: {0}, id: {1}, url: {2}",
-                        new Object[] {updateThumb, thumbnail.getDigiObjId(), snapshot.getUrl()});
-            }
             sizeCounter += contentLength;
             counter++;
             return true;

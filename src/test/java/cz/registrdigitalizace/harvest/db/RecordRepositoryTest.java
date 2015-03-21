@@ -17,11 +17,10 @@
 
 package cz.registrdigitalizace.harvest.db;
 
-import org.dbunit.dataset.CompositeDataSet;
 import org.dbunit.dataset.SortedTable;
-import org.dbunit.dataset.DefaultDataSet;
 import cz.registrdigitalizace.harvest.HarvestedRecord;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,7 +28,9 @@ import java.util.List;
 import org.dbunit.Assertion;
 import org.dbunit.operation.DatabaseOperation;
 import org.dbunit.dataset.IDataSet;
+import org.dbunit.dataset.ITable;
 import org.dbunit.dataset.ReplacementDataSet;
+import org.dbunit.dataset.datatype.DataType;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -44,7 +45,6 @@ import static org.junit.Assert.*;
 public class RecordRepositoryTest {
     private DbUnitSupport support;
     private HarvestTransaction transaction;
-    private LocationDao locationDao;
     private DigObjectDao digiObjectDao;
     private RelationDao relationDao;
     private IdSequenceDao idSequenceDao;
@@ -66,8 +66,6 @@ public class RecordRepositoryTest {
     public void setUp() throws SQLException {
         support = new DbUnitSupport();
         transaction = new HarvestTransaction(support.getSource());
-        locationDao = new LocationDao();
-        locationDao.setDataSource(transaction);
         digiObjectDao = new DigObjectDao();
         digiObjectDao.setDataSource(transaction);
         relationDao = new RelationDao();
@@ -109,7 +107,7 @@ public class RecordRepositoryTest {
                 Library library = libraries.get(0);
 
                 RecordRepository instance = new RecordRepository(
-                        locationDao, digiObjectDao, relationDao,
+                        digiObjectDao, relationDao,
                         idSequenceDao, metadataDao, library);
                 instance.init();
                 instance.add(periodical);
@@ -128,19 +126,19 @@ public class RecordRepositoryTest {
         IDataSet resultDS = support.getConnection().createDataSet();
         support.dumpTable(expectedDS.getTable("PLAANT_IDS"));
         support.dumpTable(resultDS.getTable("PLAANT_IDS"));
-////        support.printTableAsFlatXml("LOKACE");
-        Assertion.assertEquals(expectedDS.getTable("DIGOBJEKT"), resultDS.getTable("DIGOBJEKT"));
-        Assertion.assertEqualsIgnoreCols(expectedDS.getTable("LOKACE"), resultDS.getTable("LOKACE"), new String[] {"XML"});
+        Assertion.assertEqualsIgnoreCols(expectedDS.getTable("DIGOBJEKT"),
+                resultDS.getTable("DIGOBJEKT"), new String[] {"EDIDATE", "ZALDATE"});
         Assertion.assertEquals(expectedDS.getTable("DIGVAZBY"), resultDS.getTable("DIGVAZBY"));
         support.dumpTable(new SortedTable(expectedDS.getTable("PLAANT_IDS")));
         support.dumpTable(new SortedTable(resultDS.getTable("PLAANT_IDS")));
         Assertion.assertEquals(new SortedTable(expectedDS.getTable("PLAANT_IDS")),
                 new SortedTable(resultDS.getTable("PLAANT_IDS")));
-        Assertion.assertEquals(expectedDS.getTable("DIGMETADATA"), resultDS.getTable("DIGMETADATA"));
+        Assertion.assertEquals(expectedDS.getTable("METADATA"), resultDS.getTable("METADATA"));
     }
 
     @Test
     public void testRemove() throws Exception {
+        Date before = new Timestamp(System.currentTimeMillis() - 1000);
         IDataSet initialDS = support.loadFlatXmlDataStream(getClass(), "RecordRepositoryTestRemoveDataSet.xml");
         DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
         IDataSet expectedDS = support.loadFlatXmlDataStream(getClass(), "RecordRepositoryTestRemoveResult.xml");
@@ -158,7 +156,7 @@ public class RecordRepositoryTest {
                 Library library = libraries.get(0);
 
                 RecordRepository builder = new RecordRepository(
-                        locationDao, digiObjectDao, relationDao,
+                        digiObjectDao, relationDao,
                         idSequenceDao, metadataDao, library);
                 builder.init();
                 builder.remove(periodical);
@@ -176,12 +174,21 @@ public class RecordRepositoryTest {
 
         IDataSet resultDS = support.getConnection().createDataSet();
 
-        Assertion.assertEquals(expectedDS.getTable("DIGOBJEKT"), resultDS.getTable("DIGOBJEKT"));
-        Assertion.assertEqualsIgnoreCols(expectedDS.getTable("LOKACE"), resultDS.getTable("LOKACE"), new String[] {"XML"});
+        Assertion.assertEqualsIgnoreCols(expectedDS.getTable("DIGOBJEKT"), resultDS.getTable("DIGOBJEKT"),
+                new String[] {"EDIDATE"});
+        ITable resultDigObject = resultDS.getTable("DIGOBJEKT");
+        DataType edidateType = resultDigObject.getTableMetaData().getColumns()[
+                resultDigObject.getTableMetaData().getColumnIndex("EDIDATE")].getDataType();
+        for (int i = 0; i < resultDigObject.getRowCount(); i++) {
+            Object value = resultDigObject.getValue(i, "EDIDATE");
+            assertNotNull(value);
+            assertEquals(String.format("%s, %s", before, value), -1, edidateType.compare(before, value));
+        }
+
         Assertion.assertEquals(expectedDS.getTable("DIGVAZBY"), resultDS.getTable("DIGVAZBY"));
         Assertion.assertEquals(new SortedTable(expectedDS.getTable("PLAANT_IDS")),
                 new SortedTable(resultDS.getTable("PLAANT_IDS")));
-        Assertion.assertEquals(expectedDS.getTable("DIGMETADATA"), resultDS.getTable("DIGMETADATA"));
+        Assertion.assertEquals(expectedDS.getTable("METADATA"), resultDS.getTable("METADATA"));
     }
 
 }

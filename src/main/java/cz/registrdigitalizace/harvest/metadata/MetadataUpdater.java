@@ -21,7 +21,10 @@ import cz.registrdigitalizace.harvest.db.DigObject;
 import cz.registrdigitalizace.harvest.db.DigObjectDao;
 import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
 import cz.registrdigitalizace.harvest.db.HarvestTransaction;
+import cz.registrdigitalizace.harvest.db.IdSequence;
+import cz.registrdigitalizace.harvest.db.IdSequenceDao;
 import cz.registrdigitalizace.harvest.db.IterableResult;
+import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.Metadata;
 import cz.registrdigitalizace.harvest.db.MetadataDao;
 import java.io.StringReader;
@@ -43,62 +46,40 @@ public class MetadataUpdater {
 
     public MetadataUpdater(DigitizationRegistrySource source) {
         this.source = source;
-        parser = new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET);
+        parser = new ModsMetadataParser(ModsMetadataParser.STYLESHEET);
     }
 
     /**
-     * Throws out all existing metadata (DIGMETADATA) of already harvested digital objects
+     * Throws out all existing metadata (METADATA) of already harvested digital objects
      * and generates new.
      */
-    public void regenerateDigObjects() throws DaoException {
+    public void regenerateDigObjects(Library library) throws DaoException {
         LOG.fine("start");
         DigObjectDao digObjectDao = new DigObjectDao();
         MetadataDao metadataDao = new MetadataDao();
+        IdSequenceDao sequenceDao = new IdSequenceDao();
         HarvestTransaction transaction = new HarvestTransaction(source);
         digObjectDao.setDataSource(transaction);
         metadataDao.setDataSource(transaction);
+        sequenceDao.setDataSource(transaction);
         boolean rollback = true;
         try {
             transaction.begin();
-            metadataDao.delete();
-            IterableResult<DigObject> digObjects = digObjectDao.findMods();
+            IdSequence metadataSeq = sequenceDao.find(IdSequence.METADATA);
+            metadataDao.delete(library.getId());
+            IterableResult<DigObject> digObjects = digObjectDao.findMods(library);
             try {
                 for (DigObject digObject; digObjects.hasNextResult();) {
                     digObject = digObjects.nextResult();
                     Metadata m = handleItem(digObject);
-                    metadataDao.insert(m);
+                    metadataDao.insert(metadataSeq, m);
                     totalNumber++;
                     totalSize += digObject.getXml().length();
                 }
             } finally {
                 digObjects.close();
             }
-            metadataDao.updateDigObjectMetadata();
-            transaction.commit();
-            rollback = false;
-        } finally {
-            if (rollback) {
-                transaction.rollback();
-            }
-            transaction.close();
-            LOG.fine("end");
-        }
-    }
-
-    /**
-     * Generates metadata of incrementally harvested digital objects.
-     */
-    public void generateModifiedDigObjects() throws DaoException {
-        LOG.fine("start");
-        MetadataDao metadataDao = new MetadataDao();
-        HarvestTransaction transaction = new HarvestTransaction(source);
-        metadataDao.setDataSource(transaction);
-        boolean rollback = true;
-        try {
-            transaction.begin();
-
-            totalNumber = metadataDao.updateDigObjectMetadata();
-
+            sequenceDao.update(metadataSeq);
             transaction.commit();
             rollback = false;
         } finally {
@@ -119,17 +100,16 @@ public class MetadataUpdater {
     }
     
     private Metadata handleItem(DigObject dobj) {
-        DigobjectType dt;
+        Metadata dt;
         try {
             dt = parser.parse(new StringReader(dobj.getXml()));
             //            LOG.info(dobj.getXml() + "\n" + ModsMetadataParser.toString(dt));
         } catch (Exception e) {
-            dt = new DigobjectType();
-            dt.setTitle("!!! broken MODS parse !!!");
+            dt = new Metadata();
             LOG.log(Level.SEVERE, dobj.getId() + "\n" + dobj.getXml(), e);
         }
-        Metadata m = Metadata.create(dt, dobj.getId());
-        return m;
+        dt.setDigObjId(dobj.getId());
+        return dt;
     }
     
 }

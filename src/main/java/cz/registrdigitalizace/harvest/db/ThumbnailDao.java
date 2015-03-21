@@ -24,8 +24,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  *
@@ -39,17 +37,17 @@ public final class ThumbnailDao {
         this.source = source;
     }
 
-    public void insert(BigDecimal digiObjId, String mimeType, byte[] contents) throws DaoException {
+    public void insert(BigDecimal digiObjId, String thumbFilename, String mimeType, byte[] contents) throws DaoException {
         try {
-            doInsert(digiObjId, mimeType, contents);
+            doInsert(digiObjId, thumbFilename, mimeType, contents);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    public void insert(BigDecimal digiObjId, String mimeType, InputStream contents, int length) throws DaoException {
+    public void insert(BigDecimal digiObjId, String thumbFilename, String mimeType, InputStream contents, int length) throws DaoException {
         try {
-            doInsert(digiObjId, mimeType, contents, length);
+            doInsert(digiObjId, thumbFilename, mimeType, contents, length);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
@@ -93,7 +91,8 @@ public final class ThumbnailDao {
         Statement stmt = conn.createStatement();
         ResultSet rs = null;
         try {
-            rs = stmt.executeQuery(SQLQuery.getFindMissingThumbnails());
+            rs = stmt.executeQuery("select ID, UUID, RDIGKNIHOVNA_DIGOBJEKT as LIBID from DIGOBJEKT"
+                    + " where ID not in (select DIGOBJEKTID from THUMBNAILS)");
             return new ThumbnailResult(rs, stmt);
         } finally {
             if (rs == null) {
@@ -102,29 +101,33 @@ public final class ThumbnailDao {
         }
     }
 
-    private void doInsert(BigDecimal digiObjId, String mimeType, InputStream contents, int length) throws SQLException {
+    private void doInsert(BigDecimal digiObjId, String thumbFilename, String mimeType, InputStream contents, int length) throws SQLException {
         Connection conn = source.getConnection();
         PreparedStatement pstmt = conn.prepareStatement(
-                "insert into THUMBNAILS (DIGOBJEKTID, MIME, CONTENTS) values (?, ?, ?)");
+                "insert into THUMBNAILS (DIGOBJEKTID, TNFILENAME, MIME, CONTENTS) values (?, ?, ?, ?)");
         try {
-            pstmt.setBigDecimal(1, digiObjId);
-            pstmt.setString(2, mimeType);
+            int col = 1;
+            pstmt.setBigDecimal(col++, digiObjId);
+            pstmt.setString(col++, thumbFilename);
+            pstmt.setString(col++, mimeType);
 //            pstmt.setBlob(3, contents, length);
-            pstmt.setBinaryStream(3, contents, length);
+            pstmt.setBinaryStream(col++, contents, length);
             pstmt.executeUpdate();
         } finally {
             SQLQuery.tryClose(pstmt);
         }
     }
 
-    private void doInsert(BigDecimal digiObjId, String mimeType, byte[] contents) throws SQLException {
+    private void doInsert(BigDecimal digiObjId, String thumbFilename, String mimeType, byte[] contents) throws SQLException {
         Connection conn = source.getConnection();
         PreparedStatement pstmt = conn.prepareStatement(
-                "insert into THUMBNAILS (DIGOBJEKTID, MIME, CONTENTS) values (?, ?, ?)");
+                "insert into THUMBNAILS (DIGOBJEKTID, TNFILENAME, MIME, CONTENTS) values (?, ?, ?, ?)");
         try {
-            pstmt.setBigDecimal(1, digiObjId);
-            pstmt.setString(2, mimeType);
-            pstmt.setBytes(3, contents);
+            int col = 1;
+            pstmt.setBigDecimal(col++, digiObjId);
+            pstmt.setString(col++, thumbFilename);
+            pstmt.setString(col++, mimeType);
+            pstmt.setBytes(col++, contents);
             pstmt.executeUpdate();
         } finally {
             SQLQuery.tryClose(pstmt);
@@ -171,7 +174,7 @@ public final class ThumbnailDao {
         protected Thumbnail fetchNext() throws DaoException {
             try {
                 Thumbnail thumbnail = new Thumbnail();
-                thumbnail.setDigiObjId(rs.getBigDecimal("RDIGOBJEKTL"));
+                thumbnail.setDigiObjId(rs.getBigDecimal("ID"));
                 thumbnail.setUuid(rs.getString("UUID"));
                 thumbnail.setLibraryId(rs.getBigDecimal("LIBID"));
                 return thumbnail;

@@ -16,21 +16,20 @@
  */
 package cz.registrdigitalizace.harvest.db;
 
-import cz.registrdigitalizace.harvest.Utils;
+import cz.registrdigitalizace.harvest.db.Metadata.MetadataItem;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * DIGMETADATA table accessor.
+ * METADATA table accessor.
  * 
  * @author Jan Pokorsky
  */
@@ -42,13 +41,20 @@ public class MetadataDao {
     public void setDataSource(HarvestTransaction source) {
         this.source = source;
     }
-    
-    public void delete() throws DaoException {
+
+    /**
+     * Deletes metadata of all digital objects of a library.
+     * @param libraryId library ID
+     * @throws DaoException failure
+     */
+    public void delete(BigDecimal libraryId) throws DaoException {
         try {
-            LOG.fine("delete from DIGMETADATA");
+            LOG.log(Level.FINE, "delete from METADATA where ID in (select ID from DIGOBJEKT where RDIGKNIHOVNA_DIGOBJEKT={0})", libraryId);
             Connection c = source.getConnection();
-            PreparedStatement stmt = c.prepareStatement("delete from DIGMETADATA");
+            PreparedStatement stmt = c.prepareStatement(
+                    "delete from METADATA where ID in (select ID from DIGOBJEKT where RDIGKNIHOVNA_DIGOBJEKT=?)");
             try {
+                stmt.setBigDecimal(1, libraryId);
                 stmt.executeUpdate();
             } finally {
                 SQLQuery.tryClose(stmt);
@@ -59,167 +65,75 @@ public class MetadataDao {
             LOG.fine("delete done");
         }
     }
-    
-    public void insert(Metadata m) throws DaoException {
-        try {
-            Connection c = source.getConnection();
-            PreparedStatement stmt = c.prepareStatement(
-                    "insert into DIGMETADATA (ID,NAZEV,ISSN,ISBN,CCNB,SIGLA,"
-                    + "SIGNATURA,AUTORI,VYDAVATELE,ROKVYD,MODIFIKACE)"
-                    + " values (?,?,?,?,?,?,?,?,?,?,?)");
-            try {
-                int i = 1;
-                stmt.setBigDecimal(i++, m.getId());
-                stmt.setString(i++, value(m.getTitle(), "title", 2000, m));
-                stmt.setString(i++, value(m.getIssn(), "issn", 255, m));
-                stmt.setString(i++, value(m.getIsbn(), "isbn", 255, m));
-                stmt.setString(i++, value(m.getCcnb(), "ccnb", 255, m));
-                stmt.setString(i++, value(m.getSigla(), "sigla", 255, m));
-                stmt.setString(i++, value(m.getSignature(), "signature", 2000, m));
-                stmt.setString(i++, value(m.getAuthors(), "authors", 2000, m));
-                stmt.setString(i++, value(m.getPublishers(), "publishers", 2000, m));
-                stmt.setString(i++, value(m.getYearOfPublication(), "yearOfPublication", 255, m));
-                stmt.setInt(i++, 1);
-                stmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(stmt);
-            }
-        } catch (SQLException ex) {
-            throw new DaoException(ex);
-        }
-    }
-    
-    public void update(Metadata m) throws DaoException {
-        try {
-            Connection c = source.getConnection();
-            PreparedStatement stmt = c.prepareStatement(
-                    "update DIGMETADATA set NAZEV=?,ISSN=?,ISBN=?,CCNB=?,SIGLA=?,"
-                    + "SIGNATURA=?,AUTORI=?,VYDAVATELE=?,ROKVYD=?,MODIFIKACE=?"
-                    + " where ID=?");
-            try {
-                int i = 1;
-                stmt.setString(i++, value(m.getTitle(), "title", 2000, m));
-                stmt.setString(i++, value(m.getIssn(), "issn", 255, m));
-                stmt.setString(i++, value(m.getIsbn(), "isbn", 255, m));
-                stmt.setString(i++, value(m.getCcnb(), "ccnb", 255, m));
-                stmt.setString(i++, value(m.getSigla(), "sigla", 255, m));
-                stmt.setString(i++, value(m.getSignature(), "signature", 2000, m));
-                stmt.setString(i++, value(m.getAuthors(), "authors", 2000, m));
-                stmt.setString(i++, value(m.getPublishers(), "publishers", 2000, m));
-                stmt.setString(i++, value(m.getYearOfPublication(), "yearOfPublication", 255, m));
-                stmt.setInt(i++, 1);
-                stmt.setBigDecimal(i++, m.getId());
-                stmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(stmt);
-            }
-        } catch (SQLException ex) {
-            throw new DaoException(ex);
-        }
-    }
-    
-    public long updateDigObjectMetadata() throws DaoException {
-        try {
-            Connection c = source.getConnection();
-            computeModifications(c);
-            // commit changes in temporary tables to minimize transaction log
-            c.commit();
 
-            PreparedStatement stmt = c.prepareStatement(SQLQuery.getSelectMetadataHierarchy());
-            PreparedStatement updateStmt = c.prepareStatement(
-                    "update DIGOBJEKT set NAZEV=?, AUTOR=?, ISSN=?, ISBN=?, CCNB=?,"
-                    + " SIGLA=?, SIGNATURA=?, VYDAVATEL=?, ROKVYD=? where ID=?");
-            PreparedStatement resetChangesStmt = c.prepareStatement(
-                    "update DIGMETADATA set MODIFIKACE=0 where MODIFIKACE > 0");
-            
-            LOG.log(Level.FINE, "update DIGOBJEKT metadata as \n{0}",
-                    SQLQuery.getSelectMetadataHierarchy());
-            long start = System.currentTimeMillis();
-            long updateNumber = 1;
+    /**
+     * Deletes metadata of a digital object.
+     * @param m metadata with digObjId
+     * @throws DaoException failure
+     */
+    public void delete(Metadata m) throws DaoException {
+        if (m.getDigObjId() == null) {
+            throw new IllegalArgumentException("Missing digObjId");
+        }
+        try {
+            Connection c = source.getConnection();
+            PreparedStatement stmt = c.prepareStatement(
+                    "delete from METADATA where RDIGOBJEKT_METADATA=?");
             try {
-                ResultSet rs = stmt.executeQuery();
-                LOG.log(Level.FINE, "hierarchical select executed");
-                boolean finest = LOG.isLoggable(Level.FINEST);
-                try {
-                    while (rs.next()) {
-                        String titles = rs.getString("NAZEV");
-                        String authors = rs.getString("AUTOR");
-                        String issn = rs.getString("ISSN");
-                        String isbn = rs.getString("ISBN");
-                        String ccnb = rs.getString("CCNB");
-                        String siglas = rs.getString("SIGLA");
-                        String signatures = rs.getString("SIGNATURA");
-                        String publishers = rs.getString("VYDAVATEL");
-                        String years = rs.getString("ROKVYD");
-                        BigDecimal id = rs.getBigDecimal("ID");
-                        if (finest) {                     
-                            String up = String.format(
-                                "update DIGOBJEKT set NAZEV='%s', AUTOR='%s', ISSN='%s',"
-                                    + " ISBN='%s', CCNB='%s', SIGLA='%s', SIGNATURA='%s',"
-                                    + " VYDAVATEL='%s', ROKVYD='%s' where ID=%s",
-                                    titles, authors, issn, isbn, ccnb, siglas,
-                                    signatures, publishers, years, id
-                                    );
-                            LOG.log(Level.FINEST, "udpdating... {0}\n{1}",
-                                    new Object[] {updateNumber, up});
-                        }
-                        int col = 1;
-                        updateStmt.setString(col++, titles);
-                        updateStmt.setString(col++, authors);
-                        updateStmt.setString(col++, issn);
-                        updateStmt.setString(col++, isbn);
-                        updateStmt.setString(col++, ccnb);
-                        updateStmt.setString(col++, siglas);
-                        updateStmt.setString(col++, signatures);
-                        updateStmt.setString(col++, publishers);
-                        updateStmt.setString(col++, years);
-                        updateStmt.setBigDecimal(col++, id);
-                        SQLQuery.assertRows(1, updateStmt.executeUpdate());
-                        updateNumber++;
+                stmt.setBigDecimal(1, m.getDigObjId());
+                stmt.executeUpdate();
+            } finally {
+                SQLQuery.tryClose(stmt);
+            }
+        } catch (SQLException ex) {
+            throw new DaoException(ex);
+        } finally {
+            LOG.fine("delete done");
+        }
+    }
+
+    /**
+     * Inserts metadata of a digital object.
+     * @param metadataId ID sequence
+     * @param m metadata
+     * @throws DaoException failure
+     */
+    public void insert(IdSequence metadataId, Metadata m) throws DaoException {
+        try {
+            Connection c = source.getConnection();
+            PreparedStatement stmt = c.prepareStatement(
+                    "insert into METADATA (ID,VALUE,VALID,RELIEFNAME,RDIGOBJEKT_METADATA)"
+                    + " values (?,?,?,?,?)");
+            try {
+                for (MetadataItem item : m.getItems()) {
+                    item.setId(metadataId.increment());
+                    insert(item, m, stmt);
+                }
+                int[] results = stmt.executeBatch();
+                for (int result : results) {
+                    if (result == Statement.EXECUTE_FAILED) {
+                        throw new DaoException("insert failed " + m);
                     }
-                } finally {
-                    SQLQuery.tryClose(rs);
                 }
             } finally {
                 SQLQuery.tryClose(stmt);
-                SQLQuery.tryClose(updateStmt);
             }
-            long end = System.currentTimeMillis() - start;
-            LOG.log(Level.FINE, "update of {1} object(s) finished after: {0} ",
-                    new Object[] {Utils.elapsedTime(end), updateNumber});
-            
-            try {
-                resetChangesStmt.executeUpdate();
-            } finally {
-                SQLQuery.tryClose(resetChangesStmt);
-            }
-            
-            return updateNumber - 1;
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
-    
-    private void computeModifications(Connection c) throws SQLException {
-        Statement stmt = c.createStatement();
-        try {
-            long start = System.currentTimeMillis();
-            LOG.fine("delete from DIGMETADATA_CHANGES");
-            stmt.executeUpdate("delete from DIGMETADATA_CHANGES");
-            long end = System.currentTimeMillis() - start;
-            LOG.log(Level.FINE, "delete finished after: {0}", Utils.elapsedTime(end));
 
-            start = System.currentTimeMillis();
-            LOG.fine("insert DIGMETADATA_CHANGES");
-            stmt.executeUpdate(SQLQuery.getInsertMetadataChanges());
-            end = System.currentTimeMillis() - start;
-            LOG.log(Level.FINE, "insert finished after: {0}", Utils.elapsedTime(end));
-        } finally {
-            SQLQuery.tryClose(stmt);
-        }
+    private void insert(MetadataItem mi, Metadata m, PreparedStatement stmt) throws SQLException {
+        int i = 1;
+        stmt.setBigDecimal(i++, mi.getId());
+        stmt.setString(i++, value(mi.getValue(), mi.getReliefName(), 2000, null));
+        stmt.setBoolean(i++, !mi.isInvalid());
+        stmt.setString(i++, mi.getReliefName());
+        stmt.setBigDecimal(i++, m.getDigObjId());
+        stmt.addBatch();
     }
 
-    private String value(String value, String name, int limit, Metadata m) {
+    private String value(String value, String name, int limit, Object metadata) {
         if (value != null && value.length() > limit / 3) {
             try {
                 Utf8LengthStream ls = new Utf8LengthStream();
@@ -234,7 +148,7 @@ public class MetadataDao {
                 }
                 if (endIndex >= 0) {
                     LOG.log(Level.WARNING, String.format("%s: length: %s, limit:%s, value: %s\n%s",
-                            name, ls.length, limit, value, m), new IllegalStateException());
+                            name, ls.length, limit, value, metadata), new IllegalStateException());
                     value = value.substring(0, endIndex);
                 }
             } catch (IOException ex) {

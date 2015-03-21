@@ -126,8 +126,7 @@ public final class Harvest {
         if (conf.isDryRun() || conf.isHarvestToCache()) {
             return;
         }
-        computeMetadata();
-        
+
         ThumbnailHarvest thumbnailHarvest = new ThumbnailHarvest(dataSource, libraries);
         long time = System.currentTimeMillis();
         thumbnailHarvest.harvestThumbnails();
@@ -141,9 +140,14 @@ public final class Harvest {
      * <p>No harvest is run.
      */
     public void updateMetadata() throws DaoException {
-        MetadataUpdater mu = new MetadataUpdater(dataSource);
         long time = System.currentTimeMillis();
-        mu.regenerateDigObjects();
+        List<Library> libraries = fetchLibraries();
+        MetadataUpdater mu = new MetadataUpdater(dataSource);
+        for (Library library : libraries) {
+            if (includeLibrary(library)) {
+                mu.regenerateDigObjects(library);
+            }
+        }
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "MODS regeneration status:\n  objects updated: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
                 new Object[]{mu.getTotalNumber(), mu.getTotalSize(), Utils.elapsedTime(time)});
@@ -161,18 +165,6 @@ public final class Harvest {
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "Thumbnail harvest status:\n  Thumbnails downloaded: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
                 new Object[]{thumbnailHarvest.getTotalNumber(), thumbnailHarvest.getTotalSize(), Utils.elapsedTime(time)});
-    }
-
-    /**
-     * Computes selected meta data from just harvested and persisted XML descriptors.
-     */
-    private void computeMetadata() throws DaoException {
-        MetadataUpdater mu = new MetadataUpdater(dataSource);
-        long time = System.currentTimeMillis();
-        mu.generateModifiedDigObjects();
-        time = System.currentTimeMillis() - time;
-        LOG.log(Level.INFO, "MODS generation status:\n  objects updated: {0}\n  Time: {1}\n",
-                new Object[]{mu.getTotalNumber(), Utils.elapsedTime(time)});
     }
 
     private List<Library> fetchLibraries() throws DaoException {
@@ -197,19 +189,26 @@ public final class Harvest {
         }
     }
 
+    private boolean includeLibrary(Library library) {
+        if (conf.getIncludeLibraries().isEmpty()) {
+            if (conf.getExcludeLibraries().contains(library.getId())) {
+                return false;
+            }
+        } else {
+            if (!conf.getIncludeLibraries().contains(library.getId())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Harvests library meta data and persists them in DB.
      * <p>The persistence is optional.
      */
     private void harvestLibrary(Library library) throws OaiException, DaoException, JAXBException, XMLStreamException, IOException {
-        if (conf.getIncludeLibraries().isEmpty()) {
-            if (conf.getExcludeLibraries().contains(library.getId())) {
-                return ;
-            }
-        } else {
-            if (!conf.getIncludeLibraries().contains(library.getId())) {
-                return ;
-            }
+        if (!includeLibrary(library)) {
+            return ;
         }
         long time = System.currentTimeMillis();
         OaiSource oaiSource = resolveOaiSource(library);

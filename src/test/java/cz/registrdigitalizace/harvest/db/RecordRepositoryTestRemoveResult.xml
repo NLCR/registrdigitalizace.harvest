@@ -2,14 +2,20 @@
 <dataset>
     <PLAANT_IDS deskname="cz.incad.rd.DigObjekt" id="4"/>
     <PLAANT_IDS deskname="cz.incad.rd.DigVazby" id="3"/>
-    <PLAANT_IDS deskname="cz.incad.rd.Lokace" id="11"/>
-    <DIGOBJEKT />
+    <PLAANT_IDS deskname="cz.incad.rd.Metadata" id="13"/>
     <DIGKNIHOVNA id="10" software="kramerius4" protokol="oaipmh" formatdat="rd"
             encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
             oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
-    <DLISTS id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
-    <LOKACE />
+
+    <DIGOBJEKT id="2" XML="&lt;record root=&apos;true&apos;&gt;&lt;uuid&gt;uuid:2&lt;uuid&gt;&lt;name&gt;Periodical&lt;/name&gt;&lt;/record&gt;"
+               uuid="uuid:2" druhdokumentu="periodical" isleaf="0" rdigknihovna_digobjekt="10"
+               stav="deleted" />
+    <DIGOBJEKT id="3" XML="&lt;record root=&apos;false&apos;&gt;&lt;uuid&gt;uuid:3&lt;uuid&gt;&lt;name&gt;Volume&lt;/name&gt;&lt;/record&gt;"
+               uuid="uuid:3" druhdokumentu="volume" isleaf="0" rdigknihovna_digobjekt="10"
+               stav="deleted" />
+    <DIGOBJEKT id="4" XML="&lt;record root=&apos;false&apos;&gt;&lt;uuid&gt;uuid:4&lt;uuid&gt;&lt;name&gt;Issue 1&lt;/name&gt;&lt;/record&gt;"
+               uuid="uuid:4" druhdokumentu="issue" isleaf="1"  rdigknihovna_digobjekt="10"
+               stav="deleted" />
     <DIGVAZBY />
-    <digmetadata />
-    <digmetadata_changes />
+    <metadata />
 </dataset>

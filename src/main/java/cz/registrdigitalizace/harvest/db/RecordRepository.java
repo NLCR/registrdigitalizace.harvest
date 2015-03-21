@@ -20,7 +20,6 @@ package cz.registrdigitalizace.harvest.db;
 import cz.registrdigitalizace.harvest.HarvestedRecord;
 import java.math.BigDecimal;
 import java.sql.Date;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,23 +35,21 @@ public class RecordRepository {
 
     private static final Logger LOG = Logger.getLogger(RecordRepository.class.getName());
 
-    private final LocationDao locationDao;
     private final DigObjectDao digiObjectDao;
     private final RelationDao relationDao;
     private final IdSequenceDao idSequenceDao;
     private final MetadataDao metadataDao;
     private final Library library;
     private final Date inputDate;
-    private IdSequence locationSequence;
+    private IdSequence metadataSequence;
     private IdSequence digiObjSequence;
     private IdSequence relationSequence;
 
     public RecordRepository(
-            LocationDao locationDao, DigObjectDao digiObjectDao,
+            DigObjectDao digiObjectDao,
             RelationDao relationDao, IdSequenceDao idSequenceDao,
             MetadataDao metadataDao,
             Library library) {
-        this.locationDao = locationDao;
         this.digiObjectDao = digiObjectDao;
         this.relationDao = relationDao;
         this.idSequenceDao = idSequenceDao;
@@ -65,9 +62,9 @@ public class RecordRepository {
      * Makes snapshot of ID sequences.
      */
     public void init() throws DaoException {
-        Map<String, IdSequence> ids = idSequenceDao.find(IdSequence.DIGOBJECT, IdSequence.LOCATION, IdSequence.RELATION);
+        Map<String, IdSequence> ids = idSequenceDao.find(IdSequence.DIGOBJECT, IdSequence.METADATA, IdSequence.RELATION);
         digiObjSequence = getSequence(ids, IdSequence.DIGOBJECT);
-        locationSequence = getSequence(ids, IdSequence.LOCATION);
+        metadataSequence = getSequence(ids, IdSequence.METADATA);
         relationSequence = getSequence(ids, IdSequence.RELATION);
     }
 
@@ -79,7 +76,6 @@ public class RecordRepository {
     public void add(HarvestedRecord r) throws DaoException {
         try {
             upsertDigiobject(r);
-            upsertLocation(r);
             upsertRelations(r);
             upsertMetadata(r);
         } catch (Exception ex) {
@@ -90,18 +86,19 @@ public class RecordRepository {
     }
 
     public void remove(HarvestedRecord r) throws DaoException {
-        BigDecimal digiObjId = digiObjectDao.find(r.getUuid());
+        BigDecimal digiObjId = digiObjectDao.find(library.getId(), r.getUuid());
         if (digiObjId == null) {
-            LOG.log(Level.INFO, "Harvested record not found in DIGIOBJEKT: {0}.\nLibrary: {1}",
+            LOG.log(Level.INFO, "Harvested record not found in DIGOBJEKT: {0}.\nLibrary: {1}",
                     new Object[]{r, library});
             return ;
         }
         r.setId(digiObjId);
-        // deleteOld locations; XXX try to deleteOld all obsolete locations with one query like digi objects
-        BigDecimal locationId = locationDao.find(digiObjId, library.getId());
-        if (locationId != null) {
-            locationDao.delete(Arrays.asList(locationId));
-        }
+        digiObjectDao.updateState(digiObjId, "deleted");
+
+        Metadata metadata = new Metadata();
+        metadata.setDigObjId(digiObjId);
+        metadataDao.delete(metadata);
+
         // deleteOld relations
         relationDao.delete(r, library.getId());
     }
@@ -109,7 +106,7 @@ public class RecordRepository {
     public void close() throws DaoException {
         digiObjectDao.removeUnrelated(library.getId());
         upsertSequence(digiObjSequence);
-        upsertSequence(locationSequence);
+        upsertSequence(metadataSequence);
         upsertSequence(relationSequence);
     }
 
@@ -126,46 +123,24 @@ public class RecordRepository {
         relationDao.insert(relationSequence, r, library.getId());
     }
 
-    private void upsertLocation(HarvestedRecord r) throws DaoException {
-        BigDecimal id = locationDao.find(r.getId(), library.getId());
-        if (id == null) {
-            if (r.getChildren().isEmpty()) {
-                // insertOld location only for leafs
-                id = locationSequence.increment();
-                locationDao.insert(id, r.getId(), library.getId(), inputDate);
-            }
-        } else {
-            if (r.getChildren().isEmpty()) {
-                locationDao.update(id, inputDate);
-            } else {
-                locationDao.delete(Arrays.asList(id));
-            }
-        }
-    }
-
     private void upsertDigiobject(HarvestedRecord r) throws DaoException {
-        BigDecimal id = digiObjectDao.find(r.getUuid());
+        BigDecimal id = digiObjectDao.find(library.getId(), r.getUuid());
+        boolean isLeaf = r.getChildren().isEmpty();
         if (id == null) {
             id = digiObjSequence.increment();
-            digiObjectDao.insert(id, r.getUuid(), r.getType(), r.getDescriptor());
+            digiObjectDao.insert(library.getId(), id, r.getUuid(),
+                    r.getType(), r.getDescriptor(), r.getFormat(), null, isLeaf);
         } else {
-            digiObjectDao.update(id, r.getType(), r.getDescriptor());
-            r.getMetadata().setId(id);
+            digiObjectDao.update(id, r.getType(), r.getDescriptor(), r.getFormat(), isLeaf);
         }
         r.setId(id);
+        r.getMetadata().setDigObjId(id);
     }
     
     private void upsertMetadata(HarvestedRecord r) throws DaoException {
         Metadata metadata = r.getMetadata();
-        BigDecimal id = r.getId();
-        if (metadata.getId() == null) {
-            // new object
-            metadata.setId(id);
-            metadataDao.insert(metadata);
-        } else {
-            // existing object
-            metadataDao.update(metadata);
-        }
+        metadataDao.delete(metadata);
+        metadataDao.insert(metadataSequence, metadata);
     }
 
 }

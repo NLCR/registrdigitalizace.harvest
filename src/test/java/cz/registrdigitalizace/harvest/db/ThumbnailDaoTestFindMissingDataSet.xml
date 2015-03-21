@@ -1,18 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-    <digobjekt id="1" XML="&lt;record&gt;&lt;/record&gt;" uuid="uuid:1" druhdokumentu="monograph"/>
-    <digobjekt id="2" XML="&lt;record&gt;&lt;/record&gt;" uuid="uuid:2" druhdokumentu="monograph"/>
     <digknihovna id="10" software="kramerius4" protokol="oaipmh" formatdat="rd"
             encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
             oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
     <dlists id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
-    <lokace id="10" digknihovna="examplelib" datumzal="2010-04-10"
-        url="http://example.com/handle/uuid:1" rdigobjektl="1"/>
-    <lokace id="11" digknihovna="examplelib" datumzal="2010-04-10"
-        url="http://example.com/handle/uuid:2" rdigobjektl="2"/>
+    <digobjekt id="1" rdigknihovna_digobjekt="10" uuid="uuid:1" druhdokumentu="monograph"/>
+    <digobjekt id="2"  rdigknihovna_digobjekt="10" uuid="uuid:2" druhdokumentu="monograph"/>
     <digvazby />
-    <digmetadata />
-    <digmetadata_changes />
+    <metadata />
 
     <thumbnails digobjektid="2" mime="image/jpeg" contents="a2FyZWw="/>
 </dataset>

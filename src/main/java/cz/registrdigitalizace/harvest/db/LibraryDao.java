@@ -50,7 +50,8 @@ public final class LibraryDao {
         Statement stmt = conn.createStatement();
         try {
             ResultSet rs = stmt.executeQuery(
-                    "select ID, PROTOKOL, FORMATDAT, LASTHARVEST, OAIPMHCOMMAND, OAIPMHSERVERBASEURL from DIGKNIHOVNA");
+                    "select K.ID as ID, L.\"VALUE\" as DLISTS_VALUE, PROTOKOL, FORMATDAT, LASTHARVEST, OAIPMHCOMMAND, OAIPMHSERVERBASEURL"
+                    + " from DIGKNIHOVNA K, DLISTS L where K.ID = L.ID");
             try {
                 return processSelectLibraries(rs);
             } finally {
@@ -71,6 +72,7 @@ public final class LibraryDao {
             library.setLastHarvest(rs.getString("LASTHARVEST"));
             library.setQueryParameters(rs.getString("OAIPMHCOMMAND"));
             library.setBaseUrl(rs.getString("OAIPMHSERVERBASEURL"));
+            library.setDListValue(rs.getString("DLISTS_VALUE"));
             libraries.add(library);
         }
         return libraries;

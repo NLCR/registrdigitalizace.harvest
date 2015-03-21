@@ -32,6 +32,7 @@ public class HarvestedRecord {
     private String uuid;
     private String type;
     private String descriptor;
+    private String format;
     private Metadata metadata;
     @Deprecated
     private boolean root;
@@ -81,6 +82,20 @@ public class HarvestedRecord {
      */
     public void setDescriptor(String descriptor) {
         this.descriptor = descriptor;
+    }
+
+    /**
+     * Gets metada data content format. E.g. XML namespace
+     */
+    public String getFormat() {
+        return format;
+    }
+
+    /**
+     * Sets metada data content format. E.g. XML namespace
+     */
+    public void setFormat(String format) {
+        this.format = format;
     }
 
     /**
@@ -137,8 +152,8 @@ public class HarvestedRecord {
     public String toString() {
         int length = descriptor == null ? 0 : descriptor.length();
         return String.format("HarvestedRecord[id:%s, uuid:%s, type:%s, root:%s"
-                + ", children:%s, xml.length:%s,\n  %s]",
-                id, uuid, type, root, childrenUuids, length, metadata);
+                + ", children:%s, xml.length:%s, format:%s,\n  %s]",
+                id, uuid, type, root, childrenUuids, length, format, metadata);
     }
 
 }

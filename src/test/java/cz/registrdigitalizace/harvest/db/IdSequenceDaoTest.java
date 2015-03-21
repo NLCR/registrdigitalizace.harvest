@@ -85,17 +85,17 @@ public class IdSequenceDaoTest {
     public void testFindIds() throws Exception {
         transaction.begin();
         try {
-            Map<String, IdSequence> ids = dao.find(IdSequence.DIGOBJECT, IdSequence.LOCATION);
+            Map<String, IdSequence> ids = dao.find(IdSequence.DIGOBJECT, IdSequence.METADATA);
             assertNotNull("ids", ids);
             IdSequence id = ids.get(IdSequence.DIGOBJECT);
             assertNotNull("id: " +  IdSequence.DIGOBJECT, id);
             assertEquals(BigDecimal.ONE, id.getId());
             assertEquals(IdSequence.DIGOBJECT, id.getName());
 
-            id = ids.get(IdSequence.LOCATION);
-            assertNotNull("id: " +  IdSequence.LOCATION, id);
+            id = ids.get(IdSequence.METADATA);
+            assertNotNull("id: " +  IdSequence.METADATA, id);
             assertEquals(BigDecimal.valueOf(10), id.getId());
-            assertEquals(IdSequence.LOCATION, id.getName());
+            assertEquals(IdSequence.METADATA, id.getName());
         } finally {
             transaction.close();
         }

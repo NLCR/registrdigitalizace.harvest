@@ -30,6 +30,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import static cz.registrdigitalizace.harvest.TestUtils.*;
 import static org.junit.Assert.*;
 
 /**
@@ -68,7 +69,7 @@ public class KrameriusParserTest {
         String filename = "testParseDrobnusky.xml";
         Metadata m = doTestParse(filename, 0);
         assertNotNull(m);
-        assertEquals("Drobnůstky", m.getTitle());
+        assertSetEquals(asSet("Drobnůstky"), m.find(Metadata.NAZEV));
     }
 
     private Metadata doTestParse(String filename, int expectedRelations) throws Exception {
@@ -77,7 +78,7 @@ public class KrameriusParserTest {
         assertNotNull("missing: " + filename, input);
         XMLStreamReader reader = xmlContext.createStreamParser(input, null);
 
-        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET));
+        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.STYLESHEET));
         HarvestedRecord record = parser.parse(reader);
         assertNotNull(record);
 
@@ -96,7 +97,7 @@ public class KrameriusParserTest {
         assertNotNull("missing: " + filename, input);
         XMLStreamReader reader = xmlContext.createStreamParser(input, null);
 
-        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET));
+        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.STYLESHEET));
         HarvestedRecord record = parser.parse(reader);
         assertNotNull("HarvestedRecord", record);
         assertValidRecord(true, "cd2b2ad0-62d4-11dd-ac0e-000d606f5dc6", "MONOGRAPH", Collections.<String>emptyList(), record);
@@ -110,7 +111,7 @@ public class KrameriusParserTest {
         assertNotNull("missing: " + filename, input);
         XMLStreamReader reader = xmlContext.createStreamParser(input, null);
 
-        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET));
+        KrameriusParser parser = new KrameriusParser(xmlContext, new ModsMetadataParser(ModsMetadataParser.STYLESHEET));
         HarvestedRecord record = parser.parse(reader);
         assertNotNull("HarvestedRecord", record);
         assertValidRecord(false, "cd2b2ad0-62d4-11dd-ac0e-000d606f5dc6", "PERIODICAL_VOLUME",

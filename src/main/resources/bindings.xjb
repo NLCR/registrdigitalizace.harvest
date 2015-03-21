@@ -9,18 +9,5 @@
             <package name="org.openarchives.oai2" />
         </schemaBindings>
     </bindings>
-    
-    <bindings schemaLocation="digobject.xsd">
-        <schemaBindings>
-            <package name="cz.registrdigitalizace.harvest.metadata" />
-        </schemaBindings>
-        
-        <bindings node="/xs:schema/xs:complexType[@name='DigobjectType']">
-            <!-- http://java.net/jira/browse/JAXB-690 workaround -->
-            <annox:annotate>
-                <annox:annotate annox:class="javax.xml.bind.annotation.XmlRootElement" name="digobject"/>
-            </annox:annotate>
-        </bindings>
-    </bindings>
-    
+
 </bindings>

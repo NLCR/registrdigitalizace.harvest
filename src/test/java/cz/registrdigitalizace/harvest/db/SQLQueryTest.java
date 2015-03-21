@@ -56,7 +56,7 @@ public class SQLQueryTest {
 
     @Test
     public void testDeleteHierarchyFromLokace() {
-        String result = SQLQuery.getInsertLokace();
+        String result = SQLQuery.getSelectMetadataHierarchy();
         assertNotNull(result);
         assertTrue(result.length() > 0);
     }

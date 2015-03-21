@@ -27,7 +27,7 @@ public class IdSequence {
 
     public static final String DIGOBJECT = "cz.incad.rd.DigObjekt";
     public static final String RELATION = "cz.incad.rd.DigVazby";
-    public static final String LOCATION = "cz.incad.rd.Lokace";
+    public static final String METADATA = "cz.incad.rd.Metadata";
 
     private BigDecimal lastId;
     private final String sequenceName;

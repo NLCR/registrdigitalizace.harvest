@@ -28,6 +28,8 @@ import java.math.BigDecimal;
 public final class Library {
 
     private BigDecimal id;
+    /** DLISTS.VALUE*/
+    private String dListValue;
     /** PROTOKOL */
     private String harvestProtocol;
     /** FORMATDAT */
@@ -61,6 +63,14 @@ public final class Library {
 
     public void setBaseUrl(String baseUrl) {
         this.baseUrl = baseUrl;
+    }
+
+    public String getDListValue() {
+        return dListValue;
+    }
+
+    public void setDListValue(String dListValue) {
+        this.dListValue = dListValue;
     }
 
     public String getHarvestProtocol() {
@@ -113,8 +123,8 @@ public final class Library {
 
     @Override
     public String toString() {
-        return String.format("Library[id: %s, baseUrl: %s, protocol: %s, format: %s, query: %s, last: %s]",
-                id, baseUrl, harvestProtocol, metadataFormat, queryParameters, lastHarvest);
+        return String.format("Library[id: %s, dListValue: %s, baseUrl: %s, protocol: %s, format: %s, query: %s, last: %s]",
+                id, dListValue, baseUrl, harvestProtocol, metadataFormat, queryParameters, lastHarvest);
     }
 
 }

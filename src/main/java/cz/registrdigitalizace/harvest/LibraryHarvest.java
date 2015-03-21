@@ -24,7 +24,6 @@ import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.IdSequenceDao;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.LibraryDao;
-import cz.registrdigitalizace.harvest.db.LocationDao;
 import cz.registrdigitalizace.harvest.db.MetadataDao;
 import cz.registrdigitalizace.harvest.db.RecordRepository;
 import cz.registrdigitalizace.harvest.db.RelationDao;
@@ -48,11 +47,10 @@ import org.openarchives.oai2.StatusType;
 public class LibraryHarvest {
     
     // parser will be configurable per library at some time in future
-    private static final ModsMetadataParser modsParser = new ModsMetadataParser(ModsMetadataParser.MZK_STYLESHEET);
+    private static final ModsMetadataParser modsParser = new ModsMetadataParser(ModsMetadataParser.STYLESHEET);
     private final Library library;
     private final HarvestTransaction transaction;
     private final IdSequenceDao idSequenceDao = new IdSequenceDao();
-    private final LocationDao locationDao = new LocationDao();
     private final DigObjectDao digiObjectDao = new DigObjectDao();
     private final RelationDao relationDao = new RelationDao();
     private final LibraryDao libraryDao = new LibraryDao();
@@ -137,12 +135,11 @@ public class LibraryHarvest {
 
     private RecordRepository createProcessor() throws DaoException {
         idSequenceDao.setDataSource(transaction);
-        locationDao.setDataSource(transaction);
         relationDao.setDataSource(transaction);
         digiObjectDao.setDataSource(transaction);
         metadataDao.setDataSource(transaction);
 
-        return new RecordRepository(locationDao, digiObjectDao, relationDao,
+        return new RecordRepository(digiObjectDao, relationDao,
                 idSequenceDao, metadataDao, library);
     }
 

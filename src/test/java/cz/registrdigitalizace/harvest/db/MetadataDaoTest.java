@@ -16,12 +16,14 @@
  */
 package cz.registrdigitalizace.harvest.db;
 
+import cz.registrdigitalizace.harvest.db.Metadata.MetadataItem;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import org.dbunit.Assertion;
 import org.dbunit.dataset.ITable;
 import org.dbunit.operation.DatabaseOperation;
 import org.dbunit.dataset.IDataSet;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -68,16 +70,20 @@ public class MetadataDaoTest {
     public void testDelete() throws Exception {
         IDataSet initialDS = support.loadFlatXmlDataStream(getClass(), "MetadataDaoTestDataSet.xml", true);
         DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
+        BigDecimal libId = BigDecimal.valueOf(1);
         try {
             transaction.begin();
-            dao.delete();
+            dao.delete(libId);
             transaction.commit();
         } finally {
             transaction.close();
         }
 
-        ITable result = support.getConnection().createTable("DIGMETADATA");
+        ITable result = support.getConnection().createQueryTable("METADATA",
+                "select M.* from METADATA M, DIGOBJEKT D where RDIGOBJEKT_METADATA=D.ID and rdigknihovna_digobjekt=" + libId);
         assertEquals(0, result.getRowCount());
+        ITable result2 = support.getConnection().createTable("METADATA");
+        assertThat(result2.getRowCount(), CoreMatchers.not(0));
     }
 
     @Test
@@ -90,15 +96,15 @@ public class MetadataDaoTest {
                 "vydavatele2", "issn2", "isbn2", "ccnb2", "sigla2", "signatura2", "rokvyd2");
         try {
             transaction.begin();
-            dao.insert(m);
+            dao.insert(new IdSequence(BigDecimal.valueOf(2), IdSequence.METADATA), m);
             transaction.commit();
         } finally {
             transaction.close();
         }
-        IDataSet resultDS = support.getConnection().createDataSet(new String[]{"DIGOBJEKT", "DIGMETADATA"});
-//        support.printTableAsFlatXml("DIGMETADATA");
-//        support.dumpTable(resultDS.getTable("DIGMETADATA"));
-//        support.dumpTable(expectedDS.getTable("DIGMETADATA"));
+        IDataSet resultDS = support.getConnection().createDataSet(new String[]{"DIGKNIHOVNA", "DIGOBJEKT", "METADATA"});
+//        support.printTableAsFlatXml("METADATA");
+//        support.dumpTable(resultDS.getTable("METADATA"));
+//        support.dumpTable(expectedDS.getTable("METADATA"));
         Assertion.assertEquals(expectedDS, resultDS);
     }
 
@@ -106,14 +112,14 @@ public class MetadataDaoTest {
     public void testInsertLargeValues() throws Exception {
         IDataSet initialDS = support.loadFlatXmlDataStream(getClass(), "MetadataDaoTestDataSet.xml", true);
         DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
-        char[] chars = new char[3000];
+        char[] chars = new char[5000];
         Arrays.fill(chars, 'č');
         String longString = String.valueOf(chars);
         Metadata m = createNewRecord(BigDecimal.valueOf(2), longString, longString,
                 longString, longString, longString, longString, longString, longString, longString);
         try {
             transaction.begin();
-            dao.insert(m);
+            dao.insert(new IdSequence(BigDecimal.valueOf(2), IdSequence.METADATA), m);
             transaction.commit();
         } finally {
             transaction.close();
@@ -126,37 +132,20 @@ public class MetadataDaoTest {
         DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
         IDataSet expectedDS = support.loadFlatXmlDataStream(getClass(), "MetadataDaoTestUpdateResult.xml", true);
 
-        Metadata m = createNewRecord(BigDecimal.valueOf(1), "Updated_DO1", "autori1",
-                "vydavatele1", "issn1", "isbn1", "ccnb1", "sigla1", "signatura1", "rokvyd1");
+        Metadata m = createNewRecord(BigDecimal.valueOf(1), "Updated_DO1", null,
+                null, null, null, null, null, null, null);
         try {
             transaction.begin();
-            dao.update(m);
+            dao.delete(m);
+            dao.insert(new IdSequence(BigDecimal.valueOf(2), IdSequence.METADATA), m);
             transaction.commit();
         } finally {
             transaction.close();
         }
-        IDataSet resultDS = support.getConnection().createDataSet(new String[]{"DIGOBJEKT", "DIGMETADATA"});
-//        support.printTableAsFlatXml("DIGMETADATA");
-//        support.dumpTable(resultDS.getTable("DIGMETADATA"));
-//        support.dumpTable(expectedDS.getTable("DIGMETADATA"));
-        Assertion.assertEquals(expectedDS, resultDS);
-    }
-
-    @Test
-    public void testUpdateDigObjectMetadata() throws Exception {
-        IDataSet initialDS = support.loadFlatXmlDataStream(getClass(), "MetadataDaoTestUpdateDigObjMetDataSet.xml", true);
-        DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
-        IDataSet expectedDS = support.loadFlatXmlDataStream(getClass(), "MetadataDaoTestUpdateDigObjMetResult.xml", true);
-
-        try {
-            transaction.begin();
-            dao.updateDigObjectMetadata();
-            transaction.commit();
-        } finally {
-            transaction.close();
-        }
-        IDataSet resultDS = support.getConnection().createDataSet(new String[]{
-            "DIGOBJEKT", "DIGVAZBY", "DIGMETADATA", "DIGMETADATA_CHANGES"});
+        IDataSet resultDS = support.getConnection().createDataSet(new String[]{"DIGKNIHOVNA", "DIGOBJEKT", "METADATA"});
+//        support.printTableAsFlatXml("METADATA");
+//        support.dumpTable(resultDS.getTable("METADATA"));
+//        support.dumpTable(expectedDS.getTable("METADATA"));
         Assertion.assertEquals(expectedDS, resultDS);
     }
 
@@ -164,17 +153,23 @@ public class MetadataDaoTest {
             String authors, String publishers, String issn, String isbn,
             String ccnb, String sigla, String signature, String yearOfPublication) {
 
-        Metadata m = new Metadata();
-        m.setAuthors(authors);
-        m.setCcnb(ccnb);
-        m.setId(id);
-        m.setIsbn(isbn);
-        m.setIssn(issn);
-        m.setPublishers(publishers);
-        m.setSigla(sigla);
-        m.setSignature(signature);
-        m.setTitle(title);
-        m.setYearOfPublication(yearOfPublication);
-        return m;
+        Metadata m2 = new Metadata();
+        m2.setDigObjId(id);
+        addItem(m2, null, title, Metadata.NAZEV, null);
+        addItem(m2, null, authors, Metadata.OSOBA, null);
+        addItem(m2, null, publishers, Metadata.OSOBA, null);
+        addItem(m2, null, issn, Metadata.ISSN, null);
+        addItem(m2, null, isbn, Metadata.ISBN, null);
+        addItem(m2, null, ccnb, Metadata.CCNB, null);
+        addItem(m2, null, sigla, Metadata.SIGLA_BIB_UDAJU, null);
+        addItem(m2, null, signature, Metadata.SIGNATURA, null);
+        addItem(m2, null, yearOfPublication, Metadata.ROK_VYDANI, null);
+        return m2;
+    }
+
+    public static void addItem(Metadata m2, BigDecimal id, String value, String reliefName, Boolean invalid) {
+        if (value != null) {
+            m2.getItems().add(new MetadataItem(id, value, reliefName, invalid));
+        }
     }
 }

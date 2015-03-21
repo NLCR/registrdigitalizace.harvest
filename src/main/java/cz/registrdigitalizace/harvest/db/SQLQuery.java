@@ -36,45 +36,15 @@ import java.util.logging.Logger;
 final class SQLQuery {
     private static final Logger LOGGER = Logger.getLogger(SQLQuery.class.getName());
 
-    private static String insertLokace;
-    private static String insertVazby;
-    private static String deleteUnrelatedDigiObjekts;
-    private static String findMissingThumbnails;
     private static String selectMetadataHierarchy;
-    private static String insertMetadataChanges;
 
     public static void init() throws IOException {
         CharArrayWriter queryBuilder = new CharArrayWriter(1024);
-        insertLokace = loadQuery("/sql/insertLokace.sql", queryBuilder);
-        insertVazby = loadQuery("/sql/insertVazby.sql", queryBuilder);
-        deleteUnrelatedDigiObjekts = loadQuery("/sql/deleteUnrelatedDigiObjekts.sql", queryBuilder);
-        findMissingThumbnails = loadQuery("/sql/findMissingThumbnails.sql", queryBuilder);
         selectMetadataHierarchy = loadQuery("/sql/selectMetadataHierarchy.sql", queryBuilder);
-        insertMetadataChanges = loadQuery("/sql/insertMetadataChanges.sql", queryBuilder);
-    }
-
-    public static String getInsertLokace() {
-        return insertLokace;
-    }
-
-    public static String getInsertVazby() {
-        return insertVazby;
-    }
-
-    public static String getDeleteUnrelatedDigiObjects() {
-        return deleteUnrelatedDigiObjekts;
-    }
-
-    public static String getFindMissingThumbnails() {
-        return findMissingThumbnails;
     }
 
     public static String getSelectMetadataHierarchy() {
         return selectMetadataHierarchy;
-    }
-
-    public static String getInsertMetadataChanges() {
-        return insertMetadataChanges;
     }
 
     private static String loadQuery(String filename, CharArrayWriter queryBuilder) throws IOException {

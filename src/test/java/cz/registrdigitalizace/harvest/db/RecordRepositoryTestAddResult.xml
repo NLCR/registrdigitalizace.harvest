@@ -1,9 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-    <DIGOBJEKT id="2" XML="&lt;record root=&apos;true&apos;&gt;&lt;uuid&gt;uuid:2&lt;uuid&gt;&lt;name&gt;Periodical&lt;/name&gt;&lt;/record&gt;" uuid="uuid:2" druhdokumentu="periodical"/>
-    <DIGOBJEKT id="3" XML="&lt;record root=&apos;false&apos;&gt;&lt;uuid&gt;uuid:3&lt;uuid&gt;&lt;name&gt;Volume&lt;/name&gt;&lt;/record&gt;" uuid="uuid:3" druhdokumentu="volume"/>
-    <DIGOBJEKT id="4" XML="&lt;record root=&apos;false&apos;&gt;&lt;uuid&gt;uuid:4&lt;uuid&gt;&lt;name&gt;Issue 1&lt;/name&gt;&lt;/record&gt;" uuid="uuid:4" druhdokumentu="issue"/>
-    <LOKACE id="11" digknihovna="examplelib" datumzal="${currentDate}" rdigobjektl="4" />
+    <DIGOBJEKT id="2" XML="&lt;record root=&apos;true&apos;&gt;&lt;uuid&gt;uuid:2&lt;uuid&gt;&lt;name&gt;Periodical&lt;/name&gt;&lt;/record&gt;"
+               uuid="uuid:2" druhdokumentu="periodical" isleaf="0" rdigknihovna_digobjekt="10" />
+    <DIGOBJEKT id="3" XML="&lt;record root=&apos;false&apos;&gt;&lt;uuid&gt;uuid:3&lt;uuid&gt;&lt;name&gt;Volume&lt;/name&gt;&lt;/record&gt;"
+               uuid="uuid:3" druhdokumentu="volume" isleaf="0" rdigknihovna_digobjekt="10" />
+    <DIGOBJEKT id="4" XML="&lt;record root=&apos;false&apos;&gt;&lt;uuid&gt;uuid:4&lt;uuid&gt;&lt;name&gt;Issue 1&lt;/name&gt;&lt;/record&gt;"
+               uuid="uuid:4" druhdokumentu="issue" isleaf="1"  rdigknihovna_digobjekt="10" />
     <DIGVAZBY id="1" potomek="uuid:2" poradi="1" digknihovna="10"/>
     <DIGVAZBY id="2" predek="2" potomek="uuid:3" poradi="1" digknihovna="10"/>
     <!--<DIGVAZBY id="3" potomek="uuid:3" poradi="1" digknihovna="10"/>--> <!--removed as not root; DigObjectDao.removeUnrelated-->
@@ -11,10 +13,9 @@
     <!--<DIGVAZBY id="5" potomek="uuid:4" poradi="1" digknihovna="10"/>--> <!--removed as not root; DigObjectDao.removeUnrelated-->
     <PLAANT_IDS deskname="cz.incad.rd.DigObjekt" id="4"/>
     <PLAANT_IDS deskname="cz.incad.rd.DigVazby" id="5"/>
-    <PLAANT_IDS deskname="cz.incad.rd.Lokace" id="11"/>
+    <PLAANT_IDS deskname="cz.incad.rd.Metadata" id="13"/>
 
-    <digmetadata id="2" nazev="Periodical" modifikace="1" />
-    <digmetadata id="3" nazev="Volume" modifikace="1" />
-    <digmetadata id="4" nazev="Issue 1" modifikace="1" />
-    <digmetadata_changes />
+    <metadata id="11" reliefname="nazev" value="Periodical" valid="1" rdigobjekt_metadata="2" />
+    <metadata id="12" reliefname="nazev" value="Volume" valid="1" rdigobjekt_metadata="3" />
+    <metadata id="13" reliefname="nazev" value="Issue 1" valid="1" rdigobjekt_metadata="4" />
 </dataset>

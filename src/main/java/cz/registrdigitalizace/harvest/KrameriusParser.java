@@ -18,7 +18,6 @@
 package cz.registrdigitalizace.harvest;
 
 import cz.registrdigitalizace.harvest.db.Metadata;
-import cz.registrdigitalizace.harvest.metadata.DigobjectType;
 import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import cz.registrdigitalizace.harvest.oai.BoundaryStreamFilter;
 import cz.registrdigitalizace.harvest.oai.BoundaryStreamReader;
@@ -128,6 +127,8 @@ public final class KrameriusParser implements MetadataParser<HarvestedRecord> {
         if (!OaiParser.moveToStartElement(reader)) {
             throw new XMLStreamException("Missing descriptor content", reader.getLocation());
         }
+        String descriptionFormat = reader.getName().getNamespaceURI();
+        record.setFormat(descriptionFormat);
         XMLInputFactory inFactory = xmlContext.getXMLInputFactory();
         XMLStreamReader boundaryReader =
                 new BoundaryStreamReader(reader, new BoundaryStreamFilter(reader.getName(), true));
@@ -136,12 +137,11 @@ public final class KrameriusParser implements MetadataParser<HarvestedRecord> {
             XMLStreamReader filteredReader = inFactory.createFilteredReader(
                     boundaryReader, dumpFilter);
             // read content
-            DigobjectType dt = descriptorParser.parse(new StAXSource(filteredReader));
-            Metadata metadata = Metadata.create(dt, null);
-            record.setMetadata(metadata);
+            Metadata metadata2 = descriptorParser.parse(new StAXSource(filteredReader));
+            record.setMetadata(metadata2);
             String descriptor = dumpFilter.getDumpedText();
             record.setDescriptor(descriptor);
-            if (dt == null) {
+            if (metadata2 == null || metadata2.getItems().isEmpty()) {
                 LOG.log(Level.WARNING, "unexpected metadata content for {0}:\n{1}", new Object[] {record.getUuid(), descriptor});
             }
         } catch (IOException ex) {

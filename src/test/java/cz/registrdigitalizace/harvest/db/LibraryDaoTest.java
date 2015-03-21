@@ -90,6 +90,7 @@ public class LibraryDaoTest {
         assertEquals(null, lib.getLastHarvest());
         assertEquals("rd", lib.getMetadataFormat());
         assertEquals(null, lib.getQueryParameters());
+        assertEquals("LIB1", lib.getDListValue());
     }
 
     @Test

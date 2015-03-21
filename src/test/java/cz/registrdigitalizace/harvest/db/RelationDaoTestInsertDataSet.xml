@@ -8,8 +8,6 @@
             encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
             oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
     <dlists id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
-    <lokace />
     <digvazby />
-    <digmetadata />
-    <digmetadata_changes />
+    <metadata />
 </dataset>

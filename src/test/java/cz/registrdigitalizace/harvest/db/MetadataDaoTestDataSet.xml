@@ -1,12 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-    <digobjekt id="1" uuid="1" />
-    <digobjekt id="2" uuid="2" />
-    <digobjekt id="3" uuid="3" />
-    <digmetadata id="1" nazev="DO1" modifikace="0" />
-    <digmetadata id="3" nazev="DO3" modifikace="0" />
+    <digknihovna id="1" />
+    <digknihovna id="2" />
+    <digknihovna id="3" />
+    <digobjekt id="1" uuid="1" rdigknihovna_digobjekt="2" />
+    <digobjekt id="2" uuid="2" rdigknihovna_digobjekt="1" />
+    <digobjekt id="3" uuid="3" rdigknihovna_digobjekt="3" />
+    <metadata id="1" reliefname="nazev" value="DO1" rdigobjekt_metadata="1" />
+    <metadata id="2" reliefname="nazev" value="DO3" rdigobjekt_metadata="3" />
 
     <digvazby />
-    <lokace />
-    <digmetadata_changes />
 </dataset>

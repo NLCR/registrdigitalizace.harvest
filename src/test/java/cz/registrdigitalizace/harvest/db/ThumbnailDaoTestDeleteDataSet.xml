@@ -1,10 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-    <digobjekt />
-    <lokace />
+    <digobjekt id="2" druhdokumentu="monograph"/>
     <digvazby />
-    <digmetadata />
-    <digmetadata_changes />
+    <metadata />
 
     <thumbnails digobjektid="1" mime="image/jpeg" contents="a2FyZWw="/>
+    <thumbnails digobjektid="2" mime="image/jpeg" contents="a2FyZWw="/>
 </dataset>
