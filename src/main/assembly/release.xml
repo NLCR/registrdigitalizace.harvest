@@ -31,7 +31,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
     <fileSets>
         <!-- / permissions -->
         <fileSet>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory></outputDirectory>
             <directoryMode>755</directoryMode>
             <includes>
                 <include>./</include>
@@ -39,7 +39,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         </fileSet>
         <!-- /lib permissions -->
         <fileSet>
-            <outputDirectory>/lib</outputDirectory>
+            <outputDirectory>lib</outputDirectory>
             <directoryMode>755</directoryMode>
             <includes>
                 <include>./</include>
@@ -48,7 +48,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <!-- bin -->
         <fileSet>
             <directory>${basedir}/src/main/commands</directory>
-            <outputDirectory>/bin</outputDirectory>
+            <outputDirectory>bin</outputDirectory>
             <fileMode>700</fileMode>
             <directoryMode>700</directoryMode>
             <filtered>true</filtered>
@@ -56,7 +56,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <!-- conf-->
         <fileSet>
             <directory>${basedir}/src/main/config</directory>
-            <outputDirectory>/conf</outputDirectory>
+            <outputDirectory>conf</outputDirectory>
             <fileMode>600</fileMode>
             <directoryMode>700</directoryMode>
             <includes>
@@ -67,7 +67,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <!-- create empty logs folder -->
         <fileSet>
             <directory>${basedir}/src/main/config</directory>
-            <outputDirectory>/logs</outputDirectory>
+            <outputDirectory>logs</outputDirectory>
             <directoryMode>0700</directoryMode>
             <excludes>
                 <exclude>*</exclude>
@@ -76,7 +76,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         <!-- info files -->
         <fileSet>
             <directory>${project.basedir}</directory>
-            <outputDirectory>/</outputDirectory>
+            <outputDirectory></outputDirectory>
             <fileMode>0644</fileMode>
             <includes>
                 <include>./</include>
