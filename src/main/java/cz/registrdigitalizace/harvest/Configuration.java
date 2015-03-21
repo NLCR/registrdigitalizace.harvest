@@ -160,11 +160,11 @@ final class Configuration {
                 + nltab + HARVEST_WITH_CACHE
                 + nltabtab + "Harvests data to local cache and then writes it to DB."
                 + nltab + String.format("%s <folder>", HARVEST_FROM_CACHE)
-                + nltabtab + "Reads already harvested data from foilder containing session cache and writes it to DB."
+                + nltabtab + "Reads already harvested data from folder containing session cache and writes it to DB."
                 + nltab + String.format("%s <folder>", CACHE_ROOT)
-                + nltabtab + "Path to store  all harvested data. -Djava.io.tmp/harvest_cache is default path."
+                + nltabtab + "Path to store all harvested data. -Djava.io.tmp/harvest_cache is default path."
                 + nltab + DRY_RUN
-                + nltabtab + "Use to test storage of newly harvested records. Rollbacks DB modifications."
+                + nltabtab + "Use to test storage of newly harvested records. Rollbacks DB modifications. Skips thumbnail processing."
                 + nltab + INCLUDES + " <libIds>"
                 + nltabtab + "Use to include only list of library IDs."
                 + nltab + EXCLUDES + " <libIds>"
