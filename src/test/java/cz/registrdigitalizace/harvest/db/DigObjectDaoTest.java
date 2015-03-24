@@ -171,6 +171,35 @@ public class DigObjectDaoTest {
         }
     }
 
+    @Test
+    public void testFindMods() throws Exception {
+        QueryDataSet queryDataSet = new QueryDataSet(support.getConnection());
+        queryDataSet.addTable(DIGIOBJECTS_TABLE);
+        IDataSet initDataSet = support.loadFlatXmlDataStream(
+                getClass(), "DigObjectTestFindDataSet.xml");
+        DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initDataSet);
+        transaction.begin();
+        try {
+            Library library = new Library();
+            library.setId(BigDecimal.ONE);
+            try {
+                IterableResult<DigObject> result = dao.findMods(library);
+                assertNotNull(result);
+                assertTrue(result.hasNextResult());
+                DigObject next = result.next();
+                assertNotNull(next);
+                assertEquals(BigDecimal.ONE, next.getId());
+                assertEquals("<record></record>", next.getXml());
+                transaction.commit();
+            } catch (DaoException ex) {
+                transaction.rollback();
+                throw new IllegalStateException(ex);
+            }
+        } finally {
+            transaction.close();
+        }
+    }
+
     public static HarvestedRecord createNewRecord(String uuid, boolean root, String type, String name, String... relations) {
         return createRecord(null, uuid, root, type, name, relations);
     }

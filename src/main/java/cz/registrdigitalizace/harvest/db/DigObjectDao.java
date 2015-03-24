@@ -95,8 +95,8 @@ public class DigObjectDao {
                 "select ID, \"XML\" from DIGOBJEKT where RDIGKNIHOVNA_DIGOBJEKT = ?");
         ResultSet rs = null;
         try {
-            rs = pstmt.executeQuery();
             pstmt.setBigDecimal(1, library.getId());
+            rs = pstmt.executeQuery();
             return new FindModsResult(pstmt, rs);
         } finally {
             if (rs == null) {
