@@ -53,6 +53,14 @@ public final class ModsMetadataParser {
     private Transformer transformer;
     private Unmarshaller digObjReader;
 
+    public static String getDefaultXslt() {
+        URL xslt = ModsMetadataParser.class.getResource(STYLESHEET);
+        if (xslt == null) {
+            throw new IllegalStateException("Missing stylesheet " + STYLESHEET);
+        }
+        return xslt.toExternalForm();
+    }
+
     public ModsMetadataParser(String stylesheet) {
         try {
             initUnmarshaler();
@@ -71,11 +79,15 @@ public final class ModsMetadataParser {
 
     private void initTransformer(String stylesheet) throws TransformerConfigurationException {
         TransformerFactory tfactory = TransformerFactory.newInstance();
-        URL xslt = ModsMetadataParser.class.getResource(stylesheet);
-        if (xslt == null) {
-            throw new TransformerConfigurationException("Missing stylesheet.");
+        String systemId = stylesheet;
+        if (STYLESHEET.equals(stylesheet)) {
+            URL xsltRes = ModsMetadataParser.class.getResource(stylesheet);
+            if (xsltRes == null) {
+                throw new TransformerConfigurationException("Missing stylesheet.");
+            }
+            systemId = xsltRes.toExternalForm();
         }
-        transformer = tfactory.newTransformer(new StreamSource(xslt.toExternalForm()));
+        transformer = tfactory.newTransformer(new StreamSource(systemId));
     }
     
     public Metadata parse(InputStream modsxml) {

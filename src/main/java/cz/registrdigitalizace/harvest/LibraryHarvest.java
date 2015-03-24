@@ -46,8 +46,7 @@ import org.openarchives.oai2.StatusType;
  */
 public class LibraryHarvest {
     
-    // parser will be configurable per library at some time in future
-    private static final ModsMetadataParser modsParser = new ModsMetadataParser(ModsMetadataParser.STYLESHEET);
+    private final ModsMetadataParser modsParser;
     private final Library library;
     private final HarvestTransaction transaction;
     private final IdSequenceDao idSequenceDao = new IdSequenceDao();
@@ -59,9 +58,11 @@ public class LibraryHarvest {
     private int removeCounter;
     private final boolean dryRun;
 
-    public LibraryHarvest(Library library, DigitizationRegistrySource source, boolean dryRun) {
+    public LibraryHarvest(Library library, DigitizationRegistrySource source,
+            ModsMetadataParser metadataParser, boolean dryRun) {
         this.library = library;
         this.transaction = new HarvestTransaction(source);
+        this.modsParser = metadataParser;
         this.dryRun = dryRun;
     }
 

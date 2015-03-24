@@ -40,20 +40,18 @@ public class MetadataUpdater {
     
     private static final Logger LOG = Logger.getLogger(MetadataUpdater.class.getName());
     private final DigitizationRegistrySource source;
-    private final ModsMetadataParser parser;
     private long totalNumber;
     private long totalSize;
 
     public MetadataUpdater(DigitizationRegistrySource source) {
         this.source = source;
-        parser = new ModsMetadataParser(ModsMetadataParser.STYLESHEET);
     }
 
     /**
      * Throws out all existing metadata (METADATA) of already harvested digital objects
      * and generates new.
      */
-    public void regenerateDigObjects(Library library) throws DaoException {
+    public void regenerateDigObjects(Library library, ModsMetadataParser parser) throws DaoException {
         LOG.fine("start");
         DigObjectDao digObjectDao = new DigObjectDao();
         MetadataDao metadataDao = new MetadataDao();
@@ -71,7 +69,7 @@ public class MetadataUpdater {
             try {
                 for (DigObject digObject; digObjects.hasNextResult();) {
                     digObject = digObjects.nextResult();
-                    Metadata m = handleItem(digObject);
+                    Metadata m = handleItem(digObject, parser);
                     metadataDao.insert(metadataSeq, m);
                     totalNumber++;
                     totalSize += digObject.getXml().length();
@@ -99,7 +97,7 @@ public class MetadataUpdater {
         return totalSize;
     }
     
-    private Metadata handleItem(DigObject dobj) {
+    private Metadata handleItem(DigObject dobj, ModsMetadataParser parser) {
         Metadata dt;
         try {
             dt = parser.parse(new StringReader(dobj.getXml()));

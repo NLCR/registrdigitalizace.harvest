@@ -16,12 +16,19 @@
  */
 package cz.registrdigitalizace.harvest;
 
+import static cz.registrdigitalizace.harvest.Harvest.CONFIG_PROPERTY;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Harvest configuration.
@@ -40,7 +47,8 @@ final class Configuration {
     private static final String INCLUDES = "-includes";
     private static final String HELP = "-help";
     private static final String H = "-h";
-    
+    private static final Logger LOG = Logger.getLogger(Configuration.class.getName());
+
     private boolean dryRun;
     private boolean harvestFromCache;
     private boolean harvestToCache;
@@ -54,6 +62,7 @@ final class Configuration {
     private List<String> errors = new ArrayList<String>();
     private Set<BigDecimal> includeLibraries = Collections.emptySet();
     private Set<BigDecimal> excludeLibraries = Collections.emptySet();
+    private Properties properties;
 
     /** build configuration from command line */
     public static Configuration fromCmdLine(String[] args) {
@@ -233,6 +242,58 @@ final class Configuration {
      */
     public Set<BigDecimal> getIncludeLibraries() {
         return includeLibraries;
+    }
+
+    /**
+     * Gets a XSLT path.
+     */
+    public String getMetadataXslt(String libVal) {
+        String val = getProperties().getProperty("library." + libVal +  ".metadata.xslt",
+                getProperties().getProperty("metadata.xslt"));
+        return val;
+    }
+
+    /**
+     * Gets harvester.properties.
+     * @see Harvest#CONFIG_PROPERTY
+     */
+    public Properties getProperties() {
+        return loadConfigFile();
+    }
+
+    /**
+     * Fetches properties form file specified as
+     * {@code -Dcz.registrdigitalizace.harvest.Harvest.config}.
+     *
+     * @return fetched properties or system properties
+     */
+    public Properties loadConfigFile() {
+        if (properties != null) {
+            return properties;
+        }
+        properties = System.getProperties();
+        String configPath = properties.getProperty(CONFIG_PROPERTY);
+        LOG.log(Level.FINEST, "CONFIG_PROPERTY: {0}", configPath);
+        if (configPath != null) {
+            InputStreamReader reader = null;
+            try {
+                reader = new InputStreamReader(new FileInputStream(configPath), "UTF-8");
+                properties = new Properties();
+                properties.load(reader);
+            } catch (IOException ex) {
+                throw new IllegalStateException(configPath, ex);
+            } finally {
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException ex) {
+                    LOG.log(Level.SEVERE, configPath, ex);
+                }
+            }
+        }
+        LOG.log(Level.FINEST, "config: {0}", properties.toString());
+        return properties;
     }
 
     static String defaultCacheRoot() {

@@ -23,6 +23,7 @@ import cz.registrdigitalizace.harvest.db.HarvestTransaction;
 import cz.registrdigitalizace.harvest.db.Library;
 import cz.registrdigitalizace.harvest.db.LibraryDao;
 import cz.registrdigitalizace.harvest.metadata.MetadataUpdater;
+import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import cz.registrdigitalizace.harvest.oai.Harvester;
 import cz.registrdigitalizace.harvest.oai.ListResult;
 import cz.registrdigitalizace.harvest.oai.OaiException;
@@ -31,14 +32,13 @@ import cz.registrdigitalizace.harvest.oai.OaiSourceFactory;
 import cz.registrdigitalizace.harvest.oai.Record;
 import cz.registrdigitalizace.harvest.oai.XmlContext;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
@@ -62,6 +62,7 @@ public final class Harvest {
     private final XmlContext xmlCtx = new XmlContext();
     private final OaiSourceFactory oaiFactory;
     private final Configuration conf;
+    private final Map<String, ModsMetadataParser> parserMap = new HashMap<String, ModsMetadataParser>();
     private File sessionCache;
 
     public Harvest() {
@@ -74,7 +75,7 @@ public final class Harvest {
 
     Harvest(OaiSourceFactory oaiFactory, Configuration conf) {
         this.oaiFactory = oaiFactory;
-        this.dataSource = new DigitizationRegistrySource(resolveConfig());
+        this.dataSource = new DigitizationRegistrySource(conf.getProperties());
         this.conf = conf;
     }
 
@@ -98,6 +99,7 @@ public final class Harvest {
                 System.out.println(Configuration.help());
                 return ;
             }
+            conf.loadConfigFile();
             Harvest harvest = new Harvest(OaiSourceFactory.getInstance(), conf);
             
             if (conf.isRegenerateMods()) {
@@ -109,6 +111,7 @@ public final class Harvest {
             }
         } catch (Throwable ex) {
             LOG.log(Level.SEVERE, "Cannot start harvest process", ex);
+            System.exit(1);
         }
     }
 
@@ -145,7 +148,7 @@ public final class Harvest {
         MetadataUpdater mu = new MetadataUpdater(dataSource);
         for (Library library : libraries) {
             if (includeLibrary(library)) {
-                mu.regenerateDigObjects(library);
+                mu.regenerateDigObjects(library, createMetadataParser(library));
             }
         }
         time = System.currentTimeMillis() - time;
@@ -241,11 +244,31 @@ public final class Harvest {
     private void persistRecords(Library library, ListResult<Record> oaiRecords, long time)
             throws DaoException, JAXBException, XMLStreamException {
 
-        LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource, conf.isDryRun());
+        LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource,
+                createMetadataParser(library), conf.isDryRun());
         libraryHarvest.harvest(oaiRecords, xmlCtx);
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2}\n",
                 new Object[]{libraryHarvest.getAddRecordCount(), libraryHarvest.getRemoveRecordCount(), Utils.elapsedTime(time)});
+    }
+
+    private ModsMetadataParser createMetadataParser(Library library) {
+        String xslt = conf.getMetadataXslt(library.getDListValue());
+        if (xslt != null) {
+//            xslt = new File(xslt).toURI().toASCIIString();
+        } else {
+            xslt = ModsMetadataParser.getDefaultXslt();
+        }
+        return createMetadataParser(xslt);
+    }
+
+    private ModsMetadataParser createMetadataParser(String xslt) {
+        ModsMetadataParser parser = parserMap.get(xslt);
+        if (parser == null) {
+            parser = new ModsMetadataParser(xslt);
+            parserMap.put(xslt, parser);
+        }
+        return parser;
     }
 
     /** Iterates records to get them cached */
@@ -327,41 +350,6 @@ public final class Harvest {
             }
         }
         return null;
-    }
-
-    /**
-     * Fetches properties form file specified as
-     * {@code -Dcz.registrdigitalizace.harvest.Harvest.config}.
-     * 
-     * @return fetched properties or system properties
-     */
-    private static Properties resolveConfig() {
-        Properties properties = System.getProperties();
-        String configPath = properties.getProperty(CONFIG_PROPERTY);
-        LOG.log(Level.FINEST, "CONFIG_PROPERTY: {0}", configPath);
-        if (configPath != null) {
-            InputStreamReader reader = null;
-            try {
-                reader = new InputStreamReader(new FileInputStream(configPath), "UTF-8");
-                properties = new Properties();
-                properties.load(reader);
-            } catch (IOException ex) {
-                LOG.log(Level.SEVERE, null, ex);
-            } finally {
-                try {
-                    if (reader != null) {
-                        reader.close();
-                    }
-                } catch (IOException ex) {
-                    LOG.log(Level.SEVERE, null, ex);
-                }
-            }
-            if (reader == null) {
-                System.exit(1);
-            }
-        }
-        LOG.log(Level.FINEST, "config: {0}", properties.toString());
-        return properties;
     }
 
 }
