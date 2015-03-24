@@ -77,7 +77,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
         </item>
     </xsl:template>
 
-    <xsl:template match="mods:name[@type='personal']/mods:namePart[text()]">
+    <xsl:template match="mods:name[@type='personal']/mods:namePart[(not(@type) or @type='family' or @type='given') and text()]">
         <item reliefName="osoba">
             <xsl:value-of select="normalize-space(text())" />
         </item>

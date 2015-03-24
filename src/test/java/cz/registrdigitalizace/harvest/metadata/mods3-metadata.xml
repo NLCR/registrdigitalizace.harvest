@@ -10,6 +10,7 @@
         <mods:identifier type="urnnbn">urn:nbn:cz:nk-0010vt</mods:identifier>
         <mods:name usage="primary" type="personal">
             <mods:namePart>Rohn, Johann Carl von Reichenberg</mods:namePart>
+            <mods:namePart type="date">1850</mods:namePart>
             <mods:role>
                 <mods:roleTerm type="code" authority="marcrelator">cre</mods:roleTerm>
             </mods:role>
