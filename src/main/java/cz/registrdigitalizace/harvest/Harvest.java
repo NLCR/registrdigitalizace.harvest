@@ -126,7 +126,7 @@ public final class Harvest {
             harvestLibraryAndLog(library);
         }
 
-        if (conf.isDryRun() || conf.isHarvestToCache()) {
+        if (conf.isDryRun() || conf.isHarvestToCache() || conf.isNoThumbnails()) {
             return;
         }
 

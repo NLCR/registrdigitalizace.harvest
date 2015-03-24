@@ -43,6 +43,7 @@ final class Configuration {
     private static final String HARVEST_WITH_CACHE = "-harvestWithCache";
     private static final String CACHE_ROOT = "-cacheRoot";
     private static final String DRY_RUN = "-dryRun";
+    private static final String NO_THUMB = "-noThumb";
     private static final String EXCLUDES = "-excludes";
     private static final String INCLUDES = "-includes";
     private static final String HELP = "-help";
@@ -54,6 +55,7 @@ final class Configuration {
     private boolean harvestToCache;
     private boolean harvestWithCache;
     private boolean help;
+    private boolean noThumbnails;
     private boolean regenerateMods;
     private boolean updateThumbnails;
     private boolean version;
@@ -107,6 +109,8 @@ final class Configuration {
                 conf.cacheRoot = args[++i];
             } else if (DRY_RUN.equals(arg)) {
                 conf.dryRun = true;
+            } else if (NO_THUMB.equals(arg)) {
+                conf.noThumbnails = true;
             } else if (INCLUDES.equals(arg)) {
                 if (i + 1 >= args.length) {
                     throw new IllegalArgumentException("Missing list of IDs!");
@@ -148,9 +152,9 @@ final class Configuration {
         String tab = "  ";
         String nltab = "\n" + tab;
         String nltabtab = "\n" + tab + tab;
-        return String.format("harvest [%s | %s | %s | %s | %s | %s <libIds> | %s <libIds>]",
+        return String.format("harvest [%s | %s | %s | %s | %s | %s <libIds> | %s <libIds>] | %s",
                         VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS, DRY_RUN,
-                        INCLUDES, EXCLUDES)
+                        INCLUDES, EXCLUDES, NO_THUMB)
                 + String.format("\nharvest %s [%s <folder>] | %s [%s <folder>]",
                         HARVEST_TO_CACHE, CACHE_ROOT, HARVEST_WITH_CACHE, CACHE_ROOT)
                 + "\nharvest -harvestFromCache <folder>"
@@ -178,6 +182,8 @@ final class Configuration {
                 + nltabtab + "Use to include only list of library IDs."
                 + nltab + EXCLUDES + " <libIds>"
                 + nltabtab + "Use to exclude list of library IDs from processing."
+                + nltab + NO_THUMB
+                + nltabtab + "Use not to process thumbnails."
                 + "\n\n";
     }
 
@@ -222,6 +228,10 @@ final class Configuration {
 
     public boolean isDryRun() {
         return dryRun;
+    }
+
+    public boolean isNoThumbnails() {
+        return noThumbnails;
     }
 
     public List<String> getErrors() {
