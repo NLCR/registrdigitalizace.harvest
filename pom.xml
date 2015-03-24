@@ -41,16 +41,6 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
     </properties>
 
     <build>
-        <testResources>
-            <testResource>
-                <directory>src/test/java</directory>
-                <includes>
-                    <include>**/*.xml</include>
-                    <include>**/*.dtd</include>
-                    <include>**/*.properties</include>
-                </includes>
-            </testResource>
-        </testResources>
 
         <plugins>
             <plugin>
