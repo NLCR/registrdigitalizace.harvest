@@ -1,9 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-    <digobjekt id="2" druhdokumentu="monograph"/>
+    <digknihovna id="10" software="kramerius4" protokol="oaipmh" formatdat="rd"
+            encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
+            oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
+    <digobjekt id="2" uuid="uuid2" rdigknihovna_digobjekt="10" druhdokumentu="monograph"/>
     <digvazby />
     <metadata />
 
-    <thumbnails digobjektid="1" mime="image/jpeg" contents="a2FyZWw="/>
-    <thumbnails digobjektid="2" mime="image/jpeg" contents="a2FyZWw="/>
+    <thumbnails digobjektuuid="uuid1" digknihovna="10" mime="image/jpeg" contents="a2FyZWw="/>
+    <thumbnails digobjektuuid="uuid2" digknihovna="10" mime="image/jpeg" contents="a2FyZWw="/>
 </dataset>

@@ -37,17 +37,19 @@ public final class ThumbnailDao {
         this.source = source;
     }
 
-    public void insert(BigDecimal digiObjId, String thumbFilename, String mimeType, byte[] contents) throws DaoException {
+    public void insert(BigDecimal libraryId, String digiObjUuid, String thumbFilename,
+            String mimeType, byte[] contents) throws DaoException {
         try {
-            doInsert(digiObjId, thumbFilename, mimeType, contents);
+            doInsert(libraryId, digiObjUuid, thumbFilename, mimeType, contents);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
     }
 
-    public void insert(BigDecimal digiObjId, String thumbFilename, String mimeType, InputStream contents, int length) throws DaoException {
+    public void insert(BigDecimal libraryId, String digiObjUuid, String thumbFilename,
+            String mimeType, InputStream contents, int length) throws DaoException {
         try {
-            doInsert(digiObjId, thumbFilename, mimeType, contents, length);
+            doInsert(libraryId, digiObjUuid, thumbFilename, mimeType, contents, length);
         } catch (SQLException ex) {
             throw new DaoException(ex);
         }
@@ -80,7 +82,8 @@ public final class ThumbnailDao {
         Connection conn = source.getConnection();
         Statement stmt = conn.createStatement();
         try {
-            stmt.executeUpdate("delete from THUMBNAILS where DIGOBJEKTID not in (select ID from DIGOBJEKT)");
+            stmt.executeUpdate("delete from THUMBNAILS where "
+                    + "(DIGOBJEKTUUID,DIGKNIHOVNA) not in (select UUID,RDIGKNIHOVNA_DIGOBJEKT from DIGOBJEKT)");
         } finally {
             SQLQuery.tryClose(stmt);
         }
@@ -92,7 +95,7 @@ public final class ThumbnailDao {
         ResultSet rs = null;
         try {
             rs = stmt.executeQuery("select ID, UUID, RDIGKNIHOVNA_DIGOBJEKT as LIBID from DIGOBJEKT"
-                    + " where ID not in (select DIGOBJEKTID from THUMBNAILS)");
+                    + " where (UUID,RDIGKNIHOVNA_DIGOBJEKT) not in (select DIGOBJEKTUUID,DIGKNIHOVNA from THUMBNAILS)");
             return new ThumbnailResult(rs, stmt);
         } finally {
             if (rs == null) {
@@ -101,13 +104,15 @@ public final class ThumbnailDao {
         }
     }
 
-    private void doInsert(BigDecimal digiObjId, String thumbFilename, String mimeType, InputStream contents, int length) throws SQLException {
+    private void doInsert(BigDecimal libraryId, String digiObjUuid, String thumbFilename,
+            String mimeType, InputStream contents, int length) throws SQLException {
         Connection conn = source.getConnection();
         PreparedStatement pstmt = conn.prepareStatement(
-                "insert into THUMBNAILS (DIGOBJEKTID, TNFILENAME, MIME, CONTENTS) values (?, ?, ?, ?)");
+                "insert into THUMBNAILS (DIGKNIHOVNA, DIGOBJEKTUUID, TNFILENAME, MIME, CONTENTS) values (?, ?, ?, ?, ?)");
         try {
             int col = 1;
-            pstmt.setBigDecimal(col++, digiObjId);
+            pstmt.setBigDecimal(col++, libraryId);
+            pstmt.setString(col++, digiObjUuid);
             pstmt.setString(col++, thumbFilename);
             pstmt.setString(col++, mimeType);
 //            pstmt.setBlob(3, contents, length);
@@ -118,13 +123,15 @@ public final class ThumbnailDao {
         }
     }
 
-    private void doInsert(BigDecimal digiObjId, String thumbFilename, String mimeType, byte[] contents) throws SQLException {
+    private void doInsert(BigDecimal libraryId, String digiObjUuid, String thumbFilename,
+            String mimeType, byte[] contents) throws SQLException {
         Connection conn = source.getConnection();
         PreparedStatement pstmt = conn.prepareStatement(
-                "insert into THUMBNAILS (DIGOBJEKTID, TNFILENAME, MIME, CONTENTS) values (?, ?, ?, ?)");
+                "insert into THUMBNAILS (DIGKNIHOVNA, DIGOBJEKTUUID, TNFILENAME, MIME, CONTENTS) values (?, ?, ?, ?, ?)");
         try {
             int col = 1;
-            pstmt.setBigDecimal(col++, digiObjId);
+            pstmt.setBigDecimal(col++, libraryId);
+            pstmt.setString(col++, digiObjUuid);
             pstmt.setString(col++, thumbFilename);
             pstmt.setString(col++, mimeType);
             pstmt.setBytes(col++, contents);

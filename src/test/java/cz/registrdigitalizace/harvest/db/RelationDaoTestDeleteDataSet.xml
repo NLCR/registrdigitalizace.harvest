@@ -1,13 +1,13 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <dataset>
-    <DIGOBJEKT id="1" uuid="u1" druhdokumentu="periodical" />
-    <DIGOBJEKT id="2" uuid="u2" druhdokumentu="volume" />
-    <DIGOBJEKT id="10" uuid="u10" druhdokumentu="issue" />
-    <DIGOBJEKT id="11" uuid="u11" druhdokumentu="monograph" />
     <DIGKNIHOVNA id="10" software="kramerius4" protokol="oaipmh" formatdat="dr"
             encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
             oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
     <DLISTS id="10" classname="cz.incad.rd.DigKnihovna" value="examplelib" />
+    <DIGOBJEKT id="1" uuid="u1" druhdokumentu="periodical" />
+    <DIGOBJEKT id="2" uuid="u2" druhdokumentu="volume" />
+    <DIGOBJEKT id="10" uuid="u10" druhdokumentu="issue" />
+    <DIGOBJEKT id="11" uuid="u11" druhdokumentu="monograph" />
     <!-- root u1 -->
     <DIGVAZBY id="1" potomek="u1" poradi="1" digknihovna="10" />
     <!-- u1 => u2 -->
@@ -18,4 +18,5 @@
     <!-- root u11 -->
     <DIGVAZBY id="4" potomek="u11" poradi="1" digknihovna="10" />
     <metadata />
+    <thumbnails />
 </dataset>

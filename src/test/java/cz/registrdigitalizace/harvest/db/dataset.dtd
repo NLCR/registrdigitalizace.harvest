@@ -113,7 +113,8 @@ Data model snapshot.
 
 <!ELEMENT thumbnails EMPTY>
 <!ATTLIST thumbnails
-    digobjektid CDATA #REQUIRED
+    digknihovna CDATA #REQUIRED
+    digobjektuuid CDATA #REQUIRED
     tnfilename CDATA #REQUIRED
     mime CDATA #REQUIRED
     contents CDATA #IMPLIED

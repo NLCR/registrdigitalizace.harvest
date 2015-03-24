@@ -71,7 +71,8 @@ public class ThumbnailDaoTest {
         DatabaseOperation.CLEAN_INSERT.execute(support.getConnection(), initialDS);
         IDataSet expectedDS = support.loadFlatXmlDataStream(getClass(), "ThumbnailDaoTestInsertResult.xml", true);
 
-        BigDecimal digiObjId = BigDecimal.ONE;
+        BigDecimal libraryId = BigDecimal.TEN;
+        String digObjUuid = "uuid1";
         String mimeType = "image/jpeg";
         byte[] buf = "karel".getBytes("UTF-8");
         InputStream contents = new ByteArrayInputStream(buf);
@@ -80,7 +81,7 @@ public class ThumbnailDaoTest {
         instance.setDataSource(transaction);
         transaction.begin();
 //        instance.insert(digiObjId, mimeType, buf);
-        instance.insert(digiObjId, "fname", mimeType, contents, buf.length);
+        instance.insert(libraryId, digObjUuid, "fname", mimeType, contents, buf.length);
         transaction.commit();
         transaction.close();
         IDataSet resultDS = support.getConnection().createDataSet(new String[]{"THUMBNAILS"});

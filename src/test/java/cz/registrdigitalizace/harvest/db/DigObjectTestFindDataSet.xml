@@ -4,4 +4,5 @@
     <digobjekt id="1" XML="&lt;record&gt;&lt;/record&gt;" uuid="uuid:1" druhdokumentu="monograph" rdigknihovna_digobjekt="1" />
 <!--  <digobjekt id="1" uuid="uuid:1" druhdokumentu="monograph"/>-->
     <digvazby />
+    <thumbnails />
 </dataset>

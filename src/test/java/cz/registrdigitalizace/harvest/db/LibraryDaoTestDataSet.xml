@@ -5,4 +5,5 @@
             encodinginputxml="UTF-8" encodingoutputxml="UTF-8"
             oaipmhserverbaseurl="http://example.com/oaiprovider" nazevorg="Library"/>
     <DIGVAZBY />
+    <thumbnails />
 </dataset>

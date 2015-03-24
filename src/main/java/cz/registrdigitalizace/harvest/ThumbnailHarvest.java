@@ -179,7 +179,7 @@ public final class ThumbnailHarvest {
         InputStream content = snapshot.getContent();
         try {
             int contentLength = snapshot.getContentLength();
-            thumbnailDao.insert(thumbnail.getDigiObjId(), snapshot.getFilename(),
+            thumbnailDao.insert(thumbnail.getLibraryId(), thumbnail.getUuid(), snapshot.getFilename(),
                     snapshot.getMimeType(), content, contentLength);
             sizeCounter += contentLength;
             counter++;
