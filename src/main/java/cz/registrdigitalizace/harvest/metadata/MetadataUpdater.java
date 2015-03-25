@@ -70,6 +70,7 @@ public class MetadataUpdater {
                 for (DigObject digObject; digObjects.hasNextResult();) {
                     digObject = digObjects.nextResult();
                     Metadata m = handleItem(digObject, parser);
+                    metadataDao.delete(m);
                     metadataDao.insert(metadataSeq, m);
                     totalNumber++;
                     totalSize += digObject.getXml().length();
