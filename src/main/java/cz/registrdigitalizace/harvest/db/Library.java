@@ -19,6 +19,10 @@ package cz.registrdigitalizace.harvest.db;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * The class describes DIGKNIHOVNA table record.
@@ -36,11 +40,17 @@ public final class Library {
     private String metadataFormat;
     /** LASTHARVEST */
     private String lastHarvest;
+    /** od jakého datumu */
+    private String fromDate;
+    /** do jakého datumu */
+    private String toDate;
     /** OAIPMHSERVERBASEURL */
     private String baseUrl;
     /** OAIPMHCOMMAND */
     private String queryParameters;
     private transient File cacheFolder;
+    
+    private Integer pocetMesicu = 3;
 
     /** checks library fields and returns error message in case of any illegal field */
     public String validate() {
@@ -97,6 +107,22 @@ public final class Library {
         this.lastHarvest = lastHarvest;
     }
 
+    public String getFromDate() {
+        return fromDate;
+    }
+
+    public void setFromDate( String fromDate) {
+        this.fromDate = fromDate;
+    }
+
+    public String getToDate() {
+        return toDate;
+    }
+
+    public void setToDate(String toDate) {
+        this.toDate = toDate;
+    }
+    
     public String getMetadataFormat() {
         return metadataFormat;
     }
@@ -123,8 +149,8 @@ public final class Library {
 
     @Override
     public String toString() {
-        return String.format("Library[id: %s, dListValue: %s, baseUrl: %s, protocol: %s, format: %s, query: %s, last: %s]",
-                id, dListValue, baseUrl, harvestProtocol, metadataFormat, queryParameters, lastHarvest);
+        return String.format("Library[id: %s, dListValue: %s, baseUrl: %s, protocol: %s, format: %s, query: %s, last: %s, from: %s, to: %s]",
+                id, dListValue, baseUrl, harvestProtocol, metadataFormat, queryParameters, lastHarvest, fromDate, toDate);
     }
 
 }

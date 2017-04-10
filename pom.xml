@@ -52,7 +52,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
                     <target>1.6</target>
                 </configuration>
             </plugin>
-
+<!-- plugin pro testování??
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -67,7 +67,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
-
+-->
             <plugin>
                 <groupId>org.jvnet.jaxb2.maven2</groupId>
                 <artifactId>maven-jaxb22-plugin</artifactId>

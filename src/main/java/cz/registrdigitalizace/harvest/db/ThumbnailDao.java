@@ -24,12 +24,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Jan Pokorsky
  */
 public final class ThumbnailDao {
+    private static final Logger LOG = Logger.getLogger(ThumbnailDao.class.getName());
 
     private HarvestTransaction source;
 
@@ -82,11 +85,13 @@ public final class ThumbnailDao {
         Connection conn = source.getConnection();
         Statement stmt = conn.createStatement();
         try {
+            LOG.log(Level.INFO, "  doDeleteUnrelated");
             stmt.executeUpdate("delete from THUMBNAILS where "
                     + "(DIGOBJEKTUUID,DIGKNIHOVNA) not in (select UUID,RDIGKNIHOVNA_DIGOBJEKT from DIGOBJEKT)");
         } finally {
             SQLQuery.tryClose(stmt);
         }
+        LOG.log(Level.INFO, "  dokonceno: doDeleteUnrelated");
     }
     
     private IterableResult<Thumbnail> doFindMissing() throws SQLException {

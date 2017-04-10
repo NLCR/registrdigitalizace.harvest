@@ -29,10 +29,13 @@ import cz.registrdigitalizace.harvest.db.RecordRepository;
 import cz.registrdigitalizace.harvest.db.RelationDao;
 import cz.registrdigitalizace.harvest.metadata.ModsMetadataParser;
 import cz.registrdigitalizace.harvest.oai.ListResult;
+import cz.registrdigitalizace.harvest.oai.MetadataParser;
 import cz.registrdigitalizace.harvest.oai.Record;
 import cz.registrdigitalizace.harvest.oai.RecordTypeParser;
 import cz.registrdigitalizace.harvest.oai.XmlContext;
 import java.util.Iterator;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
 import javax.xml.stream.XMLStreamException;
 import org.openarchives.oai2.HeaderType;
@@ -45,6 +48,7 @@ import org.openarchives.oai2.StatusType;
  * @author Jan Pokorsky
  */
 public class LibraryHarvest {
+    private static final Logger LOG = Logger.getLogger(LibraryHarvest.class.getName());
     
     private final ModsMetadataParser modsParser;
     private final Library library;
@@ -66,12 +70,18 @@ public class LibraryHarvest {
         this.dryRun = dryRun;
     }
 
-    public void harvest(ListResult<Record> listRecords, XmlContext xmlCtx) throws DaoException, JAXBException, XMLStreamException {
+    public String harvest(ListResult<Record> listRecords, XmlContext xmlCtx) throws DaoException, JAXBException, XMLStreamException {
+        String casChyby = "";
+        String casPosledniZpracovanyZaznam;
         transaction.begin();
         boolean rollback = true;
         try {
-            persistRecords(listRecords.iterator(), xmlCtx);
-
+            casPosledniZpracovanyZaznam = persistRecords(listRecords.iterator(), xmlCtx);
+            if (!"OK".equals(casPosledniZpracovanyZaznam)) {
+                System.out.println(" chyba pri behu: " + casPosledniZpracovanyZaznam);
+            } else {
+                casPosledniZpracovanyZaznam = "";
+            }
             libraryDao.setDataSource(transaction);
             String harvestDate = listRecords.getResponseDate().toString();
             library.setLastHarvest(harvestDate);
@@ -82,39 +92,58 @@ public class LibraryHarvest {
                 rollback = false;
             }
         } finally {
+            System.out.println("  ukoncuji transakci");
             if (rollback) {
                 transaction.rollback();
             }
             transaction.close();
         }
-
+        return casPosledniZpracovanyZaznam;
     }
 
-    private void persistRecords(Iterator<Record> recordIterator, XmlContext xmlCtx)
-            throws DaoException, JAXBException, XMLStreamException {
+    private String persistRecords(Iterator<Record> recordIterator, XmlContext xmlCtx)
+            throws DaoException, JAXBException/*, XMLStreamException*/ {
+        String timestampPosledniZpracovanyZaznam = "";
         
+        System.out.println("    spoustim persistRecord");
         if (!recordIterator.hasNext()) {
-            return ;
+            System.out.println("    nejsou zaznamy, ukoncuji persistRecord");
+            return "OK";
         }
         RecordRepository processor = createProcessor();
-        processor.init();
+        System.out.println("  procesorVytvoren: ");
+        //dočasně blokováno// processor.init();
+        System.out.println("  procesorInicializovan: ");
+        int pocetZpracovanychZaznamu = 0;
 
-        while (recordIterator.hasNext()) {
-            Record oairecord = recordIterator.next();
-            RecordTypeParser parser = oairecord.getParser();
-            HeaderType headerType = parser.parseHeader();
-            if (headerType.getStatus() == StatusType.DELETED) {
-                HarvestedRecord record = resolveDeleteRecord(headerType.getIdentifier());
-                processor.remove(record);
-                removeCounter++;
-            } else {
-                HarvestedRecord metadata = parser.parseMetadata(new KrameriusParser(xmlCtx, modsParser));
-                processor.add(metadata);
-                // parser.parseAbouts();
-                addCounter++;
+        try {
+            while (recordIterator.hasNext()) {
+                pocetZpracovanychZaznamu++;
+                //System.out.println(" zpracovavamZaznam: " + pocetZpracovanychZaznamu);
+                Record oairecord = recordIterator.next();
+                RecordTypeParser parser = oairecord.getParser();
+                HeaderType headerType = parser.parseHeader();
+                if (headerType.getStatus() == StatusType.DELETED) {
+                    HarvestedRecord record = resolveDeleteRecord(headerType.getIdentifier());
+                    //dočasně blokováno// processor.remove(record); // docasne zablokovano
+                    removeCounter++;
+                } else {
+                    HarvestedRecord metadata = parser.parseMetadata(new KrameriusParser(xmlCtx, modsParser));
+                    //dočasně blokováno// processor.add(metadata); // docasne zablokovano
+                    addCounter++;
+                }
+                timestampPosledniZpracovanyZaznam = headerType.getDatestamp();
+                System.out.println("  zaznam: " + pocetZpracovanychZaznamu + " zpracovan");
             }
+        } catch (Exception ex) {
+            System.out.println("  chyba pri zpracovani XML: " + ex + " -- " + timestampPosledniZpracovanyZaznam);
+            LOG.log(Level.SEVERE, "  chyba pri zpracovani XML: " + ex + " -- " + timestampPosledniZpracovanyZaznam);
+            return timestampPosledniZpracovanyZaznam; // poslat cas posledniho spravneho
         }
-        processor.close();
+        System.out.println("  uzaviram zpracovani zaznamu (processor.close)");
+        //dočasně blokováno// processor.close(); // docasne zablokovano
+        System.out.println("    ukoncuji persistRecord");
+        return "OK";
     }
 
     public int getAddRecordCount() {

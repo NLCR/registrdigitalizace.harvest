@@ -20,6 +20,8 @@ package cz.registrdigitalizace.harvest.oai;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
 import javax.xml.stream.XMLStreamException;
 import org.openarchives.oai2.OAIPMHerrorType;
@@ -32,6 +34,7 @@ import org.openarchives.oai2.OAIPMHtype;
  * @author Jan Pokorsky
  */
 public class Harvester {
+    private static final Logger LOG = Logger.getLogger(Harvester.class.getName());
 
     private final OaiSource oaiSource;
     private final XmlContext xmlCtx;
@@ -45,6 +48,7 @@ public class Harvester {
         try {
             InputStream stream = oaiSource.openConnection();
             OaiParser parser = createParser(xmlCtx, listContentStreaming);
+
             parser.parse(stream);
             OAIPMHtype oaiType = parser.getOaiType();
             List<OAIPMHerrorType> errors = oaiType.getError();
@@ -57,12 +61,16 @@ public class Harvester {
             ListResult<Record> listResult = new ListResult<Record>(parser, oaiSource, Record.class);
             return listResult;
         } catch (XMLStreamException ex) {
+            LOG.log(Level.INFO, "  chyba parsovani1: " + ex);
             throw new OaiException(ex, oaiSource.getUrl());
         } catch (JAXBException ex) {
+            LOG.log(Level.INFO, "  chyba parsovani2: " + ex);
             throw new OaiException(ex, oaiSource.getUrl());
         } catch (IOException ex) {
+            LOG.log(Level.INFO, "  chyba parsovani3: " + ex);
             throw new OaiException(ex, oaiSource.getUrl());
         } catch (OaiException ex) {
+            LOG.log(Level.INFO, "  chyba parsovani4: " + ex);
             ex.setSource(oaiSource.getUrl());
             throw ex;
         }

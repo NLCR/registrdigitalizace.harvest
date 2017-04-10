@@ -19,6 +19,7 @@ package cz.registrdigitalizace.harvest.oai;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,7 +99,15 @@ public class OaiSource {
         if (LOG.isLoggable(Level.FINE)) {
             LOG.log(Level.FINE, url.toExternalForm());
         }
-        return openStream(url);
+        //změna Marek - nastaví timeOut pro čtení
+        //return openStream(url);
+        
+        HttpURLConnection huc = (HttpURLConnection) url.openConnection();
+        huc.setConnectTimeout(60 * 1000);
+        huc.setReadTimeout(60 * 1000);
+        huc.connect();
+        return huc.getInputStream();        
+        
     }
 
     private InputStream openStream(URL url) throws IOException {

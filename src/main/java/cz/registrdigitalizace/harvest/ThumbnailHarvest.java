@@ -72,10 +72,17 @@ public final class ThumbnailHarvest {
             transaction.begin();
             thumbnailDao.deleteUnrelated();
 
+LOG.log(Level.INFO, "  hledam zatim nenactene thumbnails");
+System.out.println("  hledam zatim nenactene thumbnails");
             IterableResult<Thumbnail> missings = thumbnailDao.findMissing();
+LOG.log(Level.INFO, "  nalezl jsem zatim nenactene thumbnails");
+System.out.println("  nalezl jsem zatim nenactene thumbnails");
             try {
+                int pocitadloZaznamu = 0;
                 Thumbnail last = null;
                 while (missings.hasNextResult()) {
+                    pocitadloZaznamu++;
+System.out.println("  zpracovavam thumbnil zaznam: " + pocitadloZaznamu);
                     Thumbnail thumbnail = missings.nextResult();
                     if (last != null && last.getDigiObjId().equals(thumbnail.getDigiObjId())) {
                         continue;

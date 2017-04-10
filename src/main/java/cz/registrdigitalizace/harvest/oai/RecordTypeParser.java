@@ -17,8 +17,11 @@
 
 package cz.registrdigitalizace.harvest.oai;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
@@ -27,6 +30,13 @@ import javax.xml.stream.XMLStreamReader;
 import org.openarchives.oai2.AboutType;
 import org.openarchives.oai2.HeaderType;
 
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.stax.StAXSource;
+import javax.xml.transform.stream.StreamResult;
 /**
  * Helper class to parse OAI {@code <record>} element properly.
  *
@@ -38,7 +48,8 @@ import org.openarchives.oai2.HeaderType;
  * @author Jan Pokorsky
  */
 public class RecordTypeParser {
-
+    private static final Logger LOG = Logger.getLogger(RecordTypeParser.class.getName());
+    
     private final XMLStreamReader reader;
     private XMLStreamReader metadataReader;
     private final XmlContext xmlContext;
@@ -57,12 +68,31 @@ public class RecordTypeParser {
         if (headerParsed) {
             return header;
         }
-        OaiParser.moveToNextStartElement(reader, OaiParser.HEADER);
-        Unmarshaller unmarshaller = xmlContext.getUnmarshaller();
-        JAXBElement<HeaderType> headerElm = unmarshaller.unmarshal(reader, HeaderType.class);
-        header = headerElm.getValue();
-        headerParsed = true;
+        
+        //try {
+            OaiParser.moveToNextStartElement(reader, OaiParser.HEADER);
+            Unmarshaller unmarshaller = xmlContext.getUnmarshaller();
+            JAXBElement<HeaderType> headerElm = unmarshaller.unmarshal(reader, HeaderType.class);
+            header = headerElm.getValue();
+            headerParsed = true;
+        //} catch (javax.xml.bind.UnmarshalException ex) {
+        //        System.out.println("  chyba pri zpracovani XML2: " + reader.getText());
+        //        LOG.log(Level.SEVERE, "  chyba pri zpracovani XML2: " + reader.getText());
+        //}
+        
         return header;
+    }
+    
+    public String parseChyba() {
+        StringBuffer buf = new StringBuffer();
+        int attrCnt = reader.getAttributeCount();
+        for (int i = 0; i < attrCnt; i++) {
+          String name = reader.getAttributeLocalName(i);
+          String value = reader.getAttributeValue(i);
+          buf.append(" " + name + '=' + "'" + value + "'");
+        }
+        return buf.toString();
+        
     }
 
     public <T> T parseMetadata(MetadataParser<T> metadataParser) throws XMLStreamException, JAXBException {

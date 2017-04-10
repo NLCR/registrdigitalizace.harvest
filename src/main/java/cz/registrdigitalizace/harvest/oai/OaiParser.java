@@ -148,8 +148,15 @@ public class OaiParser {
         reset();
         Unmarshaller unmarshaller = xmlCtx.getUnmarshaller();
 
+        // dočasná změna Marek
+        LOG.log(Level.INFO, "  zacatek streamu: " + stream.toString());
+        // konec dočasné změny
+        
         // do not use XMLEventReader as it is memory intensive
         XMLStreamReader reader = xmlCtx.createStreamParser(stream, null);
+        // dočasná změna Marek
+        LOG.log(Level.INFO, "  input stream: " + reader.toString());
+        // konec dočasné změny
         boolean iteratorEnabled = false;
         QName name;
         try {

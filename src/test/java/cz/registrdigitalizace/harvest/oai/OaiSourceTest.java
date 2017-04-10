@@ -57,7 +57,7 @@ public class OaiSourceTest {
     @Test
     public void testPlainUrl() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/",
+                "http://example.com:8080/oaiprovider/", null, null, 
                 null, null, null);
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords");
@@ -68,7 +68,7 @@ public class OaiSourceTest {
     @Test
     public void testUrlFormat() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/",
+                "http://example.com:8080/oaiprovider/", null, null, 
                 null, "oai_dc", null);
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords&metadataPrefix=oai_dc");
@@ -79,7 +79,7 @@ public class OaiSourceTest {
     @Test
     public void testUrlOtherParams() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/",
+                "http://example.com:8080/oaiprovider/", null, null, 
                 null, null, "set=type:periodical");
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords&set=type:periodical");
@@ -90,7 +90,7 @@ public class OaiSourceTest {
     @Test
     public void testBuildURL_Format_OtherParams() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/",
+                "http://example.com:8080/oaiprovider/", null, null, 
                 null, "oai_dc", "set=type:periodical");
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords&metadataPrefix=oai_dc&set=type:periodical");

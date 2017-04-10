@@ -31,14 +31,24 @@ import cz.registrdigitalizace.harvest.oai.OaiSource;
 import cz.registrdigitalizace.harvest.oai.OaiSourceFactory;
 import cz.registrdigitalizace.harvest.oai.Record;
 import cz.registrdigitalizace.harvest.oai.XmlContext;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.SocketTimeoutException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.xml.bind.JAXBException;
@@ -130,12 +140,14 @@ public final class Harvest {
             return;
         }
 
+/* dočasně zablokováno Marek - Thumbnaily se dočasně vytvářet nebudou
         ThumbnailHarvest thumbnailHarvest = new ThumbnailHarvest(dataSource, libraries);
         long time = System.currentTimeMillis();
         thumbnailHarvest.harvestThumbnails();
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "Thumbnail harvest status:\n  Thumbnails downloaded: {0}\n  Total size: {1} bytes\n  Time: {2}\n",
                 new Object[]{thumbnailHarvest.getTotalNumber(), thumbnailHarvest.getTotalSize(), Utils.elapsedTime(time)});
+*/
     }
 
     /**
@@ -176,7 +188,43 @@ public final class Harvest {
         libraryDao.setDataSource(transaction);
         try {
             transaction.begin();
-            List<Library> libraries = libraryDao.find();
+            // dočasná změna Marek - pro ostrý chod odstranit zaznam library
+//            List<Library> libraries = libraryDao.find();
+            List<Library> libraries = new ArrayList<Library>();
+            Library library = new Library();
+/*
+            library.setId(new BigDecimal("463"));
+            library.setHarvestProtocol("oaipmh");
+            library.setMetadataFormat("drkramerius4");
+            library.setLastHarvest(null);
+            library.setQueryParameters(null);
+            library.setBaseUrl("http://kramerius.lib.cas.cz/oaiprovider/");
+            library.setDListValue("ABA007-DK");
+            library.setFromDate("2017-01-01T00:00:00Z");
+            library.setToDate("2017-01-10T00:00:00Z");
+            libraries.add(library);
+*/
+//            library = new Library();
+            library.setId(new BigDecimal("460"));
+            library.setHarvestProtocol("oaipmh");
+            library.setMetadataFormat("drkramerius4");
+            library.setLastHarvest(null);
+            library.setQueryParameters(null);
+            library.setBaseUrl("http://kramerius4.nkp.cz/oaiprovider/");
+            library.setDListValue("ABA001-DK");
+//            library.setFromDate("2000-01-01T00:00:00Z");
+            //dočasně//library.setFromDate("2016-04-06T00:00:00Z"); // library.setFromDate("2016-09-15T00:00:00Z"); // datum vynechano - chyba v datech
+//            library.setFromDate("2017-03-04T00:00:00Z");
+            //dočasně//library.setToDate("2017-06-04T00:00:00Z");
+//            library.setFromDate("2014-10-01T00:00:00Z");
+//            library.setToDate("2014-11-01T00:00:00Z");
+
+            library.setFromDate("2016-09-15T22:51:00Z");
+            library.setToDate("2016-09-16T00:00:00Z");
+
+            libraries.add(library);
+
+            // konec dočasné změny
             return libraries;
         } finally {
             transaction.close();
@@ -188,7 +236,7 @@ public final class Harvest {
             harvestLibrary(library);
         } catch (Exception ex) {
             // catch everything not to break other libraries processing
-            LOG.log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, "  chyba: ", ex);
         }
     }
 
@@ -213,7 +261,96 @@ public final class Harvest {
         if (!includeLibrary(library)) {
             return ;
         }
+        Library modifiedLibrary;
+
+        String datumOdLocalStr = library.getFromDate();
+        Date datumOdLocal;
+        Date datumDoLocal;
+        Date datumZacatek;
+        Date datumPomocny;
+        Date datumDnesek = new Date();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        SimpleDateFormat simpleDateFormat2 = new SimpleDateFormat("yyyy-MM-dd");
+        /* // max datum ke kterému jsou záznamy načítány
+        Date datumDnesek = null;
+        try {
+            datumDnesek = simpleDateFormat2.parse("2017-03-10");
+        } catch (ParseException ex) {
+            
+        }
+        */
+        Calendar c = Calendar.getInstance();
+        Boolean pokracuj = true;
+        try {
+            datumDnesek = simpleDateFormat2.parse(simpleDateFormat2.format(datumDnesek));
+            c.setTime(simpleDateFormat.parse(datumOdLocalStr));
+            datumOdLocal = c.getTime();
+        } catch (ParseException ex) {
+            try {
+                c.setTime(simpleDateFormat2.parse(datumOdLocalStr));
+                datumOdLocal = c.getTime();
+            } catch (ParseException ex2) {
+                System.out.println("Exception when set toDate: "+ex2);
+                pokracuj = false;
+                datumOdLocal = null;
+            }
+        }
+        if ((pokracuj) && (datumOdLocal != null)) {
+            modifiedLibrary = library;
+            datumZacatek = datumOdLocal;
+            pokracuj = true;
+            while ((datumOdLocal.before(datumDnesek)) && (pokracuj)) {
+                if (datumZacatek.equals(datumOdLocal)) {
+                    try {
+                        datumPomocny = simpleDateFormat.parse(simpleDateFormat2.format(datumOdLocal) + "T00:00:00Z");
+                    } catch (ParseException ex) {
+                        pokracuj = false;
+                        datumPomocny = null;
+                    }
+                } else {
+                    datumPomocny = datumOdLocal;
+                }
+                if ((pokracuj) && (datumPomocny != null)) {
+                    c.setTime(datumPomocny);
+                    c.add(Calendar.DAY_OF_MONTH, 1);
+                    datumDoLocal =  c.getTime();
+                    modifiedLibrary.setToDate(simpleDateFormat.format(datumDoLocal));
+
+                    System.out.println("  rozmeziDatumu: " + modifiedLibrary.getFromDate() + " - " + modifiedLibrary.getToDate());
+
+                    Boolean nacteno = false;
+                    int pocitadloPokusu = 0;
+                    while ((!nacteno) && (pocitadloPokusu < 5)) {
+                        try {
+                            harvestLibraryOneDay(modifiedLibrary);
+                            nacteno = true;
+                        } catch (cz.registrdigitalizace.harvest.oai.OaiException ex) {
+                            pocitadloPokusu++;
+                            System.out.println(" pokus cislo: " + pocitadloPokusu + " " + ex.getMessage());
+                            LOG.log(Level.INFO, (" pokus cislo: " + pocitadloPokusu));
+                        }
+                    }
+                    if (!nacteno) {
+                        pokracuj = false;
+                    }
+                    datumOdLocal =  datumDoLocal;
+                    modifiedLibrary.setFromDate(simpleDateFormat.format(datumDoLocal));
+                }
+
+            }
+            if (!pokracuj) {
+                System.out.println("  zpracovani preruseno pro timeout");
+            }
+            //System.out.println("  jsem za nactenim zaznamu pro jednotlive datumy");
+            
+        }
+
+    }
+
+    private void harvestLibraryOneDay(Library library) throws OaiException, DaoException, JAXBException, XMLStreamException, IOException {
         long time = System.currentTimeMillis();
+        String casPosledniZpracovanyZaznam = "";
+
         OaiSource oaiSource = resolveOaiSource(library);
         if (oaiSource == null) {
             LOG.log(Level.FINE, "Skip {0}", library);
@@ -233,23 +370,79 @@ public final class Harvest {
                     harvester = new Harvester(oaiSource, xmlCtx);
                     oaiRecords = harvester.getListRecords(true);
                 }
-                persistRecords(library, oaiRecords, time);
+                casPosledniZpracovanyZaznam = persistRecords(library, oaiRecords, time);
+                if (!"".equals(casPosledniZpracovanyZaznam)) {
+System.out.println("  zkusim posunout cas a spustit znovu");
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+                    SimpleDateFormat simpleDF = new SimpleDateFormat("yyyyMMdd");
+                    Date datumDnesek = new Date();
+                    Date datumPomocny;
+                    Date datumFromLocal;
+                    Calendar c = Calendar.getInstance();
+                    Library libraryLocal = library;
+
+                    while (!"".equals(casPosledniZpracovanyZaznam)) {
+                        try {
+                            datumPomocny = simpleDateFormat.parse(casPosledniZpracovanyZaznam);
+                            c.setTime(datumPomocny);
+                            c.add(Calendar.SECOND, 1);
+                            datumFromLocal =  c.getTime();
+                            libraryLocal.setFromDate(simpleDateFormat.format(datumFromLocal));
+//System.out.println("  nastavuji novy cas zacatku na: " + libraryLocal.getFromDate() + " - " + libraryLocal.getToDate());
+
+                            OaiSource oaiSourceLocal = resolveOaiSource(library);
+                            Harvester harvesterLocal = new Harvester(oaiSourceLocal, xmlCtx);
+                            ListResult<Record> oaiRecordsLocal = harvester.getListRecords(true);
+                            casPosledniZpracovanyZaznam = persistRecords(libraryLocal, harvesterLocal.getListRecords(true), System.currentTimeMillis());
+                            oaiRecordsLocal.close();
+                        } catch (ParseException ex) {
+                            String fname= "." + File.separator + libraryLocal.getDListValue() + "-" + simpleDF.format(datumDnesek);
+                            BufferedWriter bw = null;
+                            FileWriter fw = null;
+                            try {
+                                File file = new File(fname);
+                                if (!file.exists()) {
+                                        file.createNewFile();
+                                }
+                                fw = new FileWriter(file.getAbsoluteFile(), true);
+                                bw = new BufferedWriter(fw);
+                                bw.write("nezpracovane zaznamy od: " + casPosledniZpracovanyZaznam + " do: " + library.getToDate());
+                            } catch (IOException e) {
+                            } finally {
+                                try {
+                                    if (bw != null)
+                                            bw.close();
+                                    if (fw != null)
+                                            fw.close();
+                                } catch (IOException exClose) {
+                                }
+                            }
+                            
+                        }
+                        //casPosledniZpracovanyZaznam = persistRecords(library, oaiRecords, time);
+                    }
+                }
             }
         } finally {
             oaiRecords.close();
         }
+
     }
 
     /** Iterates records to get them persisted */
-    private void persistRecords(Library library, ListResult<Record> oaiRecords, long time)
+    private String persistRecords(Library library, ListResult<Record> oaiRecords, long time)
             throws DaoException, JAXBException, XMLStreamException {
+        String casPosledniZpracovanyZaznam = "";
 
         LibraryHarvest libraryHarvest = new LibraryHarvest(library, dataSource,
                 createMetadataParser(library), conf.isDryRun());
-        libraryHarvest.harvest(oaiRecords, xmlCtx);
+        System.out.println("  spoustim libraryHarvest");
+        casPosledniZpracovanyZaznam = libraryHarvest.harvest(oaiRecords, xmlCtx);
+        System.out.println("  ukoncuji libraryHarvest");
         time = System.currentTimeMillis() - time;
         LOG.log(Level.INFO, "Harvest status:\n  Records added: {0}\n  Records deleted: {1}\n  Time: {2}\n",
                 new Object[]{libraryHarvest.getAddRecordCount(), libraryHarvest.getRemoveRecordCount(), Utils.elapsedTime(time)});
+        return casPosledniZpracovanyZaznam;
     }
 
     private ModsMetadataParser createMetadataParser(Library library) {
@@ -335,7 +528,7 @@ public final class Harvest {
         if ("oaipmh".equals(library.getHarvestProtocol())) {
             try {
                 OaiSource src = oaiFactory.createListRecords(
-                        library.getBaseUrl(), library.getLastHarvest(),
+                        library.getBaseUrl(), library.getLastHarvest(), library.getFromDate(), library.getToDate(),
                         library.getMetadataFormat(), library.getQueryParameters());
                 if (conf.isHarvestToCache() || conf.isHarvestWithCache()) {
                     File cache = createCacheFolder(library);
@@ -350,6 +543,21 @@ public final class Harvest {
             }
         }
         return null;
+    }
+
+    protected class InterruptTimerTask extends TimerTask {
+
+        private Thread theTread;
+
+        public InterruptTimerTask(Thread theTread) {
+            this.theTread = theTread;
+        }
+
+        @Override
+        public void run() {
+            theTread.interrupt();
+        }
+
     }
 
 }

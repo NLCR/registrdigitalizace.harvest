@@ -51,7 +51,7 @@ public final class LibraryDao {
         try {
             ResultSet rs = stmt.executeQuery(
                     "select K.ID as ID, L.\"VALUE\" as DLISTS_VALUE, PROTOKOL, FORMATDAT, LASTHARVEST, OAIPMHCOMMAND, OAIPMHSERVERBASEURL"
-                    + " from DIGKNIHOVNA K, DLISTS L where K.ID = L.ID");
+                    + " from DIGKNIHOVNA K, DLISTS L where K.ID = L.ID  and OAIPMHSERVERBASEURL is not null");
             try {
                 return processSelectLibraries(rs);
             } finally {
@@ -73,6 +73,8 @@ public final class LibraryDao {
             library.setQueryParameters(rs.getString("OAIPMHCOMMAND"));
             library.setBaseUrl(rs.getString("OAIPMHSERVERBASEURL"));
             library.setDListValue(rs.getString("DLISTS_VALUE"));
+//nastaveni posledniho uspesneho datumu harvesteru
+            library.setFromDate(rs.getString("LASTHARVEST"));
             libraries.add(library);
         }
         return libraries;
@@ -91,7 +93,8 @@ public final class LibraryDao {
         PreparedStatement pstmt = conn.prepareStatement(
                 "update DIGKNIHOVNA set LASTHARVEST=? where ID=?");
         try {
-            pstmt.setString(1, library.getLastHarvest());
+//            pstmt.setString(1, library.getLastHarvest());
+            pstmt.setString(1, library.getToDate());
             pstmt.setBigDecimal(2, library.getId());
             SQLQuery.assertRows(1, pstmt.executeUpdate());
         } finally {

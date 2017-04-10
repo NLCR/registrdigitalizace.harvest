@@ -51,8 +51,10 @@ public class OaiSourceFactory {
         }
     }
 
-    public OaiSource createListRecords(String baseUriStr, String fromDate,
-            String metadataPrefix, String otherParams) throws OaiException {
+//    public OaiSource createListRecords(String baseUriStr, String fromDate,
+//            String metadataPrefix, String otherParams) throws OaiException {
+//        return createListRecords(baseUriStr, fromDate, null, metadataPrefix, otherParams);
+/*
         try {
             return createListRecordsImpl(baseUriStr, fromDate, metadataPrefix, otherParams);
         } catch (URISyntaxException ex) {
@@ -60,8 +62,30 @@ public class OaiSourceFactory {
         } catch (MalformedURLException ex) {
             throw new OaiException(ex);
         }
-    }
+*/
+//    }
 
+    /**
+     * Marek přidán parametr toDate
+     * @param baseUriStr
+     * @param fromDate
+     * @param toDate
+     * @param metadataPrefix
+     * @param otherParams
+     * @return
+     * @throws OaiException 
+     */
+    public OaiSource createListRecords(String baseUriStr, String lastHarvest, String fromDate, String toDate,
+            String metadataPrefix, String otherParams) throws OaiException {
+        try {
+            return createListRecordsImpl(baseUriStr, lastHarvest, fromDate, toDate, metadataPrefix, otherParams);
+        } catch (URISyntaxException ex) {
+            throw new OaiException(ex);
+        } catch (MalformedURLException ex) {
+            throw new OaiException(ex);
+        }
+    }
+    
     /**
      * Creates OAI source to read cached responses from file system.
      * @param cache cache folder
@@ -85,7 +109,18 @@ public class OaiSourceFactory {
         return new OaiLocalWriteSource(src, cache);
     }
 
-    static OaiSource createListRecordsImpl(String baseUriStr, String fromDate,
+    /**
+     * Marek přidán parametr toDate
+     * @param baseUriStr
+     * @param fromDate
+     * @param toDate
+     * @param metadataPrefix
+     * @param otherParams
+     * @return
+     * @throws URISyntaxException
+     * @throws MalformedURLException 
+     */
+    static OaiSource createListRecordsImpl(String baseUriStr, String lastHarvest, String fromDate, String toDate,
             String metadataPrefix, String otherParams) throws URISyntaxException, MalformedURLException {
 
         URI baseUri = new URI(baseUriStr);
@@ -95,8 +130,14 @@ public class OaiSourceFactory {
         }
         String verbParameter = "verb=ListRecords";
         StringBuilder oaiQuery = new StringBuilder(verbParameter);
+        if (((fromDate == null) || (fromDate.length() == 0)) && (lastHarvest != null)) {
+            fromDate = lastHarvest;
+        }
         if (fromDate != null && fromDate.length() > 0) {
             oaiQuery.append("&from=").append(fromDate);
+        }
+        if (toDate != null && toDate.length() > 0) {
+            oaiQuery.append("&until=").append(toDate);
         }
         if (metadataPrefix != null && metadataPrefix.length() > 0) {
             oaiQuery.append("&metadataPrefix=").append(metadataPrefix);
