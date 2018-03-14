@@ -57,8 +57,8 @@ public class OaiSourceTest {
     @Test
     public void testPlainUrl() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/", null, null, 
-                null, null, null);
+                "http://example.com:8080/oaiprovider/", null, null, null, 
+                null, null, null, null);
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords");
         doTestResumptionUrl(inst, "X30623170/1",
@@ -68,8 +68,8 @@ public class OaiSourceTest {
     @Test
     public void testUrlFormat() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/", null, null, 
-                null, "oai_dc", null);
+                "http://example.com:8080/oaiprovider/", null, null, null, 
+                null, "oai_dc", null, null);
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords&metadataPrefix=oai_dc");
         doTestResumptionUrl(inst, "X30623170/1",
@@ -79,8 +79,8 @@ public class OaiSourceTest {
     @Test
     public void testUrlOtherParams() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/", null, null, 
-                null, null, "set=type:periodical");
+                "http://example.com:8080/oaiprovider/", null, null, null, 
+                null, null, "set=type:periodical", null);
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords&set=type:periodical");
         doTestResumptionUrl(inst, "X30623170/1",
@@ -90,8 +90,8 @@ public class OaiSourceTest {
     @Test
     public void testBuildURL_Format_OtherParams() throws Exception {
         OaiSource inst = factory.createListRecords(
-                "http://example.com:8080/oaiprovider/", null, null, 
-                null, "oai_dc", "set=type:periodical");
+                "http://example.com:8080/oaiprovider/", null, null, null, 
+                null, "oai_dc", "set=type:periodical", null);
         doTestBuildUrl(inst,
                 "http://example.com:8080/oaiprovider/?verb=ListRecords&metadataPrefix=oai_dc&set=type:periodical");
         doTestResumptionUrl(inst, "X30623170/1",

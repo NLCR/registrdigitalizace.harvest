@@ -114,8 +114,12 @@ public final class ListResult<T> extends OaiResult implements Iterable<T> {
         private String getResumptionToken() {
             OAIPMHtype oaiType = parser.getOaiType();
             ListRecordsType listRecords = oaiType.getListRecords();
-            ResumptionTokenType resumptionToken = listRecords.getResumptionToken();
-            return resumptionToken == null ? null : resumptionToken.getValue();
+//            try {
+                ResumptionTokenType resumptionToken = listRecords.getResumptionToken();
+                return resumptionToken == null ? null : resumptionToken.getValue();
+//            } catch (NullPointerException ex) {
+//                return null;
+//            }
         }
 
         private Iterator<T> resolveIterator() {

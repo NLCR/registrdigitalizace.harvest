@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Jan Pokorsky
+ * Copyright (C) 2017 Marek Kortus, based on 2012 jan Pokorsky
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Properties;
@@ -35,40 +36,38 @@ import java.util.logging.Logger;
  */
 final class Configuration {
 
-    private static final String UPDATE_METADATA = "-updateMetadata";
-    private static final String UPDATE_THUMBNAILS = "-updateThumbnails";
+    private static final String LIBRARY_IDS = "-libraryIDs";
+    private static final String LIBRARY_ID = "-libraryID";
+    private static final String FROM_DATE = "-fromDate";
+    private static final String TO_DATE = "-toDate";
+    private static final String HARVEST_DATA = "-harvestData";
+    private static final String CREATE_THUMBNAILS = "-createThumbnails";
+    private static final String SPOJIT_PREDLOHU_OBJEKT = "-spojitPredlohuObjekt";
+    private static final String ZAPIS_DO_DATABAZE = "-zapisDoDatabaze";
     private static final String VERSION = "-version";
-    private static final String HARVEST_TO_CACHE = "-harvestToCache";
-    private static final String HARVEST_FROM_CACHE = "-harvestFromCache";
-    private static final String HARVEST_WITH_CACHE = "-harvestWithCache";
-    private static final String CACHE_ROOT = "-cacheRoot";
-    private static final String DRY_RUN = "-dryRun";
-    private static final String NO_THUMB = "-noThumb";
-    private static final String EXCLUDES = "-excludes";
-    private static final String INCLUDES = "-includes";
     private static final String HELP = "-help";
     private static final String H = "-h";
     private static final Logger LOG = Logger.getLogger(Configuration.class.getName());
 
-    private boolean dryRun;
-    private boolean harvestFromCache;
-    private boolean harvestToCache;
-    private boolean harvestWithCache;
+    //private boolean dryRun;
     private boolean help;
-    private boolean noThumbnails;
-    private boolean regenerateMods;
-    private boolean updateThumbnails;
     private boolean version;
-    private String cachePath;
-    private String cacheRoot;
     private List<String> errors = new ArrayList<String>();
-    private Set<BigDecimal> includeLibraries = Collections.emptySet();
-    private Set<BigDecimal> excludeLibraries = Collections.emptySet();
     private Properties properties;
+    
+    private String libraryIDs = "";
+    private String fromDate = "";
+    private String toDate = "";
+    private Boolean harvestData = true;
+    private Boolean createThumbnails = false;
+    private Boolean spojitPredlohuObjekt = true;
+    
+    private Boolean zapisDoSouboru = false;
+    private Boolean zapisDoDatabaze = true;
 
     /** build configuration from command line */
-    public static Configuration fromCmdLine(String[] args) {
-        Configuration conf = new Configuration();
+    public static Configuration fromCmdLine(String[] args, Configuration conf) {
+        //Configuration conf = new Configuration();
         try {
             parseCmdLine(conf, args);
         } catch (IllegalArgumentException ex) {
@@ -77,62 +76,80 @@ final class Configuration {
         return conf;
     }
 
+    /**
+     * parsuje parametry z příkazové řádky a podle nich nastaví proměnné
+     * @param conf (Configuration)
+     * @param args (String[])
+     * @throws IllegalArgumentException 
+     */
     static void parseCmdLine(Configuration conf, String[] args) throws IllegalArgumentException {
         String action = null;
+        String pomocnyText;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
-            if (UPDATE_METADATA.equals(arg)) {
-                action = checkSingleOption(action, arg);
-                conf.regenerateMods = true;
-            } else if (UPDATE_THUMBNAILS.equals(arg)) {
-                action = checkSingleOption(action, arg);
-                conf.updateThumbnails = true;
-            } else if (VERSION.equals(arg)) {
-                conf.version = true;
-            } else if (HARVEST_TO_CACHE.equals(arg)) {
-                action = checkSingleOption(action, arg);
-                conf.harvestToCache = true;
-            } else if (HARVEST_FROM_CACHE.equals(arg)) {
-                action = checkSingleOption(action, arg);
-                conf.harvestFromCache = true;
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException("Missing session cache folder!");
+            if ((arg.indexOf("=")>0) && (LIBRARY_IDS.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                if (conf.libraryIDs==null) {
+                    conf.libraryIDs = arg.substring(arg.indexOf("=")+1);
+                } else {
+                    conf.libraryIDs += "," + arg.substring(arg.indexOf("=")+1);
                 }
-                conf.cachePath = args[++i];
-            } else if (HARVEST_WITH_CACHE.equals(arg)) {
-                action = checkSingleOption(action, arg);
-                conf.harvestWithCache = true;
-            } else if (CACHE_ROOT.equals(arg)) {
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException("Missing cache root folder!");
+            } else if ((arg.indexOf("=")>0) && (LIBRARY_ID.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                if (conf.libraryIDs==null) {
+                    conf.libraryIDs = arg.substring(arg.indexOf("=")+1);
+                } else {
+                    conf.libraryIDs += "," + arg.substring(arg.indexOf("=")+1);
                 }
-                conf.cacheRoot = args[++i];
-            } else if (DRY_RUN.equals(arg)) {
-                conf.dryRun = true;
-            } else if (NO_THUMB.equals(arg)) {
-                conf.noThumbnails = true;
-            } else if (INCLUDES.equals(arg)) {
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException("Missing list of IDs!");
-                } else if (!conf.excludeLibraries.isEmpty()) {
-                    throw new IllegalArgumentException("Do not mix includes with excludes!");
+            } else if ((arg.indexOf("=")>0) && (FROM_DATE.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                conf.fromDate = arg.substring(arg.indexOf("=")+1);
+            } else if ((arg.indexOf("=")>0) && (TO_DATE.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                conf.toDate = arg.substring(arg.indexOf("=")+1);
+            } else if ((arg.indexOf("=")>0) && (HARVEST_DATA.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                pomocnyText = arg.substring(arg.indexOf("=")+1);
+                if (("true".equals(pomocnyText)) || ("1".equals(pomocnyText))) {
+                    conf.harvestData = true;
+                } else {
+                    conf.harvestData = false;
                 }
-                conf.includeLibraries = parseIds(args[++i]);
-            } else if (EXCLUDES.equals(arg)) {
-                if (i + 1 >= args.length) {
-                    throw new IllegalArgumentException("Missing list of IDs!");
-                } else if (!conf.includeLibraries.isEmpty()) {
-                    throw new IllegalArgumentException("Do not mix includes with excludes!");
+            } else if ((arg.indexOf("=")>0) && (CREATE_THUMBNAILS.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                pomocnyText = arg.substring(arg.indexOf("=")+1);
+                if (("true".equals(pomocnyText)) || ("1".equals(pomocnyText))) {
+                    conf.createThumbnails = true;
+                } else {
+                    conf.createThumbnails = false;
                 }
-                conf.excludeLibraries = parseIds(args[++i]);
-            } else if (HELP.equals(arg) || H.equals(arg)) {
+            } else if ((arg.indexOf("=")>0) && (SPOJIT_PREDLOHU_OBJEKT.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                pomocnyText = arg.substring(arg.indexOf("=")+1);
+                if (("true".equals(pomocnyText)) || ("1".equals(pomocnyText))) {
+                    conf.spojitPredlohuObjekt = true;
+                } else {
+                    conf.spojitPredlohuObjekt = false;
+                }
+            } else if ((arg.indexOf("=")>0) && (ZAPIS_DO_DATABAZE.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
+                pomocnyText = arg.substring(arg.indexOf("=")+1);
+                if (("true".equals(pomocnyText)) || ("1".equals(pomocnyText))) {
+                    conf.zapisDoDatabaze = true;
+                    conf.zapisDoSouboru = false;
+                } else {
+                    conf.zapisDoDatabaze = false;
+                    conf.zapisDoSouboru = true;
+                }
+            } else if (HELP.equalsIgnoreCase(arg) || H.equals(arg)) {
                 conf.help = true;
             } else {
                 conf.addError(String.format("Unknown parameter '%s'", arg));
             }
+
+        }
+        if (conf.libraryIDs!=null) {
+            conf.libraryIDs = Utils.deDuplikace(conf.libraryIDs);
         }
     }
 
+    /**
+     * nastaví id knihoven, které se mají zpracovat
+     * @param idsArg (String)
+     * @return (Set<BigDecimal>)
+     */
     static Set<BigDecimal> parseIds(String idsArg) {
         String[] ids = idsArg.split("\\s*,\\s*");
         LinkedHashSet<BigDecimal> result = new LinkedHashSet<BigDecimal>(ids.length);
@@ -143,124 +160,56 @@ final class Configuration {
         return result;
     }
 
+    /**
+     * přidá aktuální chybové hlášení do listu
+     * @param msg (String)
+     */
     private void addError(String msg) {
         errors.add(msg);
         help = true;
     }
 
-    public static String help() {
+    /**
+     * vrátí help
+     * @return (String)
+     */
+    public static String printHelp() {
         String tab = "  ";
         String nltab = "\n" + tab;
         String nltabtab = "\n" + tab + tab;
-        return String.format("harvest [%s | %s | %s | %s | %s | %s <libIds> | %s <libIds>] | %s",
-                        VERSION, HELP, UPDATE_METADATA, UPDATE_THUMBNAILS, DRY_RUN,
-                        INCLUDES, EXCLUDES, NO_THUMB)
-                + String.format("\nharvest %s [%s <folder>] | %s [%s <folder>]",
-                        HARVEST_TO_CACHE, CACHE_ROOT, HARVEST_WITH_CACHE, CACHE_ROOT)
-                + "\nharvest -harvestFromCache <folder>"
-                + "\n\nWithout options it harvests data from remote OAI sources (DIGKNIHOVNA table) and writes them to DB."
+        return String.format("harvest [%s | %s | %s=<libIds> | %s=<libId> | %s=from_date | %s=to_date | %s=true/1/false/0]",
+                        VERSION, HELP, LIBRARY_IDS, LIBRARY_ID, FROM_DATE, TO_DATE, HARVEST_DATA)
+                + "\n\nLoad option from config file, but this can be overwrited by parameters. Definition of library connect string is loaded from database by id"
                 + "\n\nOptions:"
-                + nltab + UPDATE_METADATA
-                + nltabtab + "Recomputes meta data from already harvested XML inside DB. No harvest"
-                + nltab + UPDATE_THUMBNAILS
-                + nltabtab + "Removes thumbnail of deleted digital objects and fetches missing. No harvest"
                 + nltab + VERSION
                 + nltabtab + "Prints program version."
                 + nltab + HELP + ", " + H
                 + nltabtab + "Prints this help."
-                + nltab + HARVEST_TO_CACHE
-                + nltabtab + "Harvests data to local cache. None data are written to DB."
-                + nltab + HARVEST_WITH_CACHE
-                + nltabtab + "Harvests data to local cache and then writes it to DB."
-                + nltab + String.format("%s <folder>", HARVEST_FROM_CACHE)
-                + nltabtab + "Reads already harvested data from folder containing session cache and writes it to DB."
-                + nltab + String.format("%s <folder>", CACHE_ROOT)
-                + nltabtab + "Path to store all harvested data. -Djava.io.tmp/harvest_cache is default path."
-                + nltab + DRY_RUN
-                + nltabtab + "Use to test storage of newly harvested records. Rollbacks DB modifications. Skips thumbnail processing."
-                + nltab + INCLUDES + " <libIds>"
-                + nltabtab + "Use to include only list of library IDs."
-                + nltab + EXCLUDES + " <libIds>"
-                + nltabtab + "Use to exclude list of library IDs from processing."
-                + nltab + NO_THUMB
-                + nltabtab + "Use not to process thumbnails."
                 + "\n\n";
     }
 
-    public boolean isRegenerateMods() {
-        return regenerateMods;
-    }
-
+    /**
+     * vrátí jestli se má vypsat verze
+     * @return (boolean)
+     */
     public boolean isVersion() {
         return version;
     }
 
-    public boolean isHarvestFromCache() {
-        return harvestFromCache;
-    }
-
-    public boolean isHarvestToCache() {
-        return harvestToCache;
-    }
-
-    public boolean isHarvestWithCache() {
-        return harvestWithCache;
-    }
-
+    /**
+     * vrátí jestli se má vypsat help
+     * @return (boolean)
+     */
     public boolean isHelp() {
         return help;
     }
 
-    public String getCachePath() {
-        return cachePath;
-    }
-
-    public String getCacheRoot() {
-        if (cacheRoot == null) {
-            cacheRoot = defaultCacheRoot();
-        }
-        return cacheRoot;
-    }
-
-    public boolean isUpdateThumbnails() {
-        return updateThumbnails;
-    }
-
-    public boolean isDryRun() {
-        return dryRun;
-    }
-
-    public boolean isNoThumbnails() {
-        return noThumbnails;
-    }
-
+    /**
+     * vrátí list chyb
+     * @return (List<String>)
+     */
     public List<String> getErrors() {
         return errors;
-    }
-
-    /**
-     * Gets a set of library IDs to exclude from processing.
-     * @return empty set stands for include all
-     */
-    public Set<BigDecimal> getExcludeLibraries() {
-        return excludeLibraries;
-    }
-
-    /**
-     * Gets a set of library IDs to include from processing.
-     * @return empty set stands for include all
-     */
-    public Set<BigDecimal> getIncludeLibraries() {
-        return includeLibraries;
-    }
-
-    /**
-     * Gets a XSLT path.
-     */
-    public String getMetadataXslt(String libVal) {
-        String val = getProperties().getProperty("library." + libVal +  ".metadata.xslt",
-                getProperties().getProperty("metadata.xslt"));
-        return val;
     }
 
     /**
@@ -274,8 +223,7 @@ final class Configuration {
     /**
      * Fetches properties form file specified as
      * {@code -Dcz.registrdigitalizace.harvest.Harvest.config}.
-     *
-     * @return fetched properties or system properties
+     * @return (Properties)
      */
     public Properties loadConfigFile() {
         if (properties != null) {
@@ -306,15 +254,201 @@ final class Configuration {
         return properties;
     }
 
-    static String defaultCacheRoot() {
-        return System.getProperty("java.io.tmpdir") + "/harvest_cache";
-    }
-
+    /**
+     * zjišťuje jestli option již nebyla nastavena
+     * @param option (String)
+     * @param arg (String)
+     * @return (String)
+     */
     private static String checkSingleOption(String option, String arg) {
         if (option != null) {
             throw new IllegalArgumentException("Multiple exclusive options! " + option + ", " + arg);
         }
         return arg;
+    }
+
+    //MK
+    /**
+     * Umožňuje nastavit jedno nebo více knihoven, které se mají načíst. Musí být odděleny znakem "," (čárka)
+     * @param value (String)
+     */
+    public void SetLibraryIds(String value) {
+        if (!Utils.jePrazdne(value)) { this.libraryIDs = value; }
+    }
+
+    /**
+     * Umožňuje nastavit startovní datum harvesteru, pokud není nastaveno použije se datum poslední sklizně.
+     * @param value (String)
+     */
+    public void SetFromDate(String value) {
+        if (!Utils.jePrazdne(value)) { this.fromDate = value; }
+    }
+
+    /**
+     * Umožňuje nastavit koncové datum harvesteru, pokud nenastaveno nastaví půlnoc dnešního dne ("01.01.2000T00:00:00Z"), čímž sklidí vše do ("31.12.1999T23:59:59Z")
+     * @param value (String)
+     */
+    public void SetToDate(String value) {
+        if (!Utils.jePrazdne(value)) { this.toDate = value; }
+    }
+
+    /**
+     * vrací seznam knihoven
+     * @return (String)
+     */
+    public String getLibraryIds() {
+        return this.libraryIDs;
+    }
+
+    /**
+     * vrací hodnotu fromDate
+     * @return (String)
+     */
+    public String getFromDate() {
+        return this.fromDate;
+    }
+
+    /**
+     * vrací hodnotu toDate
+     * @return (String)
+     */
+    public String getToDate() {
+        return this.toDate;
+    }
+
+    /**
+     * Umožňuje nastavit jestli se mají harvestrovat data (záznamy) knihovny
+     * @param value (Boolean)
+     */
+    public void SetHarvestData(Boolean value) {
+        if (!Utils.jePrazdne(value)) { this.harvestData = value; }
+    }
+
+    /**
+     * vrací hodnotu zda se mají harvestrovat data (záznamy)
+     * @return (Boolean)
+     */
+    public Boolean GetHarvestData() {
+        return this.harvestData;
+    }
+
+    /**
+     * vrací hodnotu zda se mají harvestrovat data (záznamy)
+     * @return (Boolean)
+     */
+    public Boolean isHarvestData() {
+        return this.harvestData;
+    }
+
+    /**
+     * Umožňuje nastavit jestli se mají harvestrovat data (záznamy) knihovny
+     * @param value (Boolean)
+     */
+    public void SetCreateThumbnails(Boolean value) {
+        if (!Utils.jePrazdne(value)) { this.createThumbnails = value; }
+    }
+
+    /**
+     * vrací hodnotu zda se mají harvestrovat data (záznamy)
+     * @return (Boolean)
+     */
+    public Boolean GetCreateThumbnails() {
+        return this.createThumbnails;
+    }
+
+    /**
+     * vrací hodnotu zda se mají vytvářet thumbnails (náhledy)
+     * @return (Boolean)
+     */
+    public Boolean isCreateThumbnails() {
+        return this.createThumbnails;
+    }
+
+    /**
+     * vrací hodnotu zda se má zapisovat do databáze
+     * @return (Boolean)
+     */
+    public Boolean isZapisDoDatabaze() {
+        return this.zapisDoDatabaze;
+    }
+
+    /**
+     * vrací hodnotu zda se má zapisovat do souboru
+     * @return (Boolean)
+     */
+    public Boolean isZapisDoSouboru() {
+        return this.zapisDoSouboru;
+    }
+
+    /**
+     * vrací hodnotu zda se má propojit Predloha a DigObjekt
+     * @return (Boolean)
+     */
+    public Boolean isSpojitPredlohuObjekt() {
+        return this.spojitPredlohuObjekt;
+    }
+
+    //MK konec
+
+    /**
+     * vrací kompletní data
+     * @return (String)
+     */
+    public String GetFullData() {
+        String data = "";
+        //data += "dryRun: " + dryRun;
+        data += ", help: " + help;
+        data += ", version: " + version;
+        data += ", errors: (" + errors.size() + ")";
+        data += ", libraryIDs: " + libraryIDs;
+        data += ", fromDate: " + fromDate;
+        data += ", toDate: " + toDate;
+        data += ", harvestData: " + harvestData;
+
+        return data;
+    }
+    
+    /**
+     * plní properties z konfiguračního souboru
+     */
+    public void fillPropertiesFromConfigFile() {
+        Properties propertie = loadConfigFile();
+        String pomocnyString = "";
+
+        Enumeration e = properties.propertyNames();
+        while (e.hasMoreElements()) {
+            String key = (String) e.nextElement();
+            if (("libraryID".equalsIgnoreCase(key)) || ("libraryIDs".equalsIgnoreCase(key))) {
+                libraryIDs = properties.getProperty(key);
+            } else if ("fromDate".equalsIgnoreCase(key)) {
+                fromDate = properties.getProperty(key);
+            } else if ("toDate".equalsIgnoreCase(key)) {
+                toDate = properties.getProperty(key);
+            } else if ("harvestData".equalsIgnoreCase(key)) {
+                pomocnyString = properties.getProperty(key);
+                if (("true".equals(pomocnyString)) || ("1".equals(pomocnyString))) {
+                    harvestData = true;
+                } else {
+                    harvestData = false;                    
+                }
+            } else if ("zapisDoDatabaze".equalsIgnoreCase(key)) {
+                pomocnyString = properties.getProperty(key);
+                if (("true".equals(pomocnyString)) || ("1".equals(pomocnyString))) {
+                    zapisDoSouboru = false;
+                    zapisDoDatabaze = true;
+                } else {
+                    zapisDoSouboru = true;
+                    zapisDoDatabaze = false;
+                }
+            } else if ("spojitPredlohuObjekt".equalsIgnoreCase(key)) {
+                pomocnyString = properties.getProperty(key);
+                if (("true".equals(pomocnyString)) || ("1".equals(pomocnyString))) {
+                    spojitPredlohuObjekt = true;
+                } else {
+                    spojitPredlohuObjekt = false;
+                }
+            }
+        }
     }
 
 }

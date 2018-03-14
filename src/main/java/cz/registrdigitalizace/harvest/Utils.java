@@ -16,7 +16,17 @@
  */
 package cz.registrdigitalizace.harvest;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.w3c.dom.Node;
 
 /**
  * Various helpers.
@@ -24,6 +34,7 @@ import java.util.List;
  * @author Jan Pokorsky
  */
 public final class Utils {
+    private static final Logger LOG = Logger.getLogger(Utils.class.getName());
 
     public static String elapsedTime(long time) {
         long msecs = time % 1000;
@@ -42,6 +53,154 @@ public final class Utils {
             sb.append(s);
         }
         return sb.toString();
+    }
+
+    public static String deDuplikace(String vstup) {
+        String vystup = vstup;
+        List<String> idsList = new ArrayList<String>();
+        try {
+            if ((vstup.length()>1) && (vstup.endsWith(","))) {
+                vstup = vstup.substring(0,vstup.length()-1);
+            }
+            String[] ids = vstup.split("\\s*,\\s*");
+            for (String id : ids) {
+                if ((idsList.isEmpty()) && (!id.isEmpty())) {
+                    idsList.add(id);
+                } else if ((!idsList.contains(id)) && (!id.isEmpty())) {
+                    idsList.add(id);
+                }
+            }
+            String vystupLocal = "";
+            try {
+                if (!idsList.isEmpty()) {
+                    for (String s : idsList) {
+                        vystupLocal += ","+s;
+                    }
+                    if ((vystupLocal.length()>1) && (vystupLocal.startsWith(","))) {
+                        vystupLocal = vystupLocal.substring(1);
+                    }
+                    if ((vystupLocal.length()>1) && (vystupLocal.endsWith(","))) {
+                        vystupLocal = vystupLocal.substring(0,vystupLocal.length()-1);
+                    }
+                }
+            } catch (Exception ex) {
+                System.out.println(" chyba se stala pri deDuplikaci: " + ex.getMessage());
+            }
+            if (!"".equals(vystupLocal)) {
+                vystup = vystupLocal;
+            }
+        } catch (Exception ex) {
+            System.out.println(" chyba se stala pri deDuplikaci: " + ex.getMessage());
+        }
+        return vystup;
+    }
+    
+    public static Boolean jePrazdne(String valueStr) {
+        Boolean vysledek = false;
+        if ((valueStr==null) || (valueStr.isEmpty()))  {
+            return true;
+        }
+        return vysledek;
+    }
+
+    public static Boolean jePrazdne(List<String> valueStr) {
+        Boolean vysledek = false;
+        if ((valueStr==null) || (valueStr.isEmpty()) || (valueStr.size()==0))  {
+            return true;
+        }
+        return vysledek;
+    }
+    
+    public static Boolean jePrazdne(Boolean valueStr) {
+        Boolean vysledek = false;
+        if ((valueStr==null) || (!valueStr.booleanValue()))  {
+            return true;
+        }
+        return vysledek;
+    }
+    
+    public static String vratString(Node input) {
+        if (!jePrazdne(input.getTextContent())) {
+            return input.getTextContent();
+        } else if (!jePrazdne(input.getNodeValue())) {
+            return input.getNodeValue();
+        }
+        return null;
+    }
+
+    public static String normalize(String vstup) {
+        return vstup.trim().replace("  ", " ");
+    }
+
+    public static String toJson(Object vstup){
+        String vystup = "";
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            vystup = mapper.writeValueAsString(vstup);
+        } catch (JsonProcessingException ex) {
+            System.out.println("chyba konverze na JSOU: " + ex.getMessage());
+        }
+        
+        return vystup;
+    }
+    
+    public static String ListToString(List<String> seznamHodnot) {
+        String vystup = "";
+        if (!jePrazdne(seznamHodnot)) {
+            for (int i=0; i<seznamHodnot.size(); i++) {
+                if (i>0) vystup = vystup + "', '";
+                vystup = vystup + seznamHodnot.get(i);
+            }
+        }
+        return vystup;
+    }
+
+    /**
+     * vrací třídu, metodu a číslo řádku, kde došlo k chybě
+     * @return 
+     */
+    public static String lineNumber() {
+        StackTraceElement sTE = Thread.currentThread().getStackTrace()[2];
+        return " [ class: " + sTE.getClassName() + ", method: " + sTE.getMethodName() + ", line: " + sTE.getLineNumber() + "]";
+    }
+    
+
+    /**
+     * vrací jméno aktuální metody
+     * @return 
+     */
+    public static String getCurrentMethodName() {
+        return Thread.currentThread().getStackTrace()[2].getClassName() + "." + Thread.currentThread().getStackTrace()[2].getMethodName();
+    }
+
+    public static void tryClose(Connection c) {
+        if (c != null) {
+            try {
+                c.close();
+            } catch (SQLException ex) {
+                LOG.log(Level.SEVERE, " chyba při uzavření connection", ex);
+            }
+        }
+    }
+
+    public static void tryClose(Statement stmt) {
+        if (stmt != null) {
+            try {
+                stmt.close();
+            } catch (SQLException ex) {
+                LOG.log(Level.SEVERE, " chyba při uzavření statement", ex);
+            }
+        }
+    }
+
+    public static void tryClose(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException ex) {
+                LOG.log(Level.SEVERE, " chyba při uzavření resourceset", ex);
+            }
+        }
     }
 
 }

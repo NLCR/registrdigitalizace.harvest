@@ -17,6 +17,7 @@
 
 package cz.registrdigitalizace.harvest.db;
 
+import cz.registrdigitalizace.harvest.Utils;
 import java.io.File;
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -48,7 +49,10 @@ public final class Library {
     private String baseUrl;
     /** OAIPMHCOMMAND */
     private String queryParameters;
+    private String verbParameter;
     private transient File cacheFolder;
+    
+    private String kontakt;
     
     private Integer pocetMesicu = 3;
 
@@ -108,7 +112,11 @@ public final class Library {
     }
 
     public String getFromDate() {
-        return fromDate;
+        if (Utils.jePrazdne(fromDate)) {
+            return lastHarvest;
+        } else {
+            return fromDate;
+        }
     }
 
     public void setFromDate( String fromDate) {
@@ -120,7 +128,11 @@ public final class Library {
     }
 
     public void setToDate(String toDate) {
-        this.toDate = toDate;
+        if (Utils.jePrazdne(toDate)) {
+            this.toDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "T00:00:00Z";
+        } else {
+            this.toDate = toDate;
+        }
     }
     
     public String getMetadataFormat() {
@@ -147,6 +159,22 @@ public final class Library {
         this.cacheFolder = cacheFolder;
     }
 
+    public String getVerbParameter() {
+        return verbParameter;
+    }
+
+    public void setVerbParameter(String verbParameter) {
+        this.verbParameter = verbParameter;
+    }
+    
+    public String getKontakt() {
+        return this.kontakt;
+    }
+
+    public void setKontakt(String kontakt) {
+        this.kontakt = kontakt;
+    }
+    
     @Override
     public String toString() {
         return String.format("Library[id: %s, dListValue: %s, baseUrl: %s, protocol: %s, format: %s, query: %s, last: %s, from: %s, to: %s]",

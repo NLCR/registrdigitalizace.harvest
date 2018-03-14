@@ -75,10 +75,11 @@ public class OaiSourceFactory {
      * @return
      * @throws OaiException 
      */
-    public OaiSource createListRecords(String baseUriStr, String lastHarvest, String fromDate, String toDate,
-            String metadataPrefix, String otherParams) throws OaiException {
+    public OaiSource createListRecords(String baseUriStr, String verbParameterStr, String lastHarvest, String fromDate, String toDate,
+            String metadataPrefix, String otherParams, String resumptionToken) throws OaiException {
+        LOG.log(Level.INFO, " vytváří se list záznamů");
         try {
-            return createListRecordsImpl(baseUriStr, lastHarvest, fromDate, toDate, metadataPrefix, otherParams);
+            return createListRecordsImpl(baseUriStr, verbParameterStr, lastHarvest, fromDate, toDate, metadataPrefix, otherParams, resumptionToken);
         } catch (URISyntaxException ex) {
             throw new OaiException(ex);
         } catch (MalformedURLException ex) {
@@ -110,7 +111,7 @@ public class OaiSourceFactory {
     }
 
     /**
-     * Marek přidán parametr toDate
+     * Marek přidán parametr toDate, resumptionToken
      * @param baseUriStr
      * @param fromDate
      * @param toDate
@@ -120,8 +121,8 @@ public class OaiSourceFactory {
      * @throws URISyntaxException
      * @throws MalformedURLException 
      */
-    static OaiSource createListRecordsImpl(String baseUriStr, String lastHarvest, String fromDate, String toDate,
-            String metadataPrefix, String otherParams) throws URISyntaxException, MalformedURLException {
+    static OaiSource createListRecordsImpl(String baseUriStr, String verbParameterStr, String lastHarvest, String fromDate, String toDate,
+            String metadataPrefix, String otherParams, String resumptionToken) throws URISyntaxException, MalformedURLException {
 
         URI baseUri = new URI(baseUriStr);
         String query = baseUri.getQuery();
@@ -129,18 +130,25 @@ public class OaiSourceFactory {
             LOG.log(Level.WARNING, "Ignoring query part: {0}", baseUriStr);
         }
         String verbParameter = "verb=ListRecords";
+        if ((verbParameterStr!=null) && (!"".equals(verbParameterStr))) {
+            verbParameter = "verb=" + verbParameterStr;
+        }
         StringBuilder oaiQuery = new StringBuilder(verbParameter);
-        if (((fromDate == null) || (fromDate.length() == 0)) && (lastHarvest != null)) {
-            fromDate = lastHarvest;
-        }
-        if (fromDate != null && fromDate.length() > 0) {
-            oaiQuery.append("&from=").append(fromDate);
-        }
-        if (toDate != null && toDate.length() > 0) {
-            oaiQuery.append("&until=").append(toDate);
-        }
-        if (metadataPrefix != null && metadataPrefix.length() > 0) {
-            oaiQuery.append("&metadataPrefix=").append(metadataPrefix);
+        if ((resumptionToken!=null) && (!"".equals(resumptionToken))) {
+            oaiQuery.append("&resumptionToken=").append(resumptionToken);
+        } else {
+            if (((fromDate == null) || (fromDate.length() == 0)) && (lastHarvest != null)) {
+                fromDate = lastHarvest;
+            }
+            if (fromDate != null && fromDate.length() > 0) {
+                oaiQuery.append("&from=").append(fromDate);
+            }
+            if (toDate != null && toDate.length() > 0) {
+                oaiQuery.append("&until=").append(toDate);
+            }
+            if (metadataPrefix != null && metadataPrefix.length() > 0) {
+                oaiQuery.append("&metadataPrefix=").append(metadataPrefix);
+            }
         }
         if (otherParams != null && otherParams.length() > 0) {
             if (otherParams.charAt(0) != '&') {

@@ -62,6 +62,13 @@ public class LibraryHarvest {
     private int removeCounter;
     private final boolean dryRun;
 
+    /**
+     * 
+     * @param library (Library)
+     * @param source (DigitizationRegistrySource)
+     * @param metadataParser (ModsMetadataParser)
+     * @param dryRun (boolean)
+     */
     public LibraryHarvest(Library library, DigitizationRegistrySource source,
             ModsMetadataParser metadataParser, boolean dryRun) {
         this.library = library;
@@ -70,6 +77,15 @@ public class LibraryHarvest {
         this.dryRun = dryRun;
     }
 
+    /**
+     * zpracovává načtené záznamy v rámci transakce
+     * @param listRecords (ListResult<Record>)
+     * @param xmlCtx (XmlContext)
+     * @return (String)
+     * @throws DaoException
+     * @throws JAXBException
+     * @throws XMLStreamException 
+     */
     public String harvest(ListResult<Record> listRecords, XmlContext xmlCtx) throws DaoException, JAXBException, XMLStreamException {
         String casChyby = "";
         String casPosledniZpracovanyZaznam;
@@ -78,6 +94,7 @@ public class LibraryHarvest {
         try {
             casPosledniZpracovanyZaznam = persistRecords(listRecords.iterator(), xmlCtx);
             if (!"OK".equals(casPosledniZpracovanyZaznam)) {
+                LOG.log(Level.SEVERE, " chyba pri behu: " + casPosledniZpracovanyZaznam);
                 System.out.println(" chyba pri behu: " + casPosledniZpracovanyZaznam);
             } else {
                 casPosledniZpracovanyZaznam = "";
@@ -101,6 +118,14 @@ public class LibraryHarvest {
         return casPosledniZpracovanyZaznam;
     }
 
+    /**
+     * zpracuje načtené záznamy
+     * @param recordIterator (Iterator<Record>)
+     * @param xmlCtx (XmlContext)
+     * @return (String)
+     * @throws DaoException
+     * @throws JAXBException 
+     */
     private String persistRecords(Iterator<Record> recordIterator, XmlContext xmlCtx)
             throws DaoException, JAXBException/*, XMLStreamException*/ {
         String timestampPosledniZpracovanyZaznam = "";
@@ -146,14 +171,27 @@ public class LibraryHarvest {
         return "OK";
     }
 
+    /**
+     * 
+     * @return (int)
+     */
     public int getAddRecordCount() {
         return addCounter;
     }
 
+    /**
+     * 
+     * @return (int)
+     */
     public int getRemoveRecordCount() {
         return removeCounter;
     }
 
+    /**
+     * 
+     * @param identifier (String)
+     * @return 
+     */
     private HarvestedRecord resolveDeleteRecord(String identifier) {
         // XXX make UUID parse more robust
         int lastIndexOf = identifier.lastIndexOf(':');
@@ -163,6 +201,11 @@ public class LibraryHarvest {
         return rec;
     }
 
+    /**
+     * vytvoření procesoru
+     * @return (RecordRepository)
+     * @throws DaoException 
+     */
     private RecordRepository createProcessor() throws DaoException {
         idSequenceDao.setDataSource(transaction);
         relationDao.setDataSource(transaction);

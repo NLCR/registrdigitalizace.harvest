@@ -34,6 +34,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.events.XMLEvent;
 import org.openarchives.oai2.ListRecordsType;
+import org.openarchives.oai2.ListIdentifiersType;
 import org.openarchives.oai2.OAIPMHerrorType;
 import org.openarchives.oai2.OAIPMHtype;
 import org.openarchives.oai2.RecordType;
@@ -52,6 +53,7 @@ public class OaiParser {
     private static final QName REQUEST = new QName("http://www.openarchives.org/OAI/2.0/", "request");
     static final QName RECORD = new QName("http://www.openarchives.org/OAI/2.0/", "record");
     private static final QName LIST_RECORDS = new QName("http://www.openarchives.org/OAI/2.0/", "ListRecords");
+    private static final QName LIST_IDENTIFIERS = new QName("http://www.openarchives.org/OAI/2.0/", "ListIdentifiers");
     private static final QName ERROR = new QName("http://www.openarchives.org/OAI/2.0/", "error");
     private static final QName RESUMPTION_TOKEN = new QName("http://www.openarchives.org/OAI/2.0/", "resumptionToken");
     static final QName HEADER = new QName("http://www.openarchives.org/OAI/2.0/", "header");
@@ -196,6 +198,14 @@ public class OaiParser {
                     }
                     name = reader.getName();
                 } while (ERROR.equals(name));
+            } else if (LIST_IDENTIFIERS.equals(name)) {
+                ParsingContext parsingCtx = new ParsingContext();
+                parsingCtx.harvesterInputStream = stream;
+                parsingCtx.reader = reader;
+                this.oaiType.setListIdentifiers(new ListIdentifiersType());
+                this.iterator = new ParserIterator(this, parsingCtx, Record.class);
+                iteratorEnabled = true;
+                return;
             } else {
                 throw new XMLStreamException("unsupported verb: " + name, reader.getLocation());
             }
@@ -260,7 +270,7 @@ public class OaiParser {
                 reader, ResumptionTokenType.class);
         ResumptionTokenType token = tokenElm.getValue();
         String tokenVal = token.getValue();
-        LOG.fine(tokenVal);
+        LOG.fine(" token:" + tokenVal);
         tokenVal = (tokenVal == null || tokenVal.length() == 0) ? null : tokenVal;
         ListRecordsType listRecordsType = this.oaiType.getListRecords();
         listRecordsType.setResumptionToken(tokenVal == null ? null : token);
