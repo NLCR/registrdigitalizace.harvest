@@ -239,7 +239,13 @@ public class KrameriusEntry {
     
     public void setSigla(String valueLocal) {
         if (!Utils.jePrazdne(valueLocal)) {
-            this.sigla = valueLocal;
+            if (("ABA000".equals(valueLocal.substring(0, 6))) || ("ABA001".equals(valueLocal.substring(0, 6))) || ("ABA100".equals(valueLocal.substring(0, 6)))) {
+                this.sigla = "ABA001";
+            } else if (("BOA001".equals(valueLocal.substring(0, 6))) || ("BOA002".equals(valueLocal.substring(0, 6))) || ("BOA003".equals(valueLocal.substring(0, 6)))) {
+                this.sigla = "BOA001";
+            } else {
+                this.sigla = valueLocal;
+            }
         }
     }
 
@@ -251,7 +257,7 @@ public class KrameriusEntry {
         if (i<this.ccnb.size()) {
             return this.ccnb.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setCcnb(List<String> valueLocal) {
@@ -274,7 +280,7 @@ public class KrameriusEntry {
         if (i<this.urnnbn.size()) {
             return this.urnnbn.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setUrnnbn(List<String> valueLocal) {
@@ -318,7 +324,7 @@ public class KrameriusEntry {
         if (i<this.issn.size()) {
             return this.issn.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setIssn(List<String> valueLocal) {
@@ -341,7 +347,7 @@ public class KrameriusEntry {
         if (i<this.oclc.size()) {
             return this.oclc.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setOclc(List<String> valueLocal) {
@@ -364,7 +370,7 @@ public class KrameriusEntry {
         if (i<this.nepccnb.size()) {
             return this.nepccnb.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setNepCcnb(List<String> valueLocal) {
@@ -387,7 +393,7 @@ public class KrameriusEntry {
         if (i<this.nepisbn.size()) {
             return this.nepisbn.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setNepIsbn(List<String> text) {
@@ -408,7 +414,7 @@ public class KrameriusEntry {
         if (i<this.nepissn.size()) {
             return this.nepissn.get(i);
         }
-        return null;
+        return "";
     }
     
     public void setNepIssn(List<String> valueLocal) {

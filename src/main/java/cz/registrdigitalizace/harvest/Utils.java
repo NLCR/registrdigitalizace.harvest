@@ -202,5 +202,13 @@ public final class Utils {
             }
         }
     }
+    
+    public static int parseInteger(String value) {
+        if (value==null) {
+            return 0;
+        } else {
+            return Integer.parseInt(value);
+        }
+    }
 
 }

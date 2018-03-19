@@ -17,6 +17,7 @@
 
 package cz.registrdigitalizace.harvest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.registrdigitalizace.harvest.db.AutorEntry;
 import cz.registrdigitalizace.harvest.db.DaoException;
 import cz.registrdigitalizace.harvest.db.DigitizationRegistrySource;
@@ -41,6 +42,7 @@ import cz.registrdigitalizace.harvest.oai.XmlContext;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -52,7 +54,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -112,6 +113,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 
+// 2018.03.15 - dočasně zablokováno propojování periodik v: HledejPeriodikumHledani
+
+
 /**
  * Harvests digitized objects and stores them in Digitization Registry CZ.
  *
@@ -121,6 +125,7 @@ import org.xml.sax.SAXParseException;
  * @author Jan Pokorsky
  */
 public final class Harvest {
+    private static final int pocetZpracovavanychDni = 7;
 
     public static final String CONFIG_PROPERTY = Harvest.class.getName() + ".config";
 
@@ -210,48 +215,56 @@ public final class Harvest {
                 File f = new File("MonografieNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNenalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProNenalezeneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProNenalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("MonografieNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProNalezeneZaznamyMonografie.write("pole001;sigla;uuid\n");
                 } else {
                     bwSouborProNalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("MonografieChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProChybneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProChybneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProChybneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("MonografieNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNejednoznacneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProNejednoznacneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn;idCisla\n");
                 } else {
                     bwSouborProNejednoznacneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("PeriodikaNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNenalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProNenalezeneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProNenalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("PeriodikaNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProNalezeneZaznamyPeriodika.write("pole001;sigla;uuid\n");
                 } else {
                     bwSouborProNalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("PeriodikaChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProChybneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProChybneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProChybneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
                 f = new File("PeriodikaNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNejednoznacneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+                    bwSouborProNejednoznacneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn;idCisla\n");
                 } else {
                     bwSouborProNejednoznacneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
@@ -496,8 +509,7 @@ public final class Harvest {
             datumZacatek = datumOdLocal;
             pokracuj = true;
             int pocetZpracovanychDni = 0;
-//            while ((datumOdLocal.before(datumDo)) && (pokracuj)) {
-            while ((datumOdLocal.before(datumDo)) && (pokracuj) && (pocetZpracovanychDni<=10)) {
+            while ((datumOdLocal.before(datumDo)) && (pokracuj) && (pocetZpracovanychDni<this.pocetZpracovavanychDni)) { //počet dní, které se mají harvestovat
                 pocetZpracovanychDni++;
                 if (datumZacatek.equals(datumOdLocal)) {
                     try {
@@ -615,7 +627,8 @@ public final class Harvest {
                     LOG.log(Level.INFO, " zaznam zalozen: " + zaznamZalozen);
                     //System.out.println(" zaznam zalozen: " + zaznamZalozen);
                     Boolean pripojPredlohu = false;
-                    pripojPredlohu = pripojPredlohu(library, krameriusEntry);
+//                    pripojPredlohu = pripojPredlohu(library, krameriusEntry);
+                    pripojPredlohu = pripojPredlohu(krameriusEntry);
                     LOG.log(Level.INFO, " predloha pripojena: " + pripojPredlohu);
                     //System.out.println(" predloha pripojena: " + pripojPredlohu);
                     LOG.log(Level.INFO, " \n\n dalsiZaznam\n\n");
@@ -764,7 +777,7 @@ public final class Harvest {
         if ((metadata != null) && (metadata.getLength()>0)) {
             System.out.println(" metadata nactena");
             this.zpracovaneIdentifiers.add(identifier);
-
+        
             krameriusEntry.setLibraryId(library.getId().toString());
             krameriusEntry.setDListValue(library.getDListValue());
             Node nNodeRecord = metadata.item(0);
@@ -783,360 +796,369 @@ public final class Harvest {
                     if ("dr:descriptor".equals(nNodeRecordChild.getNodeName())) {
                         NodeList nListDescriptorChild = nNodeRecordChild.getChildNodes();
                         for (int j=0; j<nListDescriptorChild.getLength(); j++) {
-                            krameriusEntry.setUuid(uuidStr);
-                            krameriusEntry.setDruhDokumentu(typeStr);
-
                             Node nNodeDescriptorChild = nListDescriptorChild.item(j);
-                            if ("mods:modsCollection".equals(nNodeDescriptorChild.getNodeName())) {
-                                NodeList nListMMCChild = nNodeDescriptorChild.getChildNodes();
-                                int zaznamCislo = 0;
-                                Boolean zaznamNalezen = false;
-                                for (int k=0; k<nListMMCChild.getLength(); k++) {
-                                    Node nNodeMMCChild = nListMMCChild.item(k);
-                                    if ((!zaznamNalezen) && ("mods:mods".equals(nNodeMMCChild.getNodeName()))) {
-                                        zaznamCislo = k;
-                                        zaznamNalezen = true;
-                                    }
-                                }
-                                if (zaznamNalezen) {
-                                    Node nNodeMMCChild = nListMMCChild.item(zaznamCislo); //podle xsl specifikace se zpracuje pouze 1. zaznam mods:mods
-                                    if ("mods:mods".equals(nNodeMMCChild.getNodeName())) {
-                                        NodeList nListMMChild = nNodeMMCChild.getChildNodes();
-                                        for (int k=0; k<nListMMChild.getLength(); k++) {
-                                            Node nNodeMMChild = nListMMChild.item(k);
-                                            if ("mods:titleInfo".equals(nNodeMMChild.getNodeName())) {
-                                                NodeList nListChild = nNodeMMChild.getChildNodes();
-                                                String titleLocal = "";
-                                                String subTitleLocal = "";
-                                                String partNumberLocal = "";
-                                                String partNameLocal = "";
-                                                String displayLabelLocal = "";
-                                                Boolean alternativeLocal = false;
-                                                String typeLocal = "";
-                                                List<String> nezpracovaneHodnotyLocal = new ArrayList<String>();
-                                                for (int l=0; l<nListChild.getLength(); l++) {
-                                                    Node nNodeChild = nListChild.item(l);
-                                                    if ("mods:title".equals(nNodeChild.getNodeName())) {
-                                                        if (titleLocal.isEmpty()) {
-                                                            titleLocal = Utils.vratString(nNodeChild);
-                                                            typeLocal = "title";
-
-                                                            NamedNodeMap nListAttribute = nNodeMMChild.getAttributes();
-                                                            for (int m=0; m<nListAttribute.getLength(); m++) {
-                                                                Node nNodeAttribute = nListAttribute.item(m);
-                                                                if ("displayLabel".equals(nNodeAttribute.getNodeName())) {
-                                                                    displayLabelLocal = Utils.vratString(nNodeAttribute);
-                                                                } else if ("type".equals(nNodeAttribute.getNodeName())) {
-                                                                    if ("alternative".equals(Utils.vratString(nNodeAttribute))) {
-                                                                        alternativeLocal = true;
-                                                                    }
-                                                                } else {
-                                                                    nezpracovaneHodnotyLocal.add(Utils.vratString(nNodeAttribute));
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    if ("mods:subTitle".equals(nNodeChild.getNodeName())) {
-                                                        subTitleLocal = Utils.vratString(nNodeChild);
-                                                    }
-                                                    if ("mods:partNumber".equals(nNodeChild.getNodeName())) {
-                                                        partNumberLocal = Utils.vratString(nNodeChild);
-                                                    }
-                                                    if ("mods:partName".equals(nNodeChild.getNodeName())) {
-                                                        partNameLocal = Utils.vratString(nNodeChild);
-                                                    }
-                                                }
-                                                NazevEntry novyNazev = new NazevEntry();
-                                                novyNazev.setTitle(titleLocal);
-                                                novyNazev.setType(typeLocal);
-                                                novyNazev.setDisplayLabel(displayLabelLocal);
-                                                novyNazev.setAlternative(alternativeLocal);
-                                                novyNazev.addNezpracovaneHodnotyAll(nezpracovaneHodnotyLocal);
-                                                novyNazev.setSubTitle(subTitleLocal);
-                                                novyNazev.setPartNumber(partNumberLocal);
-                                                novyNazev.setPartName(partNameLocal);
-                                                krameriusEntry.addNazev(novyNazev);
-                                                
-                                            }
-                                            if ("mods:originInfo".equals(nNodeMMChild.getNodeName())) {
-                                                String mistoLocal = "";
-                                                String vydavatelLocal = "";
-                                                String poradiVydaniLocal = "";
-                                                String ediceLocal = "";
-                                                String vydaniLocal = "";
-                                                Boolean datumDoVydani = false;
-                                                String datumDoVydaniStr = "";
-                                                List<String> datumVydaniLocal = new ArrayList<String>();
-                                                NodeList nlChild = nNodeMMChild.getChildNodes();
-                                                for (int l=0; l<nlChild.getLength(); l++) {
-                                                    Node nChild = nlChild.item(l);
-                                                    if ("mods:place".equals(nChild.getNodeName())) {
-                                                        NodeList nlCChild = nChild.getChildNodes();
-                                                        for (int m=0; m<nlCChild.getLength(); m++) {
-                                                            Node nCChild = nlCChild.item(m);
-                                                            if ("mods:placeTerm".equals(nCChild.getNodeName())) {
-                                                                NamedNodeMap nlCCAttribute = nCChild.getAttributes();
-                                                                for (int n=0; n<nlCCAttribute.getLength(); n++) {
-                                                                    Node nCCAttribute = nlCCAttribute.item(n);
-                                                                    if ("type".equals(nCCAttribute.getNodeName())) {
-                                                                        if ("text".equals(Utils.vratString(nCCAttribute))) {
-                                                                            mistoLocal = Utils.vratString(nCChild);
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    if ("mods:publisher".equals(nChild.getNodeName())) {
-                                                        vydavatelLocal = Utils.vratString(nChild);
-                                                    }
-                                                    if ("mods:edition".equals(nChild.getNodeName())) {
-                                                        poradiVydaniLocal = Utils.vratString(nChild);
-                                                    }
-                                                    if ("mods:series".equals(nChild.getNodeName())) { //nemam overeno
-                                                        ediceLocal = Utils.vratString(nChild);
-                                                    }
-                                                    if ("mods:issuance".equals(nChild.getNodeName())) {
-                                                        vydaniLocal = Utils.vratString(nChild);
-                                                        if (!"continuing".equals(Utils.vratString(nChild))) datumDoVydani = true;
-                                                    }
-                                                    if ("mods:dateIssued".equals(nChild.getNodeName())) {
-                                                        NamedNodeMap nlCAttribute = nChild.getAttributes();
-                                                        if (nlCAttribute.getLength()==0) {
-                                                            datumVydaniLocal.add(Utils.vratString(nChild));
-                                                        }
-                                                        if (datumDoVydani) {
-                                                            datumDoVydaniStr = " " + Utils.vratString(nChild);
-                                                        }
-                                                    }
-                                                }
-                                                NakladatelEntry novyNakladatel = new NakladatelEntry();
-                                                novyNakladatel.setPoradiVydani(poradiVydaniLocal);
-                                                novyNakladatel.setEdice(ediceLocal);
-                                                novyNakladatel.setMistoVydani(mistoLocal);
-                                                novyNakladatel.setNakladatel(vydavatelLocal);
-                                                novyNakladatel.setDatumVydani(datumDoVydaniStr);
-                                                novyNakladatel.setVydani(vydaniLocal + datumDoVydaniStr);
-                                                krameriusEntry.addNakladatel(novyNakladatel);
-                                                krameriusEntry.setDatumVydani(datumVydaniLocal);
-                                            }
-                                            if ("mods:name".equals(nNodeMMChild.getNodeName())) {
-                                                List<String> autorLocal = new ArrayList<String>();
-                                                String roleLocal = "";
-                                                String rokLocal = "";
-                                                String familyLocal = "";
-                                                String displayFormLocal = "";
-                                                List<String> givenLocal = new ArrayList<String>();
-                                                NodeList nlChild = nNodeMMChild.getChildNodes();
-                                                for (int l=0; l<nlChild.getLength(); l++) {
-                                                    Node nChild = nlChild.item(l);
-                                                    if ("mods:namePart".equals(nChild.getNodeName())) {
-                                                        NamedNodeMap nlCAttribute = nChild.getAttributes();
-                                                        if (nlCAttribute.getLength()>0) {
-                                                            for (int n=0; n<nlCAttribute.getLength(); n++) {
-                                                                Node nCAttribute = nlCAttribute.item(n);
-                                                                if ("type".equals(nCAttribute.getNodeName())) {
-                                                                    if ("date".equals(Utils.vratString(nCAttribute))) {
-                                                                        rokLocal = Utils.vratString(nChild);
-                                                                    }
-                                                                } else if ("family".equals(nCAttribute.getNodeName())) {
-                                                                    familyLocal = Utils.vratString(nChild);
-                                                                } else if ("given".equals(nCAttribute.getNodeName())) {
-                                                                    givenLocal.add(Utils.vratString(nChild));
-                                                                }
-                                                            }
-                                                        } else {
-                                                            autorLocal.add(Utils.vratString(nChild));
-                                                        }
-                                                    } else if ("mods:role".equals(nChild.getNodeName())) {
-                                                        NamedNodeMap nlCAttribute = nChild.getAttributes();
-                                                        if (nlCAttribute.getLength()>0) {
-                                                            String authorityLocal = "";
-                                                            String typeLocal = "";
-                                                            for (int n=0; n<nlCAttribute.getLength(); n++) {
-                                                                Node nCAttribute = nlCAttribute.item(n);
-                                                                if ("type".equals(nCAttribute.getNodeName())) {
-                                                                    typeLocal = Utils.vratString(nCAttribute);
-                                                                //} else if ("authority".equals(nNodeAttribute.getNodeName())) {
-                                                                //    authorityLocal = Utils.vratString(nNodeAttribute);
-                                                                }
-                                                            }
-                                                            //if (("code".equals(typeLocal)) && ("marcrelator".equals(authorityLocal))) {
-                                                            if ("code".equals(typeLocal)) {
-                                                                roleLocal = Utils.vratString(nChild);
-                                                            }
-                                                        }
-                                                    } else if ("mods:displayForm".equals(nChild.getNodeName())) {
-                                                        displayFormLocal = " (" + Utils.vratString(nChild) + ") ";
-                                                    }
-                                                }
-                                                if (("cre".equals(roleLocal)) || ("aut".equals(roleLocal))) {
-                                                    AutorEntry novyAutor = new AutorEntry();
-                                                    novyAutor.setAutor(autorLocal);
-                                                    novyAutor.setRozmezi(rokLocal);
-                                                    novyAutor.setRole(roleLocal);
-                                                    krameriusEntry.addAutor(novyAutor);
-                                                }
-                                            }
-
-                                            //if ("mods:typeOfResource".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            if ("mods:genre".equals(nNodeMMChild.getNodeName())) {
-                                                krameriusEntry.setGenre(Utils.vratString(nNodeMMChild));
-                                            }
-                                            //if ("mods:language".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            //if ("mods:physicalDescription".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            //if ("mods:targetAudience".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            //if ("mods:note".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            if ("mods:location".equals(nNodeMMChild.getNodeName())) {
-                                                NodeList nlChild = nNodeMMChild.getChildNodes();
-                                                for (int l=0; l<nlChild.getLength(); l++) {
-                                                    Node nChild = nlChild.item(l);
-                                                    if ("mods:physicalLocation".equals(nChild.getNodeName())) {
-                                                        krameriusEntry.setSigla(Utils.vratString(nChild));
-                                                    }
-                                                    if ("mods:shelfLocator".equals(nChild.getNodeName())) {
-                                                        krameriusEntry.setSignatura(Utils.vratString(nChild));
-                                                    }
-                                                }
-                                            }
-                                            //if ("mods:relatedItem".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            if ("mods:identifier".equals(nNodeMMChild.getNodeName())) {
-                                                String fieldTypeStr = "";
-                                                Boolean fieldInvalid = false;
-                                                NamedNodeMap nlChild = nNodeMMChild.getAttributes();
-                                                for (int l=0; l<nlChild.getLength(); l++) {
-                                                    Node nChild = nlChild.item(l);
-                                                    if ("type".equals(nChild.getNodeName())) {
-                                                        fieldTypeStr = Utils.vratString(nChild);
-                                                    }
-                                                    if ("invalid".equals(nChild.getNodeName())) {
-                                                        fieldInvalid = true;
-                                                    }
-                                                }
-                                                if ("barCode".equals(fieldTypeStr)) {
-                                                    krameriusEntry.setCarKod(Utils.vratString(nNodeMMChild));
-                                                } else if ("issn".equals(fieldTypeStr)) {
-                                                    if (fieldInvalid) {
-                                                        krameriusEntry.addNepIssn(Utils.vratString(nNodeMMChild));
-                                                    } else {
-                                                        krameriusEntry.addIssn(Utils.vratString(nNodeMMChild));
-                                                    }
-                                                } else if ("isbn".equals(fieldTypeStr)) {
-                                                    if (fieldInvalid) {
-                                                        krameriusEntry.addNepIsbn(Utils.vratString(nNodeMMChild));
-                                                    } else {
-                                                        krameriusEntry.addIsbn(Utils.vratString(nNodeMMChild));
-                                                    }
-                                                } else if ("urnnbn".equals(fieldTypeStr)) {
-                                                    krameriusEntry.addUrnnbn(Utils.vratString(nNodeMMChild));
-                                                } else if ("ccnb".equals(fieldTypeStr)) {
-                                                    if (fieldInvalid) {
-                                                        krameriusEntry.addNepCcnb(Utils.vratString(nNodeMMChild));
-                                                    } else {
-                                                        krameriusEntry.addCcnb(Utils.vratString(nNodeMMChild));
-                                                    }
-                                                } else if ("oclc".equals(fieldTypeStr)) {
-                                                    krameriusEntry.addOclc(Utils.vratString(nNodeMMChild));
-                                                }
-                                            }
-                                            if ("mods:recordInfo".equals(nNodeMMChild.getNodeName())) {
-                                                NodeList nlChild = nNodeMMChild.getChildNodes();
-                                                for (int l=0; l<nlChild.getLength(); l++) {
-                                                    Node nChild = nlChild.item(l);
-                                                    if ("mods:recordIdentifier".equals(nChild.getNodeName())) {
-                                                        krameriusEntry.setPole001(Utils.vratString(nChild));
-                                                        NamedNodeMap nlChildAttribute = nNodeMMChild.getAttributes();
-                                                        for (int m=0; m<nlChildAttribute.getLength(); m++) {
-                                                            Node nChildAttribute = nlChild.item(m);
-                                                            if ("source".equals(nChildAttribute.getNodeName())) krameriusEntry.setKatalog(Utils.vratString(nChildAttribute));
-                                                        }
-                                                    }
-                                                    if ("mods:recordContentSource".equals(nChild.getNodeName())) krameriusEntry.setSiglaBibUdaju(Utils.vratString(nChild));
-                                                }
-                                            }
-                                            //if ("mods:classification".equals(nNodeMMChild.getNodeName())) {
-                                            //}
-                                            if ("mods:part".equals(nNodeMMChild.getNodeName())) {
-                                                String volumeTitleLocal = "";
-                                                Boolean ziskejUnitNumber = false;
-                                                Boolean jeVolume = false;
-                                                String rokLocal = "";
-                                                String unitTitleLocal = "";
-                                                String issueTitleLocal = "";
-                                                Boolean jePeriodikum = false;
-                                                String cisloPeriodikaLocal = "";
-                                                NamedNodeMap nNodeAttribute = nNodeMMChild.getAttributes();
-                                                for (int l=0; l<nNodeAttribute.getLength(); l++) {
-                                                    Node nlAttribute = nNodeAttribute.item(l);
-                                                    if ("type".equals(nlAttribute.getNodeName())) {
-                                                        if ("volume".equals(Utils.vratString(nlAttribute))) ziskejUnitNumber = true;
-                                                        if ("PeriodicalIssue".equals(Utils.vratString(nlAttribute))) jePeriodikum = true;
-                                                    }
-                                                }
-
-                                                NodeList nlChild = nNodeMMChild.getChildNodes();
-                                                for (int l=0; l<nlChild.getLength(); l++) {
-                                                    Node nChild = nlChild.item(l);
-                                                    if ("mods:detail".equals(nChild.getNodeName())) {
-                                                        Boolean jeIssue = false;
-                                                        NamedNodeMap nlCAttributes = nChild.getAttributes();
-                                                        for (int m=0; m<nlCAttributes.getLength(); m++) {
-                                                            Node nCAtrributes = nlCAttributes.item(m);
-                                                            if ("type".equals(nCAtrributes.getNodeName())) {
-                                                                if ("volume".equals(Utils.vratString(nCAtrributes))) {
-                                                                    jeVolume = true;
-                                                                }
-                                                                if ("issue".equals(Utils.vratString(nCAtrributes))) {
-                                                                    jeIssue = true;
-                                                                }
-                                                            }
-                                                        }
-                                                        
-                                                        if ((ziskejUnitNumber) || (jeIssue)) {
-                                                            NodeList nlCChild = nChild.getChildNodes();
-                                                            for (int m=0; m<nlCChild.getLength(); m++) {
-                                                                Node nCChild = nlCChild.item(m);
-                                                                if ("mods:number".equals(nCChild)) {
-                                                                    if (jeIssue) issueTitleLocal = Utils.vratString(nCChild);
-                                                                    if (jeVolume) volumeTitleLocal = Utils.vratString(nCChild);
-                                                                    if ((jePeriodikum) && (jeIssue)) cisloPeriodikaLocal = Utils.vratString(nCChild);
-                                                                }
-                                                                unitTitleLocal = Utils.vratString(nlCChild.item(m));
-                                                            }
-                                                        }
-                                                    }
-                                                    if ("mods:date".equals(nChild.getNodeName())) {
-                                                        if (jeVolume) rokLocal = Utils.vratString(nChild);
-                                                    }
-                                                }
-                                                if (!"".equals(rokLocal)) krameriusEntry.addRokVydani(rokLocal);
-                                                //if (!"".equals(issueTitleLocal)) krameriusEntry.setIssueTitle("Číslo: " + issueTitleLocal);
-                                                //if (!"".equals(volumeTitleLocal)) krameriusEntry.setVolumeTitle("Ročník: " + volumeTitleLocal);
-                                                //if (!"".equals(unitTitleLocal)) krameriusEntry.setUnitTitle("Část: " + unitTitleLocal);
-                                                if (!"".equals(issueTitleLocal)) krameriusEntry.setIssueTitle(issueTitleLocal);
-                                                if (!"".equals(volumeTitleLocal)) krameriusEntry.setVolumeTitle(volumeTitleLocal);
-                                                if (!"".equals(unitTitleLocal)) krameriusEntry.setUnitTitle(unitTitleLocal);
-                                                if (!"".equals(cisloPeriodikaLocal)) krameriusEntry.setCisloPeriodika(cisloPeriodikaLocal);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            krameriusEntry = ZpracujXML(uuidStr, typeStr, nNodeDescriptorChild, krameriusEntry);
                         }
                     }
                 }
             }
+            
             System.out.println(" metadata zpracovana");
         }
+        
         return krameriusEntry;
     }
 
+    private KrameriusEntry ZpracujXML(String uuidStr, String typeStr, Node nNodeDescriptorChild, KrameriusEntry krameriusEntry) {
+        //KrameriusEntry krameriusEntry = new KrameriusEntry();
+        krameriusEntry.setUuid(uuidStr);
+        krameriusEntry.setDruhDokumentu(typeStr);
+
+        if ("mods:modsCollection".equals(nNodeDescriptorChild.getNodeName())) {
+            NodeList nListMMCChild = nNodeDescriptorChild.getChildNodes();
+            int zaznamCislo = 0;
+            Boolean zaznamNalezen = false;
+            for (int k=0; k<nListMMCChild.getLength(); k++) {
+                Node nNodeMMCChild = nListMMCChild.item(k);
+                if ((!zaznamNalezen) && ("mods:mods".equals(nNodeMMCChild.getNodeName()))) {
+                    zaznamCislo = k;
+                    zaznamNalezen = true;
+                }
+            }
+            if (zaznamNalezen) {
+                Node nNodeMMCChild = nListMMCChild.item(zaznamCislo); //podle xsl specifikace se zpracuje pouze 1. zaznam mods:mods
+                if ("mods:mods".equals(nNodeMMCChild.getNodeName())) {
+                    NodeList nListMMChild = nNodeMMCChild.getChildNodes();
+                    for (int k=0; k<nListMMChild.getLength(); k++) {
+                        Node nNodeMMChild = nListMMChild.item(k);
+                        if ("mods:titleInfo".equals(nNodeMMChild.getNodeName())) {
+                            NodeList nListChild = nNodeMMChild.getChildNodes();
+                            String titleLocal = "";
+                            String subTitleLocal = "";
+                            String partNumberLocal = "";
+                            String partNameLocal = "";
+                            String displayLabelLocal = "";
+                            Boolean alternativeLocal = false;
+                            String typeLocal = "";
+                            List<String> nezpracovaneHodnotyLocal = new ArrayList<String>();
+                            for (int l=0; l<nListChild.getLength(); l++) {
+                                Node nNodeChild = nListChild.item(l);
+                                if ("mods:title".equals(nNodeChild.getNodeName())) {
+                                    if (titleLocal.isEmpty()) {
+                                        titleLocal = Utils.vratString(nNodeChild);
+                                        typeLocal = "title";
+
+                                        NamedNodeMap nListAttribute = nNodeMMChild.getAttributes();
+                                        for (int m=0; m<nListAttribute.getLength(); m++) {
+                                            Node nNodeAttribute = nListAttribute.item(m);
+                                            if ("displayLabel".equals(nNodeAttribute.getNodeName())) {
+                                                displayLabelLocal = Utils.vratString(nNodeAttribute);
+                                            } else if ("type".equals(nNodeAttribute.getNodeName())) {
+                                                if ("alternative".equals(Utils.vratString(nNodeAttribute))) {
+                                                    alternativeLocal = true;
+                                                }
+                                            } else {
+                                                nezpracovaneHodnotyLocal.add(Utils.vratString(nNodeAttribute));
+                                            }
+                                        }
+                                    }
+                                }
+                                if ("mods:subTitle".equals(nNodeChild.getNodeName())) {
+                                    subTitleLocal = Utils.vratString(nNodeChild);
+                                }
+                                if ("mods:partNumber".equals(nNodeChild.getNodeName())) {
+                                    partNumberLocal = Utils.vratString(nNodeChild);
+                                }
+                                if ("mods:partName".equals(nNodeChild.getNodeName())) {
+                                    partNameLocal = Utils.vratString(nNodeChild);
+                                }
+                            }
+                            NazevEntry novyNazev = new NazevEntry();
+                            novyNazev.setTitle(titleLocal);
+                            novyNazev.setType(typeLocal);
+                            novyNazev.setDisplayLabel(displayLabelLocal);
+                            novyNazev.setAlternative(alternativeLocal);
+                            novyNazev.addNezpracovaneHodnotyAll(nezpracovaneHodnotyLocal);
+                            novyNazev.setSubTitle(subTitleLocal);
+                            novyNazev.setPartNumber(partNumberLocal);
+                            novyNazev.setPartName(partNameLocal);
+                            krameriusEntry.addNazev(novyNazev);
+
+                        }
+                        if ("mods:originInfo".equals(nNodeMMChild.getNodeName())) {
+                            String mistoLocal = "";
+                            String vydavatelLocal = "";
+                            String poradiVydaniLocal = "";
+                            String ediceLocal = "";
+                            String vydaniLocal = "";
+                            Boolean datumDoVydani = false;
+                            String datumDoVydaniStr = "";
+                            List<String> datumVydaniLocal = new ArrayList<String>();
+                            NodeList nlChild = nNodeMMChild.getChildNodes();
+                            for (int l=0; l<nlChild.getLength(); l++) {
+                                Node nChild = nlChild.item(l);
+                                if ("mods:place".equals(nChild.getNodeName())) {
+                                    NodeList nlCChild = nChild.getChildNodes();
+                                    for (int m=0; m<nlCChild.getLength(); m++) {
+                                        Node nCChild = nlCChild.item(m);
+                                        if ("mods:placeTerm".equals(nCChild.getNodeName())) {
+                                            NamedNodeMap nlCCAttribute = nCChild.getAttributes();
+                                            for (int n=0; n<nlCCAttribute.getLength(); n++) {
+                                                Node nCCAttribute = nlCCAttribute.item(n);
+                                                if ("type".equals(nCCAttribute.getNodeName())) {
+                                                    if ("text".equals(Utils.vratString(nCCAttribute))) {
+                                                        mistoLocal = Utils.vratString(nCChild);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if ("mods:publisher".equals(nChild.getNodeName())) {
+                                    vydavatelLocal = Utils.vratString(nChild);
+                                }
+                                if ("mods:edition".equals(nChild.getNodeName())) {
+                                    poradiVydaniLocal = Utils.vratString(nChild);
+                                }
+                                if ("mods:series".equals(nChild.getNodeName())) { //nemam overeno
+                                    ediceLocal = Utils.vratString(nChild);
+                                }
+                                if ("mods:issuance".equals(nChild.getNodeName())) {
+                                    vydaniLocal = Utils.vratString(nChild);
+                                    if (!"continuing".equals(Utils.vratString(nChild))) datumDoVydani = true;
+                                }
+                                if ("mods:dateIssued".equals(nChild.getNodeName())) {
+                                    NamedNodeMap nlCAttribute = nChild.getAttributes();
+                                    if (nlCAttribute.getLength()==0) {
+                                        datumVydaniLocal.add(Utils.vratString(nChild));
+                                    }
+                                    if (datumDoVydani) {
+                                        datumDoVydaniStr = " " + Utils.vratString(nChild);
+                                    }
+                                }
+                            }
+                            NakladatelEntry novyNakladatel = new NakladatelEntry();
+                            novyNakladatel.setPoradiVydani(poradiVydaniLocal);
+                            novyNakladatel.setEdice(ediceLocal);
+                            novyNakladatel.setMistoVydani(mistoLocal);
+                            novyNakladatel.setNakladatel(vydavatelLocal);
+                            novyNakladatel.setDatumVydani(datumDoVydaniStr);
+                            novyNakladatel.setVydani(vydaniLocal + datumDoVydaniStr);
+                            krameriusEntry.addNakladatel(novyNakladatel);
+                            krameriusEntry.setDatumVydani(datumVydaniLocal);
+                        }
+                        if ("mods:name".equals(nNodeMMChild.getNodeName())) {
+                            List<String> autorLocal = new ArrayList<String>();
+                            String roleLocal = "";
+                            String rokLocal = "";
+                            String familyLocal = "";
+                            String displayFormLocal = "";
+                            List<String> givenLocal = new ArrayList<String>();
+                            NodeList nlChild = nNodeMMChild.getChildNodes();
+                            for (int l=0; l<nlChild.getLength(); l++) {
+                                Node nChild = nlChild.item(l);
+                                if ("mods:namePart".equals(nChild.getNodeName())) {
+                                    NamedNodeMap nlCAttribute = nChild.getAttributes();
+                                    if (nlCAttribute.getLength()>0) {
+                                        for (int n=0; n<nlCAttribute.getLength(); n++) {
+                                            Node nCAttribute = nlCAttribute.item(n);
+                                            if ("type".equals(nCAttribute.getNodeName())) {
+                                                if ("date".equals(Utils.vratString(nCAttribute))) {
+                                                    rokLocal = Utils.vratString(nChild);
+                                                }
+                                            } else if ("family".equals(nCAttribute.getNodeName())) {
+                                                familyLocal = Utils.vratString(nChild);
+                                            } else if ("given".equals(nCAttribute.getNodeName())) {
+                                                givenLocal.add(Utils.vratString(nChild));
+                                            }
+                                        }
+                                    } else {
+                                        autorLocal.add(Utils.vratString(nChild));
+                                    }
+                                } else if ("mods:role".equals(nChild.getNodeName())) {
+                                    NamedNodeMap nlCAttribute = nChild.getAttributes();
+                                    if (nlCAttribute.getLength()>0) {
+                                        String authorityLocal = "";
+                                        String typeLocal = "";
+                                        for (int n=0; n<nlCAttribute.getLength(); n++) {
+                                            Node nCAttribute = nlCAttribute.item(n);
+                                            if ("type".equals(nCAttribute.getNodeName())) {
+                                                typeLocal = Utils.vratString(nCAttribute);
+                                            //} else if ("authority".equals(nNodeAttribute.getNodeName())) {
+                                            //    authorityLocal = Utils.vratString(nNodeAttribute);
+                                            }
+                                        }
+                                        //if (("code".equals(typeLocal)) && ("marcrelator".equals(authorityLocal))) {
+                                        if ("code".equals(typeLocal)) {
+                                            roleLocal = Utils.vratString(nChild);
+                                        }
+                                    }
+                                } else if ("mods:displayForm".equals(nChild.getNodeName())) {
+                                    displayFormLocal = " (" + Utils.vratString(nChild) + ") ";
+                                }
+                            }
+                            if (("cre".equals(roleLocal)) || ("aut".equals(roleLocal))) {
+                                AutorEntry novyAutor = new AutorEntry();
+                                novyAutor.setAutor(autorLocal);
+                                novyAutor.setRozmezi(rokLocal);
+                                novyAutor.setRole(roleLocal);
+                                krameriusEntry.addAutor(novyAutor);
+                            }
+                        }
+
+                        //if ("mods:typeOfResource".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        if ("mods:genre".equals(nNodeMMChild.getNodeName())) {
+                            krameriusEntry.setGenre(Utils.vratString(nNodeMMChild));
+                        }
+                        //if ("mods:language".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        //if ("mods:physicalDescription".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        //if ("mods:targetAudience".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        //if ("mods:note".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        if ("mods:location".equals(nNodeMMChild.getNodeName())) {
+                            NodeList nlChild = nNodeMMChild.getChildNodes();
+                            for (int l=0; l<nlChild.getLength(); l++) {
+                                Node nChild = nlChild.item(l);
+                                if ("mods:physicalLocation".equals(nChild.getNodeName())) {
+                                    krameriusEntry.setSigla(Utils.vratString(nChild));
+                                }
+                                if ("mods:shelfLocator".equals(nChild.getNodeName())) {
+                                    krameriusEntry.setSignatura(Utils.vratString(nChild));
+                                }
+                            }
+                        }
+                        //if ("mods:relatedItem".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        if ("mods:identifier".equals(nNodeMMChild.getNodeName())) {
+                            String fieldTypeStr = "";
+                            Boolean fieldInvalid = false;
+                            NamedNodeMap nlChild = nNodeMMChild.getAttributes();
+                            for (int l=0; l<nlChild.getLength(); l++) {
+                                Node nChild = nlChild.item(l);
+                                if ("type".equals(nChild.getNodeName())) {
+                                    fieldTypeStr = Utils.vratString(nChild);
+                                }
+                                if ("invalid".equals(nChild.getNodeName())) {
+                                    fieldInvalid = true;
+                                }
+                            }
+                            if ("barCode".equals(fieldTypeStr)) {
+                                krameriusEntry.setCarKod(Utils.vratString(nNodeMMChild));
+                            } else if ("issn".equals(fieldTypeStr)) {
+                                if (fieldInvalid) {
+                                    krameriusEntry.addNepIssn(Utils.vratString(nNodeMMChild));
+                                } else {
+                                    krameriusEntry.addIssn(Utils.vratString(nNodeMMChild));
+                                }
+                            } else if ("isbn".equals(fieldTypeStr)) {
+                                if (fieldInvalid) {
+                                    krameriusEntry.addNepIsbn(Utils.vratString(nNodeMMChild));
+                                } else {
+                                    krameriusEntry.addIsbn(Utils.vratString(nNodeMMChild));
+                                }
+                            } else if ("urnnbn".equals(fieldTypeStr)) {
+                                krameriusEntry.addUrnnbn(Utils.vratString(nNodeMMChild));
+                            } else if ("ccnb".equals(fieldTypeStr)) {
+                                if (fieldInvalid) {
+                                    krameriusEntry.addNepCcnb(Utils.vratString(nNodeMMChild));
+                                } else {
+                                    krameriusEntry.addCcnb(Utils.vratString(nNodeMMChild));
+                                }
+                            } else if ("oclc".equals(fieldTypeStr)) {
+                                krameriusEntry.addOclc(Utils.vratString(nNodeMMChild));
+                            }
+                        }
+                        if ("mods:recordInfo".equals(nNodeMMChild.getNodeName())) {
+                            NodeList nlChild = nNodeMMChild.getChildNodes();
+                            for (int l=0; l<nlChild.getLength(); l++) {
+                                Node nChild = nlChild.item(l);
+                                if ("mods:recordIdentifier".equals(nChild.getNodeName())) {
+                                    krameriusEntry.setPole001(Utils.vratString(nChild));
+                                    NamedNodeMap nlChildAttribute = nNodeMMChild.getAttributes();
+                                    for (int m=0; m<nlChildAttribute.getLength(); m++) {
+                                        Node nChildAttribute = nlChild.item(m);
+                                        if ("source".equals(nChildAttribute.getNodeName())) krameriusEntry.setKatalog(Utils.vratString(nChildAttribute));
+                                    }
+                                }
+                                if ("mods:recordContentSource".equals(nChild.getNodeName())) krameriusEntry.setSiglaBibUdaju(Utils.vratString(nChild));
+                            }
+                        }
+                        //if ("mods:classification".equals(nNodeMMChild.getNodeName())) {
+                        //}
+                        if ("mods:part".equals(nNodeMMChild.getNodeName())) {
+                            String volumeTitleLocal = "";
+                            Boolean ziskejUnitNumber = false;
+                            Boolean jeVolume = false;
+                            String rokLocal = "";
+                            String unitTitleLocal = "";
+                            String issueTitleLocal = "";
+                            Boolean jePeriodikum = false;
+                            String cisloPeriodikaLocal = "";
+                            NamedNodeMap nNodeAttribute = nNodeMMChild.getAttributes();
+                            for (int l=0; l<nNodeAttribute.getLength(); l++) {
+                                Node nlAttribute = nNodeAttribute.item(l);
+                                if ("type".equals(nlAttribute.getNodeName())) {
+                                    if ("volume".equals(Utils.vratString(nlAttribute))) ziskejUnitNumber = true;
+                                    if ("PeriodicalIssue".equals(Utils.vratString(nlAttribute))) jePeriodikum = true;
+                                }
+                            }
+
+                            NodeList nlChild = nNodeMMChild.getChildNodes();
+                            for (int l=0; l<nlChild.getLength(); l++) {
+                                Node nChild = nlChild.item(l);
+                                if ("mods:detail".equals(nChild.getNodeName())) {
+                                    Boolean jeIssue = false;
+                                    NamedNodeMap nlCAttributes = nChild.getAttributes();
+                                    for (int m=0; m<nlCAttributes.getLength(); m++) {
+                                        Node nCAtrributes = nlCAttributes.item(m);
+                                        if ("type".equals(nCAtrributes.getNodeName())) {
+                                            if ("volume".equals(Utils.vratString(nCAtrributes))) {
+                                                jeVolume = true;
+                                            }
+                                            if ("issue".equals(Utils.vratString(nCAtrributes))) {
+                                                jeIssue = true;
+                                            }
+                                        }
+                                    }
+
+                                    if ((ziskejUnitNumber) || (jeIssue)) {
+                                        NodeList nlCChild = nChild.getChildNodes();
+                                        for (int m=0; m<nlCChild.getLength(); m++) {
+                                            Node nCChild = nlCChild.item(m);
+                                            if ("mods:number".equals(nCChild)) {
+                                                if (jeIssue) issueTitleLocal = Utils.vratString(nCChild);
+                                                if (jeVolume) volumeTitleLocal = Utils.vratString(nCChild);
+                                                if ((jePeriodikum) && (jeIssue)) cisloPeriodikaLocal = Utils.vratString(nCChild);
+                                            }
+                                            unitTitleLocal = Utils.vratString(nlCChild.item(m));
+                                        }
+                                    }
+                                }
+                                if ("mods:date".equals(nChild.getNodeName())) {
+                                    if (jeVolume) rokLocal = Utils.vratString(nChild);
+                                }
+                            }
+                            if (!"".equals(rokLocal)) krameriusEntry.addRokVydani(rokLocal);
+                            //if (!"".equals(issueTitleLocal)) krameriusEntry.setIssueTitle("Číslo: " + issueTitleLocal);
+                            //if (!"".equals(volumeTitleLocal)) krameriusEntry.setVolumeTitle("Ročník: " + volumeTitleLocal);
+                            //if (!"".equals(unitTitleLocal)) krameriusEntry.setUnitTitle("Část: " + unitTitleLocal);
+                            if (!"".equals(issueTitleLocal)) krameriusEntry.setIssueTitle(issueTitleLocal);
+                            if (!"".equals(volumeTitleLocal)) krameriusEntry.setVolumeTitle(volumeTitleLocal);
+                            if (!"".equals(unitTitleLocal)) krameriusEntry.setUnitTitle(unitTitleLocal);
+                            if (!"".equals(cisloPeriodikaLocal)) krameriusEntry.setCisloPeriodika(cisloPeriodikaLocal);
+                        }
+                    }
+                }
+            }
+        }
+
+        return krameriusEntry;
+    }
+    
     /**
      * načte záznam z OAI a vrátí jeho XML prezentaci jako NodeList
      * @param library
@@ -1466,9 +1488,7 @@ public final class Harvest {
                             krameriusEntry.setId("" + idZaznamu);
                         } catch (Exception ex) {
                             System.out.println(" chyba (zalozZaznam): " + ex.getMessage());
-                            if (this.zapisDoDatabaze) {
-                                this.connection.rollback();
-                            }
+                            if (this.zapisDoDatabaze) { this.connection.rollback(); }
                             vystup = false;
                         } finally {
                             Utils.tryClose(pstmtMetadata);
@@ -1580,7 +1600,8 @@ public final class Harvest {
         return vystup;
     }
     
-    private Boolean pripojPredlohu(Library library, KrameriusEntry krameriusEntry) {
+//    private Boolean pripojPredlohu(Library library, KrameriusEntry krameriusEntry) {
+    private Boolean pripojPredlohu(KrameriusEntry krameriusEntry) {
         Boolean vystup = false;
         PreparedStatement pstmtDigObjekt = null;
         try {
@@ -1593,7 +1614,8 @@ public final class Harvest {
                 rs.next();
                 String idPredlohaStr = rs.getString("RPREDLOHA_DIGOBJEKT");
                 if (Utils.jePrazdne(idPredlohaStr)) {
-                    vystup = HledejPredlohu(library, krameriusEntry);
+//                    vystup = HledejPredlohu(library, krameriusEntry);
+                    vystup = HledejPredlohu(krameriusEntry);
                 }
             }
             
@@ -1605,21 +1627,25 @@ public final class Harvest {
         return vystup;
     }
     
-    private Boolean HledejPredlohu(Library library, KrameriusEntry krameriusEntry) {
+//    private Boolean HledejPredlohu(Library library, KrameriusEntry krameriusEntry) {
+    private Boolean HledejPredlohu(KrameriusEntry krameriusEntry) {
         Boolean vystup = true;
         String druhDokumentu = krameriusEntry.getDruhDokumentu();
         if (("MONOGRAPH".equals(druhDokumentu)) || ("MONOGRAPHUNIT".equals(druhDokumentu))) {
             LOG.log(Level.INFO, " hledám monografii");
-            vystup = HledejMonografii(library, krameriusEntry);
+//            vystup = HledejMonografii(library, krameriusEntry);
+            vystup = HledejMonografii(krameriusEntry);
         } else if ("PERIODICAL".equals(druhDokumentu)) {
             LOG.log(Level.INFO, " hledám periodikum");
-            vystup = HledejPeriodikum(library, krameriusEntry);
+//            vystup = HledejPeriodikum(library, krameriusEntry);
+            vystup = HledejPeriodikum(krameriusEntry);
         }
         
         return vystup;
     }
     
-    private Boolean HledejMonografii(Library library, KrameriusEntry krameriusEntry) {
+//    private Boolean HledejMonografii(Library library, KrameriusEntry krameriusEntry) {
+    private Boolean HledejMonografii(KrameriusEntry krameriusEntry) {
         LOG.log(Level.INFO, " metoda: HledejMonografii");
         HashMap<String, String> hMap = new HashMap<String, String>();
         Boolean vystup = false;
@@ -1631,15 +1657,15 @@ public final class Harvest {
         hMap = HledejMonografiiHledani(krameriusEntry, dalsiPodminka);
         dalsiPodminka = hMap.get("podminka");
         if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
-        //pokud nebyl nalezen žádný záznam a dodmínka je stejná jako na začátku = nenalezen žádný záznam
-        //  -> pak hledat ve všech záznamech (bez pole001)
-        if ((pokracuj) && (dalsiPodminkaZaklad.equals(dalsiPodminka)) && ("0".equals(hMap.get("pocet")))) {
+        //pokud nebyl nalezen žádný záznam a dodmínka je stejná jako na začátku, pak hledat ve všech záznamech knihovny (bez pole001)
+        if ((pokracuj) && (dalsiPodminkaZaklad.equals(dalsiPodminka)) && (("0".equals(hMap.get("pocet"))) || (Utils.jePrazdne(hMap.get("pocet"))))) {
             //hledání jen ve vlastní knihovně
             dalsiPodminkaZaklad = " sigla1='" + krameriusEntry.getSigla()+ "'";
             dalsiPodminka = dalsiPodminkaZaklad;
             hMap = HledejMonografiiHledani(krameriusEntry, dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
             //pokud nebyl nalezen žádný záznam, hledá se i v ostatních knihovnách
+
             /* -- toto je dočasně zablokováno, hledání v cizích knihovnách na základě emailu z 2018.03.14 - p. Dvořáková
             if ((pokracuj) && ("0".equals(hMap.get("pocet")))) {
                 hMap = HledejMonografiiHledani(krameriusEntry, "");
@@ -1648,7 +1674,8 @@ public final class Harvest {
             */
         }
 
-        vystup = VytvorZaznamDoSouboru(pokracuj, library, hMap, krameriusEntry, 
+//        vystup = VytvorZaznamDoSouboru(pokracuj, library, hMap, krameriusEntry, 
+        vystup = VytvorZaznamDoSouboru(pokracuj, hMap, krameriusEntry, 
                 "bwSouborProNalezeneZaznamyMonografie", "bwSouborProNenalezeneZaznamyMonografie", 
                 "bwSouborProChybneZaznamyMonografie", "bwSouborProNejednoznacneZaznamyMonografie");
 
@@ -1663,7 +1690,7 @@ public final class Harvest {
             hMap = HledejZaznamPredlohy("carkod", krameriusEntry.getCarKod(), dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) {
                 pokracuj = false;
-            } else if (!"0".equals(hMap.get("pocet"))) {
+            } else if (Utils.parseInteger(hMap.get("pocet"))>0) {
                 if (!Utils.jePrazdne(hMap.get("podminka"))) dalsiPodminka = hMap.get("podminka");
             }
         }
@@ -1671,15 +1698,31 @@ public final class Harvest {
             hMap = HledejZaznamPredlohy("signatura", krameriusEntry.getSignatura(), dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) {
                 pokracuj = false;
-            } else if (!"0".equals(hMap.get("pocet"))) {
+            } else if (Utils.parseInteger(hMap.get("pocet"))>0) {
                 if (!Utils.jePrazdne(hMap.get("podminka"))) dalsiPodminka = hMap.get("podminka");
+/* 
+    -- po dohodě tato možnost zablokována: email z 2018.03.19-13:14 p. Dvořáková. Zprovozněno v cca 11:00 stejného dne pouze pro testy
+    -- nikdy nenasazeno na ostrý provoz. Zde ponecháno pro případ opětovného požadavku na zprovoznění                 
+            } else if (Utils.parseInteger(hMap.get("pocet"))==0) {
+                String signaturaPomocna = krameriusEntry.getSignatura();
+                String hledanyText = "/Přív.";
+                if (signaturaPomocna.contains(hledanyText)) {
+                    signaturaPomocna = signaturaPomocna.substring(0, signaturaPomocna.indexOf(hledanyText));
+                    HashMap<String, String> hMapPom = hMap;
+                    hMapPom = HledejZaznamPredlohy("signatura", signaturaPomocna, dalsiPodminka);
+                    if ("1".equals(hMapPom.get("pocet"))) {
+                        hMap = hMapPom;
+                        pokracuj = false;
+                    }
+                }
+*/
             }
         }
         if ((pokracuj) && (!Utils.jePrazdne(krameriusEntry.getCcnb()))) {
             hMap = HledejZaznamPredlohy("ccnb",  Utils.ListToString(krameriusEntry.getCcnb()), dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) {
                 pokracuj = false;
-            } else if (!"0".equals(hMap.get("pocet"))) {
+            } else if (Utils.parseInteger(hMap.get("pocet"))>0) {
                 if (!Utils.jePrazdne(hMap.get("podminka"))) dalsiPodminka = hMap.get("podminka");
             }
         }
@@ -1687,14 +1730,15 @@ public final class Harvest {
             hMap = HledejZaznamPredlohy("isbn", Utils.ListToString(krameriusEntry.getIsbn()), dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) {
                 pokracuj = false;
-            } else if (!"0".equals(hMap.get("pocet"))) {
+            } else if (Utils.parseInteger(hMap.get("pocet"))>0) {
                 if (!Utils.jePrazdne(hMap.get("podminka"))) dalsiPodminka = hMap.get("podminka");
             }
         }
         return hMap;
     }
            
-    private Boolean HledejPeriodikum(Library library, KrameriusEntry krameriusEntry) {
+//    private Boolean HledejPeriodikum(Library library, KrameriusEntry krameriusEntry) {
+    private Boolean HledejPeriodikum(KrameriusEntry krameriusEntry) {
         HashMap<String, String> hMap = new HashMap<String, String>();
         Boolean vystup = false;
         // první hledání je ve vlastní knihovně, spolus s pole001
@@ -1708,13 +1752,14 @@ public final class Harvest {
         if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
         //pokud nebyl nalezen žádný záznam a dodmínka je stejná jako na začátku = nenalezen žádný záznam
         //  -> pak hledat ve všech záznamech (bez pole001)
-        if ((pokracuj) && (dalsiPodminkaZaklad.equals(dalsiPodminka)) && ("0".equals(hMap.get("pocet")))) {
+        if ((pokracuj) && (dalsiPodminkaZaklad.equals(dalsiPodminka)) && (("0".equals(hMap.get("pocet"))) || (Utils.jePrazdne(hMap.get("pocet"))))) {
             //hledání jen ve vlastní knihovně
             dalsiPodminkaZaklad = " sigla1='" + krameriusEntry.getSigla()+ "'";
             dalsiPodminka = dalsiPodminkaZaklad;
             hMap = HledejPeriodikumHledani(krameriusEntry, dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
             //pokud nebyl nalezen žádný záznam, hledá se i v ostatních knihovnách
+
             /* -- toto je dočasně zablokováno, hledání v cizích knihovnách na základě emailu z 2018.03.14 - p. Dvořáková
             if ((pokracuj) && ("0".equals(hMap.get("pocet")))) {
                 hMap = HledejPeriodikumHledani(krameriusEntry, "");
@@ -1723,7 +1768,8 @@ public final class Harvest {
             */
         }
 
-        vystup = VytvorZaznamDoSouboru(pokracuj, library, hMap, krameriusEntry,
+//        vystup = VytvorZaznamDoSouboru(pokracuj, library, hMap, krameriusEntry,
+        vystup = VytvorZaznamDoSouboru(pokracuj, hMap, krameriusEntry,
                 "bwSouborProNalezeneZaznamyPeriodika", "bwSouborProNenalezeneZaznamyPeriodika", 
                 "bwSouborProChybneZaznamyPeriodika", "bwSouborProNejednoznacneZaznamyPeriodika");
 
@@ -1734,37 +1780,53 @@ public final class Harvest {
         LOG.log(Level.INFO, " metoda: HledejPeriodikumHledani");
         HashMap<String, String> hMap = new HashMap<String, String>();
         Boolean pokracuj = true;
+        
+        /* -- spojování periodik je momentálně nezapojené!!!!! - email z 2018.03.15 p. Dvořáková
         if ((pokracuj) && (!Utils.jePrazdne(krameriusEntry.getIssn()))) {
             hMap = HledejZaznamPredlohy("issn", Utils.ListToString(krameriusEntry.getIssn()), dalsiPodminka);
             if ("1".equals(hMap.get("pocet"))) {
                 pokracuj = false;
-            } else if (!"0".equals(hMap.get("pocet"))) {
+            } else if ((Utils.parseInteger(hMap.get("pocet"))>0) {
                 if (!Utils.jePrazdne(hMap.get("podminka"))) dalsiPodminka = hMap.get("podminka");
             }
         }
+        */
         
         return hMap;
     }
     
-    private Boolean VytvorZaznamDoSouboru(Boolean pokracuj, Library library, HashMap<String, String> hMap, KrameriusEntry krameriusEntry, 
+//    private Boolean VytvorZaznamDoSouboru(Boolean nespojenyZaznam, Library library, HashMap<String, String> hMap, KrameriusEntry krameriusEntry, 
+    private Boolean VytvorZaznamDoSouboru(Boolean nespojenyZaznam, HashMap<String, String> hMap, KrameriusEntry krameriusEntry, 
             String souborProNalezeneZaznamy, String souborProNenalezeneZaznamy, 
             String souborProChybneZaznamy, String souborProNejednoznacneZaznamy) {
         Boolean vystup = false;
 
-        if (pokracuj) {
+        // kontrola na počty záznamů, pro případ kdyby to neodpovídalo
+        if ((Utils.parseInteger(hMap.get("pocet"))==0) && (!nespojenyZaznam)) {
+            LOG.log(Level.INFO, " chybné nastavení parametrů - přenastavuji =0 - " + Utils.parseInteger(hMap.get("pocet")) + " " + nespojenyZaznam);
+            nespojenyZaznam = true;
+        }
+        if ((Utils.parseInteger(hMap.get("pocet"))>1) && (!nespojenyZaznam)) {
+            LOG.log(Level.INFO, " chybné nastavení parametrů - přenastavuji >1 - " + Utils.parseInteger(hMap.get("pocet")) + " " + nespojenyZaznam);
+            nespojenyZaznam = true;
+        }
+        if ((Utils.parseInteger(hMap.get("pocet"))==1) && (nespojenyZaznam)) { 
+            LOG.log(Level.INFO, " chybné nastavení parametrů - přenastavuji =1 - " + Utils.parseInteger(hMap.get("pocet")) + " " + nespojenyZaznam);
+            nespojenyZaznam = false; 
+        }
+        // konec kontroly na počty záznamů
+        
+        if (nespojenyZaznam) {
             try {
-                if (("0".equals(hMap.get("pocet"))) || ("".equals(hMap.get("pocet")))) {
+                if (Utils.parseInteger(hMap.get("pocet"))==0) {
                     zapisDoSouboru(
-                            souborProNenalezeneZaznamy, krameriusEntry.getUuid() + ";" 
-                                    + krameriusEntry.getPole001() + ";" + krameriusEntry.getCarKod() + ";"
-                                    + krameriusEntry.getSignatura() + ";" + krameriusEntry.getCcnb(0),
+                            souborProNenalezeneZaznamy,
+                            getIdentifikaceZaznamuProSoubor(krameriusEntry),
                             "záznam nebyl nalezen (SpojPredlohaDigObjekt)");
                 } else {
                     zapisDoSouboru(
-                            souborProNejednoznacneZaznamy, krameriusEntry.getUuid()  
-                                    + krameriusEntry.getPole001() + ";" + krameriusEntry.getCarKod() + ";"
-                                    + krameriusEntry.getSignatura() + ";" + krameriusEntry.getCcnb(0)+ ";" 
-                                    + "(" + hMap.get("idcisla") + ");",
+                            souborProNejednoznacneZaznamy, 
+                            getIdentifikaceZaznamuProSoubor(krameriusEntry) + ";(" + hMap.get("idcisla") + ")",
                             "nejednoznačný záznam (SpojPredlohaDigObjekt)");
                 }
             } catch (Exception ex) {
@@ -1790,44 +1852,46 @@ public final class Harvest {
                             statement.execute(sqlPrikazDocasnyText);
                         } else {
                             zapisDoSouboru(
-                                    "bwSqlPrikazy", sqlPrikazDocasnyText,
+                                    "bwSqlPrikazy",
+                                    sqlPrikazDocasnyText,
                                     "(SpojPredlohaDigObjekt) - update DigObjekt");
                         }
 
-                        sqlPrikazDocasnyText = "select count(*) as pocet from DIGOBJEKT where RPREDLOHA_DIGOBJEKT = " + idZaznamu + " and uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + library.getId();
+//                        sqlPrikazDocasnyText = "select count(*) as pocet from DIGOBJEKT where RPREDLOHA_DIGOBJEKT = " + idZaznamu + " and uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + library.getId();
+                        sqlPrikazDocasnyText = "select count(*) as pocet from DIGOBJEKT where RPREDLOHA_DIGOBJEKT = " + idZaznamu + " and uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId();
                         LOG.log(Level.INFO, " select změněného DigObjektu: " + sqlPrikazDocasnyText);
                         rs3 = statement.executeQuery(sqlPrikazDocasnyText);
-                        //LOG.log(Level.INFO, " sql provedeno");
                         rs3.next();
                         if ("1".equals(rs3.getString("POCET"))) { provedeno = true; }
-                        LOG.log(Level.INFO, " nalezeno " + rs3.getString("POCET") + " záznamů, proto pokračuji: " + provedeno);
+                        //LOG.log(Level.INFO, " nalezeno " + rs3.getString("POCET") + " záznamů, proto pokračuji: " + provedeno);
                         if (provedeno) {
-                            if (zapisDoDatabaze) {
-                                this.connection.commit();
-                            }
+                            if (zapisDoDatabaze) { this.connection.commit(); }
                             String pole001Str = hMap.get("pole001");
                             String sigla1Str = hMap.get("sigla1");
                             zapisDoSouboru(
-                                    souborProNalezeneZaznamy, pole001Str + ";" + sigla1Str + ";" + krameriusEntry.getUuid(),
+                                    souborProNalezeneZaznamy,
+                                    pole001Str + ";" + sigla1Str + ";" + krameriusEntry.getUuid(),
                                     " úspěšný zápis (SpojPredlohaDigObjekt)");
                             vystup = true;
                         } else {
                             zapisDoSouboru(
-                                    souborProChybneZaznamy, krameriusEntry.getUuid() + ";"
-                                    + krameriusEntry.getPole001() + ";" + krameriusEntry.getCarKod() + ";"
-                                    + krameriusEntry.getSignatura() + ";" + krameriusEntry.getCcnb(0),
+                                    souborProChybneZaznamy, 
+                                    getIdentifikaceZaznamuProSoubor(krameriusEntry),
                                     " nepovedlo se upravit záznam (SpojPredlohaDigObjekt)");
-                            if (zapisDoDatabaze) {
-                                this.connection.rollback();
-                            }
+                            if (zapisDoDatabaze) { this.connection.rollback(); }
                         }
+                    } else {
+                        LOG.log(Level.INFO, " chyba: nepovedlo se najít záznam v předloze, ačkoliv by měl existovat (SpojPredlohaDigObjekt)");
+                        zapisDoSouboru(
+                                souborProNenalezeneZaznamy, 
+                                getIdentifikaceZaznamuProSoubor(krameriusEntry),
+                                " nepovedlo se najít záznam v předloze, ačkoliv by měl existovat (SpojPredlohaDigObjekt)");
                     }
                 } catch (SQLException ex) {
                     LOG.log(Level.INFO, " zápis kvůli chybě");
                     zapisDoSouboru(
-                            souborProChybneZaznamy, krameriusEntry.getUuid() + ";" 
-                                    + krameriusEntry.getPole001() + ";" + krameriusEntry.getCarKod() + ";"
-                                    + krameriusEntry.getSignatura() + ";" + krameriusEntry.getCcnb(0),
+                            souborProChybneZaznamy, 
+                            getIdentifikaceZaznamuProSoubor(krameriusEntry),
                             " SQL chyba (SpojPredlohaDigObjekt) ");
                     try {
                         this.connection.rollback();
@@ -1837,7 +1901,8 @@ public final class Harvest {
                 } catch (Exception ex) {
                     LOG.log(Level.INFO, " zápis kvůli chybě");
                     zapisDoSouboru(
-                            souborProChybneZaznamy, krameriusEntry.getUuid(),
+                            souborProChybneZaznamy,
+                            getIdentifikaceZaznamuProSoubor(krameriusEntry),
                             " obecná chyba (SpojPredlohaDigObjekt) ");
                     try {
                         this.connection.rollback();
@@ -1851,9 +1916,8 @@ public final class Harvest {
                 }
             } else { //toto by nemělo nastat, je to zde jen pro jistotu
                 zapisDoSouboru(
-                        souborProNejednoznacneZaznamy, krameriusEntry.getUuid() + ";" + krameriusEntry.getPole001() + ";" 
-                                    + krameriusEntry.getCarKod() + ";" + krameriusEntry.getSignatura() + ";" 
-                                    + krameriusEntry.getCcnb(0) /*+ ";" + krameriusEntry.getNazev(0)*/,
+                        souborProNejednoznacneZaznamy,
+                        getIdentifikaceZaznamuProSoubor(krameriusEntry),
                         " vráceno více než 1 záznam (SpojPredlohaDigObjekt) ");
             }
         }
@@ -1861,12 +1925,18 @@ public final class Harvest {
         return vystup;
     }
     
+    private String getIdentifikaceZaznamuProSoubor(KrameriusEntry krameriusEntry) {
+        return krameriusEntry.getUuid()
+                + ";" + krameriusEntry.getPole001() + ";" + krameriusEntry.getCarKod()
+                + ";" + krameriusEntry.getSignatura() + ";" + krameriusEntry.getCcnb(0)
+                + ";" + krameriusEntry.getIssn(0);
+    }
+    
     private HashMap<String, String> HledejZaznamPredlohy(String pole, String hodnoty, String dalsiPodminka) {
-        LOG.log(Level.INFO, " metoda: HledejZaznamPredlohy - " + dalsiPodminka);
+        //LOG.log(Level.INFO, " metoda: HledejZaznamPredlohy - " + dalsiPodminka);
         String podminkaVstup = dalsiPodminka;
         String podminkaVystup = podminkaVstup;
         HashMap<String, String> hMap = new HashMap<String, String>();
-        //if (!"".equals(dalsiPodminka)) {
         if (!Utils.jePrazdne(dalsiPodminka)) {
             if (!"and ".equals(dalsiPodminka.trim().substring(0, 4))) { dalsiPodminka = " and " + dalsiPodminka; }
         } else {
@@ -1887,8 +1957,6 @@ public final class Harvest {
                 hMap.put("pocet",pocetZaznamu);
                 if ("0".equals(pocetZaznamu)) {
                     hMap.put("podminka",podminkaVstup);
-                    //return hMap;
-                    //return "";
                 } else if ("1".equals(pocetZaznamu)) {
                     hMap.put("podminka",podminkaVystup);
                     rs2 = statement.executeQuery("select * from PREDLOHA where " + podminkaVystup);
@@ -1911,8 +1979,7 @@ public final class Harvest {
             Utils.tryClose(statement);
         }
         
-        //sdgf dsg 
-        LOG.log(Level.INFO, " kontrolní počet záznamů při opuštění procedury: " + hMap.get("pocet"));
+        //LOG.log(Level.INFO, " kontrolní počet záznamů při opuštění procedury: " + hMap.get("pocet"));
         return hMap;
     }
     
@@ -1971,8 +2038,10 @@ public final class Harvest {
             if (soubor == null) {
                 LOG.log(Level.SEVERE, "Soubor pro zápis: " + souborStr + " není definován");
             } else {
-                soubor.write("" + hodnota + "\n");
-                soubor.flush();
+                if (hodnota != null) {
+                    soubor.write("" + hodnota + "\n");
+                    soubor.flush();
+                }
             }
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, "Nepodařilo se zapsat do souboru: " + souborStr + ", hodnota: " + hodnota + ", popis: " + popisStr);
@@ -1982,46 +2051,77 @@ public final class Harvest {
     }
 
     private void najitPredlohyBezDigObjektu() {
+        Statement stmt = null;
+        ResultSet rs = null;
+        ResultSet rs2 = null;
         try {
-            PreparedStatement pstmtDigObjekt = this.connection.prepareStatement(
-                    "select id from digObjekt where rpredloha_digobjekt is null "
-            );
-            ResultSet rs = pstmtDigObjekt.executeQuery();
-            String idPredlohaStr = "";
-            while (rs.next()) {
-                //idPredlohaStr = rs.getString("ID");
-                spojPredlohuDigObjekt(rs.getString("ID"));
-            }
-        } catch (SQLException e) {
-
-        }
-
-    }
-    
-    private void spojPredlohuDigObjekt(String idZaznamu) {
-        try {
-            PreparedStatement pstmtDigObjekt = this.connection.prepareStatement(
-                    "select druhdokumentu, uuid,"
-                            + " (select value from metadata where reliefname='siglaFyzJednotky' and rdigobjekt_metadata=digObjekt.id) as sigla,"
-                            + " (select value from metadata where reliefname='pole001' and rdigobjekt_metadata=digObjekt.id) as pole001,"
-                            + " (select value from metadata where reliefname='signatura' and rdigobjekt_metadata=digObjekt.id) as signatura,"
-                            + " (select LISTAGG(value, ',') WITHIN GROUP(ORDER BY id DESC) from metadata where reliefname='ccnb' and rdigobjekt_metadata=digObjekt.id) as ccnb,"
-                            + " (select LISTAGG(value, ',') WITHIN GROUP(ORDER BY id DESC) from metadata where reliefname='isbn' and rdigobjekt_metadata=digObjekt.id) as isbn,"
-                            + " (select LISTAGG(value, ',') WITHIN GROUP(ORDER BY id DESC) from metadata where reliefname='issn' and rdigobjekt_metadata=digObjekt.id) as issn"
-                            + " from digObjekt where id=" + idZaznamu
-            );
-            ResultSet rs = pstmtDigObjekt.executeQuery();
+            stmt = this.connection.createStatement();
+            rs = stmt.executeQuery("select id from digObjekt where xml is not null and rpredloha_digobjekt is null");
             String idPredlohaStr = "";
             while (rs.next()) {
                 idPredlohaStr = rs.getString("ID");
-                if (Utils.jePrazdne(idPredlohaStr)) {
-//                    idPredlohaStr = HledejPredlohu(library, krameriusEntry);
+                rs2 = stmt.executeQuery("select xml, json, length(json) as length_json, length(xml) as length_xml, "
+                        + "uuid, druhDokumentu from digobjekt where id=" + idPredlohaStr);
+                rs2.next();
+                String jsonData = "";
+                String xmlData = "";
+                KrameriusEntry krameriusEntry = new KrameriusEntry();
+                ObjectMapper mapper = new ObjectMapper();
+                if (Utils.parseInteger(rs2.getString("LENGTH_JSON"))>0) {
+                    jsonData = rs2.getString("JSON");
+                    try {
+                        krameriusEntry = mapper.readValue(jsonData, KrameriusEntry.class);
+                    } catch (IOException e) {
+                        System.out.println(" chyba při parsování z json do krameriusEntry (najitPredlohyBezDigObjektu)");
+                    }
+                } else if (Utils.parseInteger(rs2.getString("LENGTH_XML"))>0) {
+                    xmlData = rs2.getString("XML"); 
+
+                    DocumentBuilderFactory dbFactoryLocal = DocumentBuilderFactory.newInstance();
+                    LOG.log(Level.INFO, " builderFactory");
+                    try {
+                        DocumentBuilder dBuilderLocal = dbFactoryLocal.newDocumentBuilder();
+                        LOG.log(Level.INFO, " documentBuilder");
+                        Document docLocal = null;
+                        Boolean neniChyba = true;
+                        try {
+                            InputStream inputStream = new ByteArrayInputStream(Charset.forName("UTF-8").encode(xmlData).array());
+                            docLocal = dBuilderLocal.parse(inputStream);
+                        } catch (SAXException ex) { //potřebuji hlavně: SAXParseException
+                            LOG.log(Level.SEVERE, " chyba SAX (najitPredlohyBezDigObjektu)");
+                            neniChyba = false;
+                        } catch (IOException ex) { 
+                            LOG.log(Level.SEVERE, " chyba IO (najitPredlohyBezDigObjektu)");
+                            neniChyba = false;
+                        }
+
+                        NodeList nListIdentifiers = docLocal.getElementsByTagName("mods:modsCollection");
+                        Node nNodeIdentifiers = nListIdentifiers.item(0);
+
+System.out.println(" zpracovan zaznam: " + krameriusEntry.toString());
+System.exit(0);
+                        
+                        
+                        krameriusEntry = ZpracujXML(rs2.getString("UUID"), rs2.getString("DRUHDOKUMENTU"), nNodeIdentifiers, krameriusEntry);                        
+
+                    } catch (ParserConfigurationException ex) { 
+                        System.out.println(" chyba při parsování uloženého XML (najitPredlohyBezDigObjektu)");
+                    }
+
+                }
+                if (krameriusEntry != null) {
+                    pripojPredlohu(krameriusEntry);                    
                 }
             }
         } catch (SQLException e) {
 
+        } finally {
+            Utils.tryClose(rs2);
+            Utils.tryClose(rs);
+            Utils.tryClose(stmt);
         }
-        
+
     }
+    
 
 }
