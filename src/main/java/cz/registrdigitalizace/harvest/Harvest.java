@@ -17,6 +17,8 @@
 
 package cz.registrdigitalizace.harvest;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.registrdigitalizace.harvest.db.AutorEntry;
 import cz.registrdigitalizace.harvest.db.DaoException;
@@ -125,7 +127,7 @@ import org.xml.sax.SAXParseException;
  * @author Jan Pokorsky
  */
 public final class Harvest {
-    private static final int pocetZpracovavanychDni = 7;
+    private static final int pocetZpracovavanychDni = 1;
 
     public static final String CONFIG_PROPERTY = Harvest.class.getName() + ".config";
 
@@ -212,56 +214,64 @@ public final class Harvest {
                 DateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
                 Date date = new Date();
                 String datumSpusteni = dateFormat.format(date);
-                File f = new File("MonografieNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+//                File f = new File("MonografieNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                File f = new File("MonNen-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNenalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNenalezeneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProNenalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("MonografieNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("MonografieNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("MonNal-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNalezeneZaznamyMonografie.write("pole001;sigla;uuid\n");
                 } else {
                     bwSouborProNalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("MonografieChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("MonografieChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                f = new File("MonChy-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProChybneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProChybneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProChybneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("MonografieNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("MonografieNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                f = new File("MonoNej-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNejednoznacneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNejednoznacneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn;idCisla\n");
                 } else {
                     bwSouborProNejednoznacneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("PeriodikaNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("PeriodikaNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                f = new File("PerNen-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNenalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNenalezeneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProNenalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("PeriodikaNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("PeriodikaNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("PerNal-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNalezeneZaznamyPeriodika.write("pole001;sigla;uuid\n");
                 } else {
                     bwSouborProNalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("PeriodikaChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("PeriodikaChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                f = new File("PerChy-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProChybneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProChybneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
                 } else {
                     bwSouborProChybneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
-                f = new File("PeriodikaNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+//                f = new File("PeriodikaNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                f = new File("PerNej-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNejednoznacneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNejednoznacneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn;idCisla\n");
@@ -276,67 +286,70 @@ public final class Harvest {
                     bwSqlPrikazy = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
             } catch (Exception ex) {
-                LOG.log(Level.SEVERE, " chyba při otevírání pomocných souborů pro zápis");
+                LOG.log(Level.SEVERE, " chyba při otevírání pomocných souborů pro zápis " + ex.getMessage());
             }
 
             Harvest harvest = new Harvest(OaiSourceFactory.getInstance(), conf);
+            LOG.log(Level.INFO, " harvest: " + conf.isHarvestData());
             if (conf.isHarvestData()) {
-                //Harvest harvest = new Harvest(OaiSourceFactory.getInstance(), conf);
                 LOG.log(Level.INFO, "  budu sklizet zaznamy");
                 harvest.harvestData();
-                try {
-                    LOG.log(Level.INFO, " uzavírám soubory");
-                    if (bwSouborProNenalezeneZaznamyMonografie != null) {
-                        bwSouborProNenalezeneZaznamyMonografie.flush();
-                        bwSouborProNenalezeneZaznamyMonografie.close();
-                    }
-                    if (bwSouborProNalezeneZaznamyMonografie != null) {
-                        bwSouborProNalezeneZaznamyMonografie.flush();
-                        bwSouborProNalezeneZaznamyMonografie.close();
-                    }
-                    if (bwSouborProChybneZaznamyMonografie != null) {
-                        bwSouborProChybneZaznamyMonografie.flush();
-                        bwSouborProChybneZaznamyMonografie.close();
-                    }
-                    if (bwSouborProNejednoznacneZaznamyMonografie != null) { 
-                        bwSouborProNejednoznacneZaznamyMonografie.flush();
-                        bwSouborProNejednoznacneZaznamyMonografie.close();
-                    }
-                    if (bwSouborProNenalezeneZaznamyPeriodika != null) { 
-                        bwSouborProNenalezeneZaznamyPeriodika.flush();
-                        bwSouborProNenalezeneZaznamyPeriodika.close();
-                    }
-                    if (bwSouborProNalezeneZaznamyPeriodika != null) { 
-                        bwSouborProNalezeneZaznamyPeriodika.flush();
-                        bwSouborProNalezeneZaznamyPeriodika.close();
-                    }
-                    if (bwSouborProChybneZaznamyPeriodika != null) { 
-                        bwSouborProChybneZaznamyPeriodika.flush();
-                        bwSouborProChybneZaznamyPeriodika.close();
-                    }
-                    if (bwSouborProNejednoznacneZaznamyPeriodika != null) { 
-                        bwSouborProNejednoznacneZaznamyPeriodika.flush();
-                        bwSouborProNejednoznacneZaznamyPeriodika.close();
-                    }
-                    if (bwSqlPrikazy != null) { 
-                        bwSqlPrikazy.flush();
-                        bwSqlPrikazy.close();
-                    }
-                    LOG.log(Level.INFO, " soubory uzavřeny v pořádku");
-                } catch (Exception ex) {
-                    LOG.log(Level.SEVERE, " chyba (main) při ukončování informačních souborů" + Utils.lineNumber(), ex);
-                }
+                LOG.log(Level.INFO, "  zaznamy sklizeny");
             }
             if (conf.isCreateThumbnails()) {
                 // tato možnost zatím není zpracovaná a nebude. obrázky již nebudou potřeba. jen UUID digitálního záznamu, které se získává harvesterem.
                 System.out.println(" !!!!Tato možnost není zpracovaná, protože již není potřeba!!!! "); // a možná ani nebude
             }
-            if ((conf.isSpojitPredlohuObjekt()) && (!conf.isHarvestData())) {
+            LOG.log(Level.INFO, " spojit: " + conf.isSpojitPredlohuObjekt());
+            if (conf.isSpojitPredlohuObjekt()) {
+                LOG.log(Level.INFO, " začínám spojovat stávající záznamy předlohy a digObjektů");
                 harvest.najitPredlohyBezDigObjektu();
+                LOG.log(Level.INFO, " konec spojování");
+            }
+            try {
+                LOG.log(Level.INFO, " uzavírám soubory");
+                if (bwSouborProNenalezeneZaznamyMonografie != null) {
+                    bwSouborProNenalezeneZaznamyMonografie.flush();
+                    bwSouborProNenalezeneZaznamyMonografie.close();
+                }
+                if (bwSouborProNalezeneZaznamyMonografie != null) {
+                    bwSouborProNalezeneZaznamyMonografie.flush();
+                    bwSouborProNalezeneZaznamyMonografie.close();
+                }
+                if (bwSouborProChybneZaznamyMonografie != null) {
+                    bwSouborProChybneZaznamyMonografie.flush();
+                    bwSouborProChybneZaznamyMonografie.close();
+                }
+                if (bwSouborProNejednoznacneZaznamyMonografie != null) { 
+                    bwSouborProNejednoznacneZaznamyMonografie.flush();
+                    bwSouborProNejednoznacneZaznamyMonografie.close();
+                }
+                if (bwSouborProNenalezeneZaznamyPeriodika != null) { 
+                    bwSouborProNenalezeneZaznamyPeriodika.flush();
+                    bwSouborProNenalezeneZaznamyPeriodika.close();
+                }
+                if (bwSouborProNalezeneZaznamyPeriodika != null) { 
+                    bwSouborProNalezeneZaznamyPeriodika.flush();
+                    bwSouborProNalezeneZaznamyPeriodika.close();
+                }
+                if (bwSouborProChybneZaznamyPeriodika != null) { 
+                    bwSouborProChybneZaznamyPeriodika.flush();
+                    bwSouborProChybneZaznamyPeriodika.close();
+                }
+                if (bwSouborProNejednoznacneZaznamyPeriodika != null) { 
+                    bwSouborProNejednoznacneZaznamyPeriodika.flush();
+                    bwSouborProNejednoznacneZaznamyPeriodika.close();
+                }
+                if (bwSqlPrikazy != null) { 
+                    bwSqlPrikazy.flush();
+                    bwSqlPrikazy.close();
+                }
+                LOG.log(Level.INFO, " soubory uzavřeny v pořádku");
+            } catch (Exception ex) {
+                LOG.log(Level.SEVERE, " chyba (main) při ukončování informačních souborů" + ex.getMessage());
             }
         } catch (Throwable ex) {
-            System.out.println("  chyba (main): " + ex + Utils.lineNumber());
-            LOG.log(Level.SEVERE, "Cannot start harvest process" + Utils.lineNumber(), ex);
+            LOG.log(Level.SEVERE, "Cannot start harvest process" + ex.getMessage());
             System.exit(1);
         }
     }
@@ -365,8 +378,7 @@ public final class Harvest {
                 }
             } catch (ParseException ex) {
                 pokracujVeZpracovani = false;
-                System.out.println(" chyba (harvestData) pri parsovani terminu" + Utils.lineNumber());
-                LOG.log(Level.SEVERE, " chyba (harvestData) při parsování termínu" + Utils.lineNumber());
+                LOG.log(Level.SEVERE, " chyba při parsování termínu" + ex.getMessage());
             }
         }
         
@@ -374,18 +386,15 @@ public final class Harvest {
             List<Library> libraries = fetchLibraries();
             for (Library library : libraries) {
                 try {
-                    System.out.println("  zacinam harvestovat knihovnu: " + library.getId());
                     LOG.log(Level.INFO, "  Začínám harvestovat knihovnu: " + library.getId());
                     harvestLibrary(library);
                 } catch (Exception ex) {
                     // catch everything not to break other libraries processing
-                    System.out.println("  chyba (harvestData) zpracovani knihovny (ID=" + library.getId() + ")");
-                    LOG.log(Level.SEVERE, "  Chyba (harvestData) zpracování knihovny (ID=" + library.getId() + ")" + Utils.lineNumber(), ex);
+                    LOG.log(Level.SEVERE, "  Chyba (harvestData) zpracování knihovny (ID=" + library.getId() + ")", ex.getMessage());
                 }
             }
         } else {
-            System.out.println("  chyba (harvestData) pri zpracovani zadaneho datumu jako zacatku nebo konce nacitanych dat! Datum musi byt zadan nasledujicim zpusobem: '1999-12-31T00:00:00Z' (datum vcetne casu).");
-            LOG.log(Level.SEVERE, "  Chyba (harvestData) při zpracování zadaného datumu jako začátku nebo konce načítaných dat! Datum musí být zadán následujícím způsobem: '1999-12-31T00:00:00Z' (datum včetně času)." + Utils.lineNumber());
+            LOG.log(Level.SEVERE, "  Chyba při zpracování zadaného datumu jako začátku nebo konce načítaných dat! Datum musí být zadán následujícím způsobem: '1999-12-31T00:00:00Z' (datum včetně času)." + Utils.lineNumber());
         }
     }
 
@@ -473,8 +482,8 @@ public final class Harvest {
         try {
             datumDo = simpleDateFormat2.parse(datumDoLocalStr);
         } catch (ParseException ex) {
-            System.out.println("Exception when set datumDo (" +  Utils.lineNumber() + "): " + ex);
-            LOG.log(Level.SEVERE, "Exception when set datumDo ("  + Utils.lineNumber() + "):" + ex);
+            System.out.println("Exception when set datumDo: " + ex.getMessage());
+            LOG.log(Level.SEVERE, "Exception when set datumDo: " + ex.getMessage());
         }
         try {
             datumDnesek = simpleDateFormat2.parse(simpleDateFormat2.format(datumDnesek));
@@ -485,8 +494,7 @@ public final class Harvest {
                 c.setTime(simpleDateFormat2.parse(datumOdLocalStr));
                 datumOdLocal = c.getTime();
             } catch (ParseException ex2) {
-                System.out.println("Exception when set datumOdLocal ("  + Utils.lineNumber() + "): "+ex2);
-                LOG.log(Level.SEVERE, "Exception when set datumOdLocal ("  + Utils.lineNumber() + "):"+ex);
+                LOG.log(Level.SEVERE, "Exception when set datumOdLocal: " + ex2.getMessage());
                 pokracuj = false;
                 datumOdLocal = null;
             }
@@ -495,8 +503,8 @@ public final class Harvest {
             try {
                 datumDo = simpleDateFormat2.parse(simpleDateFormat2.format(datumDnesek));
             } catch (ParseException ex) {
-                System.out.println("Exception when set datumDo ("  + Utils.lineNumber() + "):"+ex);
-                LOG.log(Level.SEVERE, "Exception when set datumDo ("  + Utils.lineNumber() + "):"+ex);
+                System.out.println("Exception when set datumDo: " + ex.getMessage());
+                LOG.log(Level.SEVERE, "Exception when set datumDo: " + ex.getMessage());
                 pokracuj = false;
             }
         }
@@ -517,7 +525,7 @@ public final class Harvest {
                     } catch (ParseException ex) {
                         pokracuj = false;
                         datumPomocny = null;
-                        LOG.log(Level.SEVERE, " nepodařilo se vytvořit pomocné datum");
+                        LOG.log(Level.SEVERE, " nepodařilo se vytvořit pomocné datum" + ex.getMessage());
                     }
                 } else {
                     datumPomocny = datumOdLocal;
@@ -541,7 +549,6 @@ public final class Harvest {
                             nacteno = true;
                         } catch (cz.registrdigitalizace.harvest.oai.OaiException ex) {
                             pocitadloPokusu++;
-                            //System.out.println("  pokus cislo: " + pocitadloPokusu + " " + ex.getMessage());
                             LOG.log(Level.INFO, ("  pokus číslo: " + pocitadloPokusu + " " + ex.getMessage()));
                         }
                     }
@@ -555,11 +562,11 @@ public final class Harvest {
                     try {
                         connectionLocal = this.dataSource.getConnection();
                         statement = connectionLocal.prepareStatement("update digknihovna set lastharvest='" + simpleDateFormat.format(datumDoLocal) + "' where id=" + localModifiedLibrary.getId());
-                        LOG.log(Level.INFO, " sql pro update poslední sklizně (" + Utils.getCurrentMethodName() + "): " + ((oracle.jdbc.driver.OraclePreparedStatement) statement).getOriginalSql());
+                        LOG.log(Level.INFO, " sql pro update poslední sklizně: " + ((oracle.jdbc.driver.OraclePreparedStatement) statement).getOriginalSql());
                         statement.execute();
                         connectionLocal.commit();
-                    } catch (SQLException e) {
-                        LOG.log(Level.INFO, " chyba při update datumu posledního harvesteru (" + Utils.getCurrentMethodName() + ")");
+                    } catch (SQLException ex) {
+                        LOG.log(Level.SEVERE, " chyba při update datumu posledního harvesteru " + ex.getMessage());
                     } finally {
                         Utils.tryClose(statement);
                         Utils.tryClose(connectionLocal);
@@ -603,7 +610,6 @@ public final class Harvest {
             seznamIdentifiers = GetIdentifiers(library, null);
         } catch (Exception ex) {
             LOG.log(Level.SEVERE, " chyba (harvestLibraryOneDay): " + ex.getMessage());
-            System.out.println(" chyba (harvestLibraryOneDay): " + ex.getMessage());
             pokracuj = false;
         }
 
@@ -612,8 +618,7 @@ public final class Harvest {
             try {
                 this.connection = this.dataSource.getConnection();
             } catch (SQLException ex) {
-                LOG.log(Level.SEVERE, " nepodařilo se připojit na databázi");
-                System.out.println(" nepodarilo se pripojit na databazi");
+                LOG.log(Level.SEVERE, " nepodařilo se připojit na databázi", ex.getMessage());
             }
 
             if (seznamIdentifiers.size()>0) {
@@ -668,15 +673,15 @@ public final class Harvest {
                         library.getMetadataFormat(), library.getQueryParameters(), resumptionTokenStr);
             } catch (OaiException ex) {
                 //System.out.println(" chyba OAI: " + ex.getMessage());
-                LOG.log(Level.SEVERE, " chyba (getIdentifiers) OAI" + Utils.lineNumber());
+                LOG.log(Level.SEVERE, " chyba OAI" + ex.getMessage());
             }
         } else {
             //System.out.println("chybny protokol");
-            LOG.log(Level.SEVERE, " chybný protokol (getIdentifiers) " + Utils.lineNumber());
+            LOG.log(Level.INFO, " chybný protokol ");
         }
                 
         if (oaiSource == null) {
-            LOG.log(Level.FINE, "Skip {0}", library);
+            LOG.log(Level.INFO, "Skip {0}", library);
             return null;
         }
         LOG.log(Level.INFO, "Harvesting {0}", library);
@@ -717,14 +722,13 @@ public final class Harvest {
                     NodeList nListToken = nNodeChild.getChildNodes();
                     Node nNodeToken = nListToken.item(0);
                     resumptionToken = nNodeToken.getTextContent();
-                    //System.out.println(" token:" + resumptionToken);
                     pokracuj = true;
                 }
             }
             
             if ((pokracuj) && (resumptionToken.equals(resumptionTokenStr))) {
                 //System.out.println(" vracen stejny token - nelze pokracovat");
-                LOG.log(Level.SEVERE, " vrácen stejný token - nelze pokračovat" + Utils.lineNumber());
+                LOG.log(Level.INFO, " vrácen stejný token - nelze pokračovat");
                 pokracuj = false;
             }
 
@@ -756,20 +760,16 @@ public final class Harvest {
                     opakuj = false;
                 }
             } catch (OaiException ex) {
-                //System.out.println(" chyba oai: " + Utils.lineNumber() + ex.getMessage());
-                LOG.log(Level.SEVERE, " chyba (getEntry) oai: " + Utils.lineNumber() + ex.getMessage());
+                LOG.log(Level.SEVERE, " chyba oai: " + ex.getMessage());
             } catch (IOException ex) {
-                //System.out.println(" chyba io: " + Utils.lineNumber() + ex.getMessage());
-                LOG.log(Level.SEVERE, " chyba (getEntry) io: " + Utils.lineNumber() + ex.getMessage());
+                LOG.log(Level.SEVERE, " chyba io: " + ex.getMessage());
             } catch (ParserConfigurationException ex) {
                 this.chybneIdentifiers.add(identifier);
-                //System.out.println(" chyba parsovani: " + Utils.lineNumber() + ex.getMessage());
-                LOG.log(Level.SEVERE, " chyba (getEntry) parsovani: " + Utils.lineNumber() + ex.getMessage());
+                LOG.log(Level.SEVERE, " chyba parsovani: " + ex.getMessage());
                 //opakuj = false;
             } catch (SAXException ex) {
                 this.chybneIdentifiers.add(identifier);
-                //System.out.println(" chyba sax: " + Utils.lineNumber() + ex.getMessage());
-                LOG.log(Level.SEVERE, " chyba (getEntry) sax: " + Utils.lineNumber() + ex.getMessage());
+                LOG.log(Level.SEVERE, " chyba sax: " + ex.getMessage());
                 //opakuj = false;
             }
             pocetOpakovani++;
@@ -797,7 +797,9 @@ public final class Harvest {
                         NodeList nListDescriptorChild = nNodeRecordChild.getChildNodes();
                         for (int j=0; j<nListDescriptorChild.getLength(); j++) {
                             Node nNodeDescriptorChild = nListDescriptorChild.item(j);
-                            krameriusEntry = ZpracujXML(uuidStr, typeStr, nNodeDescriptorChild, krameriusEntry);
+                            krameriusEntry.setUuid(uuidStr);
+                            krameriusEntry.setDruhDokumentu(typeStr);
+                            krameriusEntry = ZpracujXML(nNodeDescriptorChild, krameriusEntry);
                         }
                     }
                 }
@@ -809,10 +811,8 @@ public final class Harvest {
         return krameriusEntry;
     }
 
-    private KrameriusEntry ZpracujXML(String uuidStr, String typeStr, Node nNodeDescriptorChild, KrameriusEntry krameriusEntry) {
+    private KrameriusEntry ZpracujXML(Node nNodeDescriptorChild, KrameriusEntry krameriusEntry) {
         //KrameriusEntry krameriusEntry = new KrameriusEntry();
-        krameriusEntry.setUuid(uuidStr);
-        krameriusEntry.setDruhDokumentu(typeStr);
 
         if ("mods:modsCollection".equals(nNodeDescriptorChild.getNodeName())) {
             NodeList nListMMCChild = nNodeDescriptorChild.getChildNodes();
@@ -1176,12 +1176,11 @@ public final class Harvest {
                         library.getBaseUrl(), "GetRecord", null, null, null,
                         library.getMetadataFormat(), "&identifier=" + identifier, null);
             } catch (OaiException ex) {
-                System.out.println(" chyba (getEntryValue) oai: " + ex.getMessage());
-                LOG.log(Level.SEVERE, " chyba (getEntryValue) oai: " + Utils.lineNumber() + ex.getMessage());
+                LOG.log(Level.SEVERE, " chyba oai: " + ex.getMessage());
             }
         } else {
             System.out.println("chybny protokol");
-            LOG.log(Level.SEVERE, " chybný protokol (getEntryValue): " + Utils.lineNumber());
+            LOG.log(Level.SEVERE, " chybný protokol: ");
         }
                 
         if (oaiSource == null) {
@@ -1280,7 +1279,7 @@ public final class Harvest {
                                 if (bw != null) bw.close();
                                 if (fw != null) fw.close();
                             } catch (IOException exClose) {
-                                LOG.log(Level.SEVERE, " chyba (harvestLibraryOneDay2) při uzavírání fileWriter či BufferedWriter" + Utils.lineNumber());
+                                LOG.log(Level.SEVERE, " chyba při uzavírání fileWriter či BufferedWriter" + exClose.getMessage());
                             }
                         }
                     }
@@ -1359,8 +1358,8 @@ public final class Harvest {
                         library.getMetadataFormat(), library.getQueryParameters(), null);
                 return src;
             } catch (OaiException ex) {
-                LOG.log(Level.WARNING, "Invalid OAI URL ''{0}''\n  {1}" + Utils.lineNumber(),
-                        new Object[]{ex.getLocalizedMessage(), library});
+                LOG.log(Level.WARNING, "Invalid OAI URL ''{0}''\n  {1}",
+                        new Object[]{ex.getMessage(), library});
                 return null;
             }
         }
@@ -1385,8 +1384,8 @@ public final class Harvest {
                         executeQuery("select count(*) as pocet from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
                     rsDigKnihovnaKontrola.next();
                     pocetZaznamuDigKnihovna = rsDigKnihovnaKontrola.getInt("POCET");
-                } catch (SQLException e) {
-                    LOG.log(Level.SEVERE, " nepodařilo se zjistit počet záznamů v tabulce DigObjekt pro uuid: " + krameriusEntry.getUuid());
+                } catch (SQLException ex) {
+                    LOG.log(Level.SEVERE, " nepodařilo se zjistit počet záznamů v tabulce DigObjekt pro uuid: " + krameriusEntry.getUuid() + " " + ex.getMessage());
                 } finally {
                     Utils.tryClose(rsDigKnihovnaKontrola);
                     Utils.tryClose(stmt);
@@ -1427,6 +1426,7 @@ public final class Harvest {
                         + " values (?, ?, ?, ?, ?)");
 
                     idZaznamuStr = vratId("DigObjekt");
+                    krameriusEntry.setId(idZaznamuStr);
                     if (!"".equals(idZaznamuStr)) {
                         idZaznamu = 0;
                         try {
@@ -1498,7 +1498,7 @@ public final class Harvest {
                 } catch (SQLException ex) {
                     String pomocnyText = "";
                     if (pocetZaznamuDigKnihovna==0) { pomocnyText = "založit"; } else { pomocnyText = "upravit"; }
-                    LOG.log(Level.SEVERE, " nepodařilo se " + pomocnyText + " záznam");
+                    LOG.log(Level.SEVERE, " nepodařilo se " + pomocnyText + " záznam " + ex.getMessage());
                 } finally {
                     Utils.tryClose(rsMetadata);
                     Utils.tryClose(rsDigObjekt);
@@ -1507,11 +1507,11 @@ public final class Harvest {
                     Utils.tryClose(stmt);
                 }
             } else {
-                LOG.log(Level.SEVERE, " zázname nemá vyplněn uuid");
+                LOG.log(Level.INFO, " zázname nemá vyplněn uuid");
             }
             
         } catch (Exception ex) {
-            LOG.log(Level.SEVERE, " chyba (zalozZaznam) při zakládání/editaci záznamu " + Utils.lineNumber());
+            LOG.log(Level.SEVERE, " chyba při zakládání/editaci záznamu " + ex.getMessage());
         }
         return vystup;
     }
@@ -1539,12 +1539,11 @@ public final class Harvest {
                     }
 
                 } catch (SQLException ex) {
-                    System.out.println(" chyba (zpracuj metadata SQL): " + ex.getMessage() + Utils.lineNumber());
-                    LOG.log(Level.SEVERE, " chyba při zpracování SQL příkazu " + Utils.lineNumber());
+                    LOG.log(Level.SEVERE, " chyba při zpracování SQL příkazu " + ex.getMessage());
                     vystup = false;
                 } catch (IOException ex) {
-                    System.out.println(" chyba (zpracuj metadata Soubor): " + ex.getMessage() + Utils.lineNumber());
-                    LOG.log(Level.SEVERE, " chyba při tvorbě souboru s SQL příkazy " + Utils.lineNumber());
+                    LOG.log(Level.SEVERE, " chyba při tvorbě souboru s SQL příkazy " + ex.getMessage());
+                    vystup = false;
                 }
             }
         }
@@ -1588,7 +1587,7 @@ public final class Harvest {
                 }
             }
         } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "chyba v SQL příkazu (vratID)" + Utils.lineNumber());
+            LOG.log(Level.SEVERE, "chyba v SQL příkazu " + ex.getMessage());
         } finally {
             Utils.tryClose(rs);
             Utils.tryClose(statement2);
@@ -1620,7 +1619,7 @@ public final class Harvest {
             }
             
         } catch (Exception ex) {
-            LOG.log(Level.SEVERE, " chyba (pripoj predlohu) " + Utils.lineNumber());
+            LOG.log(Level.SEVERE, " chyba " + ex.getMessage());
         } finally {
             Utils.tryClose(pstmtDigObjekt);
         }
@@ -1666,15 +1665,17 @@ public final class Harvest {
             if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
             //pokud nebyl nalezen žádný záznam, hledá se i v ostatních knihovnách
 
-            /* -- toto je dočasně zablokováno, hledání v cizích knihovnách na základě emailu z 2018.03.14 - p. Dvořáková
+            ///* -- toto je dočasně zablokováno, hledání v cizích knihovnách na základě emailu z 2018.03.14 - p. Dvořáková
             if ((pokracuj) && ("0".equals(hMap.get("pocet")))) {
                 hMap = HledejMonografiiHledani(krameriusEntry, "");
-                if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
+                if ("1".equals(hMap.get("pocet"))) { 
+                    pokracuj = false;
+                    hMap.put("spojeno3kolo","1");
+                }
             }
-            */
+            //*/
         }
 
-//        vystup = VytvorZaznamDoSouboru(pokracuj, library, hMap, krameriusEntry, 
         vystup = VytvorZaznamDoSouboru(pokracuj, hMap, krameriusEntry, 
                 "bwSouborProNalezeneZaznamyMonografie", "bwSouborProNenalezeneZaznamyMonografie", 
                 "bwSouborProChybneZaznamyMonografie", "bwSouborProNejednoznacneZaznamyMonografie");
@@ -1760,15 +1761,17 @@ public final class Harvest {
             if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
             //pokud nebyl nalezen žádný záznam, hledá se i v ostatních knihovnách
 
-            /* -- toto je dočasně zablokováno, hledání v cizích knihovnách na základě emailu z 2018.03.14 - p. Dvořáková
+            ///* -- toto je dočasně zablokováno, hledání v cizích knihovnách na základě emailu z 2018.03.14 - p. Dvořáková
             if ((pokracuj) && ("0".equals(hMap.get("pocet")))) {
                 hMap = HledejPeriodikumHledani(krameriusEntry, "");
-                if ("1".equals(hMap.get("pocet"))) { pokracuj = false; }
+                if ("1".equals(hMap.get("pocet"))) { 
+                    pokracuj = false;
+                    hMap.put("spojeno3kolo","1");
+                }
             }
-            */
+            //*/
         }
 
-//        vystup = VytvorZaznamDoSouboru(pokracuj, library, hMap, krameriusEntry,
         vystup = VytvorZaznamDoSouboru(pokracuj, hMap, krameriusEntry,
                 "bwSouborProNalezeneZaznamyPeriodika", "bwSouborProNenalezeneZaznamyPeriodika", 
                 "bwSouborProChybneZaznamyPeriodika", "bwSouborProNejednoznacneZaznamyPeriodika");
@@ -1795,7 +1798,6 @@ public final class Harvest {
         return hMap;
     }
     
-//    private Boolean VytvorZaznamDoSouboru(Boolean nespojenyZaznam, Library library, HashMap<String, String> hMap, KrameriusEntry krameriusEntry, 
     private Boolean VytvorZaznamDoSouboru(Boolean nespojenyZaznam, HashMap<String, String> hMap, KrameriusEntry krameriusEntry, 
             String souborProNalezeneZaznamy, String souborProNenalezeneZaznamy, 
             String souborProChybneZaznamy, String souborProNejednoznacneZaznamy) {
@@ -1822,19 +1824,19 @@ public final class Harvest {
                     zapisDoSouboru(
                             souborProNenalezeneZaznamy,
                             getIdentifikaceZaznamuProSoubor(krameriusEntry),
-                            "záznam nebyl nalezen (SpojPredlohaDigObjekt)");
+                            "záznam nebyl nalezen");
                 } else {
                     zapisDoSouboru(
                             souborProNejednoznacneZaznamy, 
                             getIdentifikaceZaznamuProSoubor(krameriusEntry) + ";(" + hMap.get("idcisla") + ")",
-                            "nejednoznačný záznam (SpojPredlohaDigObjekt)");
+                            "nejednoznačný záznam");
                 }
             } catch (Exception ex) {
-                LOG.log(Level.SEVERE, " chyba (SpojPredlohaDigObjekt) " + Utils.lineNumber());
+                LOG.log(Level.SEVERE, " chyba " + ex.getMessage());
             }
         } else {
             if ("1".equals(hMap.get("pocet"))) {
-                LOG.log(Level.INFO, " našel jsem záznam (SpojPredlohaDigObjekt)");
+                LOG.log(Level.INFO, " našel jsem záznam");
 
                 ResultSet rs = null;
                 ResultSet rs3 = null;
@@ -1845,7 +1847,13 @@ public final class Harvest {
                     rs.next();
                     String idZaznamu = rs.getString("ID");
                     if (!Utils.jePrazdne(idZaznamu)) {
-                        sqlPrikazDocasnyText = "update DIGOBJEKT set RPREDLOHA_DIGOBJEKT = " + idZaznamu + " where uuid='" + krameriusEntry.getUuid() + "'";
+                        String pomocnyUpdate = "";
+                        String pomocnePole = "";
+                        if ("1".equals(hMap.get("spojeno3kolo"))) { 
+                            pomocnyUpdate = ", kolo3=1"; 
+                            pomocnePole = "@";
+                        }
+                        sqlPrikazDocasnyText = "update DIGOBJEKT set RPREDLOHA_DIGOBJEKT = " + idZaznamu + pomocnyUpdate + " where uuid='" + krameriusEntry.getUuid() + "'";
                         LOG.log(Level.INFO, " update DigObjektu: " + sqlPrikazDocasnyText);
                         Boolean provedeno = false;
                         if (zapisDoDatabaze) {
@@ -1854,60 +1862,58 @@ public final class Harvest {
                             zapisDoSouboru(
                                     "bwSqlPrikazy",
                                     sqlPrikazDocasnyText,
-                                    "(SpojPredlohaDigObjekt) - update DigObjekt");
+                                    "update DigObjekt");
                         }
 
-//                        sqlPrikazDocasnyText = "select count(*) as pocet from DIGOBJEKT where RPREDLOHA_DIGOBJEKT = " + idZaznamu + " and uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + library.getId();
                         sqlPrikazDocasnyText = "select count(*) as pocet from DIGOBJEKT where RPREDLOHA_DIGOBJEKT = " + idZaznamu + " and uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId();
                         LOG.log(Level.INFO, " select změněného DigObjektu: " + sqlPrikazDocasnyText);
                         rs3 = statement.executeQuery(sqlPrikazDocasnyText);
                         rs3.next();
                         if ("1".equals(rs3.getString("POCET"))) { provedeno = true; }
-                        //LOG.log(Level.INFO, " nalezeno " + rs3.getString("POCET") + " záznamů, proto pokračuji: " + provedeno);
                         if (provedeno) {
                             if (zapisDoDatabaze) { this.connection.commit(); }
                             String pole001Str = hMap.get("pole001");
                             String sigla1Str = hMap.get("sigla1");
                             zapisDoSouboru(
                                     souborProNalezeneZaznamy,
-                                    pole001Str + ";" + sigla1Str + ";" + krameriusEntry.getUuid(),
-                                    " úspěšný zápis (SpojPredlohaDigObjekt)");
+                                    pole001Str + ";" + sigla1Str + ";" + krameriusEntry.getUuid() + ";" + pomocnePole,
+                                    " úspěšný zápis");
                             vystup = true;
                         } else {
                             zapisDoSouboru(
                                     souborProChybneZaznamy, 
                                     getIdentifikaceZaznamuProSoubor(krameriusEntry),
-                                    " nepovedlo se upravit záznam (SpojPredlohaDigObjekt)");
+                                    " nepovedlo se upravit záznam");
                             if (zapisDoDatabaze) { this.connection.rollback(); }
                         }
                     } else {
-                        LOG.log(Level.INFO, " chyba: nepovedlo se najít záznam v předloze, ačkoliv by měl existovat (SpojPredlohaDigObjekt)");
+                        LOG.log(Level.INFO, " chyba: nepovedlo se najít záznam v předloze, ačkoliv by měl existovat");
                         zapisDoSouboru(
                                 souborProNenalezeneZaznamy, 
                                 getIdentifikaceZaznamuProSoubor(krameriusEntry),
-                                " nepovedlo se najít záznam v předloze, ačkoliv by měl existovat (SpojPredlohaDigObjekt)");
+                                " nepovedlo se najít záznam v předloze, ačkoliv by měl existovat");
                     }
                 } catch (SQLException ex) {
                     LOG.log(Level.INFO, " zápis kvůli chybě");
                     zapisDoSouboru(
                             souborProChybneZaznamy, 
                             getIdentifikaceZaznamuProSoubor(krameriusEntry),
-                            " SQL chyba (SpojPredlohaDigObjekt) ");
+                            " SQL chyba");
                     try {
                         this.connection.rollback();
                     } catch (SQLException ex1) {
-                        LOG.log(Level.SEVERE, " chyba (SpojPredlohaDigObjekt)  pri rollbacku zaznamu" + Utils.lineNumber());
+                        LOG.log(Level.SEVERE, " chyba při rollbacku zaznamu" + Utils.lineNumber());
                     }
                 } catch (Exception ex) {
                     LOG.log(Level.INFO, " zápis kvůli chybě");
                     zapisDoSouboru(
                             souborProChybneZaznamy,
                             getIdentifikaceZaznamuProSoubor(krameriusEntry),
-                            " obecná chyba (SpojPredlohaDigObjekt) ");
+                            " obecná chyba ");
                     try {
                         this.connection.rollback();
                     } catch (SQLException ex1) {
-                        LOG.log(Level.SEVERE, " chyba (SpojPredlohaDigObjekt)  pri rollbacku zaznamu" + Utils.lineNumber());
+                        LOG.log(Level.SEVERE, " chyba  pri rollbacku zaznamu" + Utils.lineNumber());
                     }
                 } finally {
                     Utils.tryClose(rs3);
@@ -2050,34 +2056,69 @@ public final class Harvest {
         return vystup;
     }
 
+    //@JsonIgnoreProperties(ignoreUnknown = true)
     private void najitPredlohyBezDigObjektu() {
         Statement stmt = null;
+        Statement stmt2 = null;
         ResultSet rs = null;
         ResultSet rs2 = null;
+        int zpracovavanyZaznam = 0;
+        Boolean zalozenaVlastniTransakce = false;
+        
+        if (this.connection == null) {
+            zalozenaVlastniTransakce = true;
+            LOG.log(Level.INFO, " zakládám vlastní transakci a připojení");
+            try {
+                this.connection = dataSource.getConnection();
+                LOG.log(Level.INFO, " connection zahájena");
+            } catch (SQLException x) {
+                LOG.log(Level.SEVERE, " chyba při tvorbě connection");
+            }
+            
+        }
+
         try {
             stmt = this.connection.createStatement();
-            rs = stmt.executeQuery("select id from digObjekt where xml is not null and rpredloha_digobjekt is null");
+            stmt2 = this.connection.createStatement();
+            // dočasně jen po jednom záznamu z každé skupiny
+            String sqlDotaz = "select id from digObjekt where id in (954203, 1070797, 1070798)";
+            LOG.log(Level.INFO, " sql: " + sqlDotaz);
+            rs = stmt.executeQuery(sqlDotaz);
+//            rs = stmt.executeQuery("select id from digObjekt where xml is not null and rpredloha_digobjekt is null");
             String idPredlohaStr = "";
+            
+
             while (rs.next()) {
                 idPredlohaStr = rs.getString("ID");
-                rs2 = stmt.executeQuery("select xml, json, length(json) as length_json, length(xml) as length_xml, "
-                        + "uuid, druhDokumentu from digobjekt where id=" + idPredlohaStr);
+                sqlDotaz = "select xml, json, length(json) as length_json, length(xml) as length_xml, "
+                        + "uuid, druhDokumentu, rdigknihovna_digobjekt from digobjekt where id=" + idPredlohaStr;
+                LOG.log(Level.INFO, " sql" + rs.getRow() + " : " + sqlDotaz);
+                rs2 = stmt2.executeQuery(sqlDotaz);
                 rs2.next();
                 String jsonData = "";
                 String xmlData = "";
                 KrameriusEntry krameriusEntry = new KrameriusEntry();
+//                ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
                 ObjectMapper mapper = new ObjectMapper();
                 if (Utils.parseInteger(rs2.getString("LENGTH_JSON"))>0) {
+                    LOG.log(Level.INFO, " zpracovávám json");
                     jsonData = rs2.getString("JSON");
                     try {
                         krameriusEntry = mapper.readValue(jsonData, KrameriusEntry.class);
                     } catch (IOException e) {
-                        System.out.println(" chyba při parsování z json do krameriusEntry (najitPredlohyBezDigObjektu)");
+                        LOG.log(Level.SEVERE, " chyba při parsování z json do krameriusEntry" + e.getMessage());
                     }
+                    LOG.log(Level.INFO, " json zpracován úspěšně");
                 } else if (Utils.parseInteger(rs2.getString("LENGTH_XML"))>0) {
+                    LOG.log(Level.INFO, " zpracovávám xml");
                     xmlData = rs2.getString("XML"); 
 
                     DocumentBuilderFactory dbFactoryLocal = DocumentBuilderFactory.newInstance();
+                    //zahození kontrol na správnost XML
+                    dbFactoryLocal.setValidating(false);
+                    dbFactoryLocal.setNamespaceAware(false);
+                    dbFactoryLocal.setIgnoringElementContentWhitespace(true);
+                    //konec zahození kontrol
                     LOG.log(Level.INFO, " builderFactory");
                     try {
                         DocumentBuilder dBuilderLocal = dbFactoryLocal.newDocumentBuilder();
@@ -2085,39 +2126,75 @@ public final class Harvest {
                         Document docLocal = null;
                         Boolean neniChyba = true;
                         try {
-                            InputStream inputStream = new ByteArrayInputStream(Charset.forName("UTF-8").encode(xmlData).array());
+                            InputSource inputStream = new InputSource(new StringReader(xmlData));
                             docLocal = dBuilderLocal.parse(inputStream);
                         } catch (SAXException ex) { //potřebuji hlavně: SAXParseException
-                            LOG.log(Level.SEVERE, " chyba SAX (najitPredlohyBezDigObjektu)");
+                            LOG.log(Level.SEVERE, " chyba SAX " + ex.getMessage());
                             neniChyba = false;
                         } catch (IOException ex) { 
-                            LOG.log(Level.SEVERE, " chyba IO (najitPredlohyBezDigObjektu)");
+                            LOG.log(Level.SEVERE, " chyba IO " + ex.getMessage());
                             neniChyba = false;
                         }
-
-                        NodeList nListIdentifiers = docLocal.getElementsByTagName("mods:modsCollection");
-                        Node nNodeIdentifiers = nListIdentifiers.item(0);
-
-System.out.println(" zpracovan zaznam: " + krameriusEntry.toString());
-System.exit(0);
                         
-                        
-                        krameriusEntry = ZpracujXML(rs2.getString("UUID"), rs2.getString("DRUHDOKUMENTU"), nNodeIdentifiers, krameriusEntry);                        
+                        if (neniChyba) {
+                            NodeList nListIdentifiers = docLocal.getElementsByTagName("mods:modsCollection");
+                            Node nNodeIdentifiers = nListIdentifiers.item(0);
 
-                    } catch (ParserConfigurationException ex) { 
-                        System.out.println(" chyba při parsování uloženého XML (najitPredlohyBezDigObjektu)");
+                            krameriusEntry.setId(idPredlohaStr);
+                            krameriusEntry.setLibraryId(rs2.getString("RDIGKNIHOVNA_DIGOBJEKT"));
+                            krameriusEntry.setUuid(rs2.getString("UUID"));
+                            krameriusEntry.setDruhDokumentu(rs2.getString("DRUHDOKUMENTU"));
+                            krameriusEntry = ZpracujXML(nNodeIdentifiers, krameriusEntry);                        
+                        }
+                        
+                        Connection connectionLocal = null;
+                        PreparedStatement pstmt = null;
+                        try {
+                            connectionLocal = this.dataSource.getConnection();
+                            pstmt = connectionLocal.prepareStatement("update digobjekt set json=? where id=" + idPredlohaStr);
+                            pstmt.setString(1, Utils.toJson(krameriusEntry));
+                            LOG.log(Level.INFO, " sql pro update digObjekt - json: " + ((oracle.jdbc.driver.OraclePreparedStatement) pstmt).getOriginalSql());
+                            pstmt.execute();
+                            connectionLocal.commit();
+                        } catch (SQLException e) {
+                            LOG.log(Level.INFO, " chyba při update digObjekt - json");
+                        } finally {
+                            Utils.tryClose(pstmt);
+                            Utils.tryClose(connectionLocal);
+                        }
+                    } catch (SQLException e) {
+                        LOG.log(Level.INFO, " chyba při spojování nespojených záznamů");
                     }
 
                 }
+                
+                //LOG.log(Level.INFO, " json: " + Utils.toJson(krameriusEntry));
                 if (krameriusEntry != null) {
-                    pripojPredlohu(krameriusEntry);                    
+                    if (zpracovavanyZaznam==0) {
+                        zapisDoSouboru("bwSouborProNenalezeneZaznamyMonografie", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProNalezeneZaznamyMonografie", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProChybneZaznamyMonografie", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProNejednoznacneZaznamyMonografie", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProNenalezeneZaznamyPeriodika", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProNalezeneZaznamyPeriodika", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProChybneZaznamyPeriodika", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                        zapisDoSouboru("bwSouborProNejednoznacneZaznamyPeriodika", "\n\nZáznamy dodatečně spojované\n", "Záznamy dodatečně spojované");                
+                    }
+                    zpracovavanyZaznam++;
+                    LOG.log(Level.INFO, " pokus o připojení předlohy");
+                    pripojPredlohu(krameriusEntry);
+                    LOG.log(Level.INFO, " konec pokusu o připojení předlohy");
                 }
+                LOG.log(Level.INFO, " záznam zpracován, další v pořadí následuje");
             }
         } catch (SQLException e) {
-
+            LOG.log(Level.INFO, " chyba SQL při připojování záznamů Předloha->DigObjekt (najitPredlohyBezDigObjektu)");
+        } catch (Exception e) {
+            LOG.log(Level.INFO, " obecná chyba při připojování záznamů Předloha->DigObjekt (najitPredlohyBezDigObjektu)");
         } finally {
             Utils.tryClose(rs2);
             Utils.tryClose(rs);
+            Utils.tryClose(stmt2);
             Utils.tryClose(stmt);
         }
 

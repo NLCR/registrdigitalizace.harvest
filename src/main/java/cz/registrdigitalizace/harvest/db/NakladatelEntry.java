@@ -20,15 +20,19 @@ public class NakladatelEntry {
     private String vydani;
     private String mistoVydani;
     private String neidentifikovanaPole;
+    private Boolean empty;
+    private String fullNakladatel;
     
     public NakladatelEntry() {
-    this.nakladatel = "";
-    this.datumVydani = "";
-    this.poradiVydani = "";
-    this.edice = "";
-    this.vydani = "";
-    this.mistoVydani = "";
-    this.neidentifikovanaPole = "";
+        this.nakladatel = "";
+        this.datumVydani = "";
+        this.poradiVydani = "";
+        this.edice = "";
+        this.vydani = "";
+        this.mistoVydani = "";
+        this.neidentifikovanaPole = "";
+        this.empty = false;
+        this.fullNakladatel = "";
     }
     
     public String getNakladatel() {

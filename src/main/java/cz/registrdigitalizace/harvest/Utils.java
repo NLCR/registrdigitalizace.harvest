@@ -173,6 +173,14 @@ public final class Utils {
         return Thread.currentThread().getStackTrace()[2].getClassName() + "." + Thread.currentThread().getStackTrace()[2].getMethodName();
     }
 
+    /**
+     * vrací jméno předchozí metody
+     * @return 
+     */
+    public static String getPreviousMethodName() {
+        return Thread.currentThread().getStackTrace()[3].getClassName() + "." + Thread.currentThread().getStackTrace()[3].getMethodName();
+    }
+
     public static void tryClose(Connection c) {
         if (c != null) {
             try {
@@ -211,4 +219,50 @@ public final class Utils {
         }
     }
 
+    
+/*    
+    public static void Log(String levelStr, String message) {
+        String metoda = getPreviousMethodName();
+        Level level = null;
+        switch (levelStr.toLowerCase()) {
+            case "info":
+                level = Level.INFO;
+                break;
+            case "all":
+                level = Level.ALL;
+                break;
+            case "config":
+                level = Level.CONFIG;
+                break;
+            case "fine":
+                level = Level.FINE;
+                break;
+            case "finer":
+                level = Level.FINER;
+                break;
+            case "finest":
+                level = Level.FINEST;
+                break;
+            case "off":
+                level = Level.OFF;
+                break;
+            case "severe":
+                level = Level.SEVERE;
+                break;
+            case "warning":
+                level = Level.WARNING;
+                break;
+            default:
+                level = Level.INFO;
+                break;
+        }
+        LOG.log(level, "(" +metoda + ") " + message);
+    }
+
+    public static void Log(Level level, String message) {
+        String metoda = getPreviousMethodName();
+        LOG.log(level, "(" +metoda + ") " + message);
+    }
+*/
+    
 }

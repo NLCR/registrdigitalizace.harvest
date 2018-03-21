@@ -21,6 +21,8 @@ public class AutorEntry {
     private List<String> given;
     private String displayForm;
     private String neidentifikovanaPole;
+    private Boolean empty;
+    private String fullAutor;
     
     public AutorEntry() {
         this.autor = new ArrayList<String>();
@@ -31,6 +33,8 @@ public class AutorEntry {
         this.given = new ArrayList<String>();
         this.displayForm = "";
         this.neidentifikovanaPole = "";
+        this.empty = false;
+        this.fullAutor = "";
     }
 
     public List<String> getAutor() {

@@ -22,6 +22,8 @@ public class NazevEntry {
     private String displayLabel;
     private Boolean alternative;
     private List<String> nezpracovanaHodnota;
+    private Boolean empty;
+    private String fullTitle;
     
     public NazevEntry() {
         this.type = "";
@@ -32,6 +34,8 @@ public class NazevEntry {
         this.displayLabel = "";
         this.alternative = false;
         this.nezpracovanaHodnota = new ArrayList<String>();
+        this.empty = false;
+        this.fullTitle = "";
     }
         
     public String getType() {

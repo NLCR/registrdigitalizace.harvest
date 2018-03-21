@@ -110,6 +110,7 @@ final class Configuration {
                 } else {
                     conf.harvestData = false;
                 }
+                LOG.log(Level.INFO, " harvest nastaven na: " + conf.harvestData);
             } else if ((arg.indexOf("=")>0) && (CREATE_THUMBNAILS.equalsIgnoreCase(arg.substring(0,arg.indexOf("="))))) {
                 pomocnyText = arg.substring(arg.indexOf("=")+1);
                 if (("true".equals(pomocnyText)) || ("1".equals(pomocnyText))) {
@@ -419,20 +420,20 @@ final class Configuration {
         while (e.hasMoreElements()) {
             String key = (String) e.nextElement();
             if (("libraryID".equalsIgnoreCase(key)) || ("libraryIDs".equalsIgnoreCase(key))) {
-                libraryIDs = properties.getProperty(key);
+                libraryIDs = properties.getProperty(key).trim();
             } else if ("fromDate".equalsIgnoreCase(key)) {
-                fromDate = properties.getProperty(key);
+                fromDate = properties.getProperty(key).trim();
             } else if ("toDate".equalsIgnoreCase(key)) {
-                toDate = properties.getProperty(key);
+                toDate = properties.getProperty(key).trim();
             } else if ("harvestData".equalsIgnoreCase(key)) {
-                pomocnyString = properties.getProperty(key);
+                pomocnyString = properties.getProperty(key).trim();
                 if (("true".equals(pomocnyString)) || ("1".equals(pomocnyString))) {
                     harvestData = true;
                 } else {
                     harvestData = false;                    
                 }
             } else if ("zapisDoDatabaze".equalsIgnoreCase(key)) {
-                pomocnyString = properties.getProperty(key);
+                pomocnyString = properties.getProperty(key).trim();
                 if (("true".equals(pomocnyString)) || ("1".equals(pomocnyString))) {
                     zapisDoSouboru = false;
                     zapisDoDatabaze = true;
@@ -441,7 +442,7 @@ final class Configuration {
                     zapisDoDatabaze = false;
                 }
             } else if ("spojitPredlohuObjekt".equalsIgnoreCase(key)) {
-                pomocnyString = properties.getProperty(key);
+                pomocnyString = properties.getProperty(key).trim();
                 if (("true".equals(pomocnyString)) || ("1".equals(pomocnyString))) {
                     spojitPredlohuObjekt = true;
                 } else {
