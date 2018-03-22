@@ -127,7 +127,7 @@ import org.xml.sax.SAXParseException;
  * @author Jan Pokorsky
  */
 public final class Harvest {
-    private static final int pocetZpracovavanychDni = 1;
+    private static final int pocetZpracovavanychDni = 7;
 
     public static final String CONFIG_PROPERTY = Harvest.class.getName() + ".config";
 
@@ -215,7 +215,7 @@ public final class Harvest {
                 Date date = new Date();
                 String datumSpusteni = dateFormat.format(date);
 //                File f = new File("MonografieNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
-                File f = new File("MonNen-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                File f = new File("./out/MonNen-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNenalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNenalezeneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
@@ -223,7 +223,7 @@ public final class Harvest {
                     bwSouborProNenalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("MonografieNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
-                f = new File("MonNal-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/MonNal-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNalezeneZaznamyMonografie.write("pole001;sigla;uuid\n");
@@ -231,7 +231,7 @@ public final class Harvest {
                     bwSouborProNalezeneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("MonografieChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
-                f = new File("MonChy-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/MonChy-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProChybneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProChybneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
@@ -239,7 +239,7 @@ public final class Harvest {
                     bwSouborProChybneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("MonografieNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
-                f = new File("MonoNej-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/MonoNej-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNejednoznacneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNejednoznacneZaznamyMonografie.write("uuid;pole001;carKod;signatura;ccnb;issn;idCisla\n");
@@ -247,7 +247,7 @@ public final class Harvest {
                     bwSouborProNejednoznacneZaznamyMonografie = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("PeriodikaNenalezeno-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
-                f = new File("PerNen-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/PerNen-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNenalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNenalezeneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
@@ -255,7 +255,7 @@ public final class Harvest {
                     bwSouborProNenalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("PeriodikaNalezeno-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
-                f = new File("PerNal-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/PerNal-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNalezeneZaznamyPeriodika.write("pole001;sigla;uuid\n");
@@ -263,7 +263,7 @@ public final class Harvest {
                     bwSouborProNalezeneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("PeriodikaChyba-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
-                f = new File("PerChy-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/PerChy-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProChybneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProChybneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn\n");
@@ -271,7 +271,7 @@ public final class Harvest {
                     bwSouborProChybneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 //                f = new File("PeriodikaNejednoznacne-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
-                f = new File("PerNej-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/PerNej-" + datumSpusteni + ".csv"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSouborProNejednoznacneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                     bwSouborProNejednoznacneZaznamyPeriodika.write("uuid;pole001;carKod;signatura;ccnb;issn;idCisla\n");
@@ -279,7 +279,7 @@ public final class Harvest {
                     bwSouborProNejednoznacneZaznamyPeriodika = new BufferedWriter(new FileWriter(f.getAbsolutePath(), true));
                 }
 
-                f = new File("SQLPrikazy-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
+                f = new File("./out/SQLPrikazy-" + datumSpusteni + ".txt"); // kontrola na opakované spuštění v rámci dne
                 if (!f.exists()) {
                     bwSqlPrikazy = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
                 } else {
@@ -539,19 +539,56 @@ public final class Harvest {
                     localModifiedLibrary.setToDate(simpleDateFormat.format(datumDoLocal));
 
                     Boolean nacteno = false;
-                    int pocitadloPokusu = 0;
-                    while ((!nacteno) && (pocitadloPokusu < 5)) {
+                    int pocitadloMonografie = 0;
+                    int pocitadloMonografieUnit = 0;
+                    int pocitadloPeriodika = 0;
+                    int pocitadloPeriodikaItem = 0;
+                    Boolean nactenoMonografie = false;
+                    Boolean nactenoMonografieUnit = false;
+                    Boolean nactenoPeriodika = false;
+                    Boolean nactenoPeriodikaItem = false;
+                    while ((!nactenoMonografie) && (pocitadloMonografie < 5)) {
                         try {
                             harvestLibraryOneDay(localModifiedLibrary, "&set=monograph");
-                            //harvestLibraryOneDay(localModifiedLibrary, "&set=monographunit"); asi neexisyujr
-                            harvestLibraryOneDay(localModifiedLibrary, "&set=periodical");
-                            harvestLibraryOneDay(localModifiedLibrary, "&set=periodicalitem"); // tyto záznamy se nespojují
-                            nacteno = true;
+                            nactenoMonografie = true;
                         } catch (cz.registrdigitalizace.harvest.oai.OaiException ex) {
-                            pocitadloPokusu++;
-                            LOG.log(Level.INFO, ("  pokus číslo: " + pocitadloPokusu + " " + ex.getMessage()));
+                            pocitadloMonografie++;
+                            LOG.log(Level.INFO, ("  pokus číslo: " + pocitadloMonografie + " " + ex.getMessage()));
                         }
                     }
+                    /*
+                    while ((!nactenoMonografieUnit) && (pocitadloMonografieUnit < 5)) {
+                        try {
+                            harvestLibraryOneDay(localModifiedLibrary, "&set=monographunit"); //asi neexistuje
+                            nactenoMonografieUnit = true;
+                        } catch (cz.registrdigitalizace.harvest.oai.OaiException ex) {
+                            pocitadloMonografieUnit++;
+                            LOG.log(Level.INFO, ("  pokus číslo: " + pocitadloMonografieUnit + " " + ex.getMessage()));
+                        }
+                    }
+                    */
+                    while ((!nactenoPeriodika) && (pocitadloPeriodika < 5)) {
+                        try {
+                            harvestLibraryOneDay(localModifiedLibrary, "&set=periodical");
+                            nactenoPeriodika = true;
+                        } catch (cz.registrdigitalizace.harvest.oai.OaiException ex) {
+                            pocitadloPeriodika++;
+                            LOG.log(Level.INFO, ("  pokus číslo: " + pocitadloPeriodika + " " + ex.getMessage()));
+                        }
+                    }
+                    while ((!nactenoPeriodikaItem) && (pocitadloPeriodikaItem < 5)) {
+                        try {
+                            harvestLibraryOneDay(localModifiedLibrary, "&set=periodicalitem"); // tyto záznamy se nespojují
+                            nactenoPeriodikaItem = true;
+                        } catch (cz.registrdigitalizace.harvest.oai.OaiException ex) {
+                            pocitadloPeriodikaItem++;
+                            LOG.log(Level.INFO, ("  pokus číslo: " + pocitadloPeriodikaItem + " " + ex.getMessage()));
+                        }
+                    }
+                    if ((nactenoMonografie) || (nactenoMonografieUnit) || (nactenoPeriodika) || (nactenoPeriodikaItem)) {
+                        nacteno = true;
+                    }
+
                     if (!nacteno) {
                         pokracuj = false;
                     }
@@ -1487,7 +1524,7 @@ public final class Harvest {
                             }
                             krameriusEntry.setId("" + idZaznamu);
                         } catch (Exception ex) {
-                            System.out.println(" chyba (zalozZaznam): " + ex.getMessage());
+                            System.out.println(" chyba : " + ex.getMessage());
                             if (this.zapisDoDatabaze) { this.connection.rollback(); }
                             vystup = false;
                         } finally {
@@ -2081,7 +2118,8 @@ public final class Harvest {
             stmt = this.connection.createStatement();
             stmt2 = this.connection.createStatement();
             // dočasně jen po jednom záznamu z každé skupiny
-            String sqlDotaz = "select id from digObjekt where id in (954203, 1070797, 1070798)";
+//            String sqlDotaz = "select id from digObjekt where id in (954203, 1070797, 1070798)";
+            String sqlDotaz = "select id from digObjekt where xml is not null and rpredloha_digobjekt is null";
             LOG.log(Level.INFO, " sql: " + sqlDotaz);
             rs = stmt.executeQuery(sqlDotaz);
 //            rs = stmt.executeQuery("select id from digObjekt where xml is not null and rpredloha_digobjekt is null");
