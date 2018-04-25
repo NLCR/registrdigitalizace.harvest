@@ -1418,7 +1418,7 @@ public final class Harvest {
                 try {
                     stmt = this.connection.createStatement();
                     rsDigKnihovnaKontrola = stmt.
-                        executeQuery("select count(*) as pocet from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
+                        executeQuery("select count(*) as pocet from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and (rucni spojeni is null or rucnispojeni=0) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
                     rsDigKnihovnaKontrola.next();
                     pocetZaznamuDigKnihovna = rsDigKnihovnaKontrola.getInt("POCET");
                 } catch (SQLException ex) {
@@ -1434,7 +1434,7 @@ public final class Harvest {
                 try {
                     stmt = this.connection.createStatement();
                     if (pocetZaznamuDigKnihovna>0) {
-                        String podminkaDigObjekt = " where uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId();
+                        String podminkaDigObjekt = " where uuid='" + krameriusEntry.getUuid() + "' and (rucnispojeni is null or rucnispojeni=0) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId();
                         String podminkaMetadata = "";
                         
                         rsDigObjekt = stmt.executeQuery("select LISTAGG(id, ',') WITHIN GROUP (ORDER BY id) as ids from digobjekt " + podminkaDigObjekt);
@@ -2119,12 +2119,11 @@ public final class Harvest {
             stmt2 = this.connection.createStatement();
             // dočasně jen po jednom záznamu z každé skupiny
 //            String sqlDotaz = "select id from digObjekt where id in (954203, 1070797, 1070798)";
-            String sqlDotaz = "select id from digObjekt where xml is not null and rpredloha_digobjekt is null";
+            String sqlDotaz = "select id from digObjekt where (json is not null or xml is not null) and rpredloha_digobjekt is null and (nespojovat is null or nespojovat=0)";
             LOG.log(Level.INFO, " sql: " + sqlDotaz);
             rs = stmt.executeQuery(sqlDotaz);
 //            rs = stmt.executeQuery("select id from digObjekt where xml is not null and rpredloha_digobjekt is null");
             String idPredlohaStr = "";
-            
 
             while (rs.next()) {
                 idPredlohaStr = rs.getString("ID");
@@ -2234,6 +2233,13 @@ public final class Harvest {
             Utils.tryClose(rs);
             Utils.tryClose(stmt2);
             Utils.tryClose(stmt);
+            if (zalozenaVlastniTransakce) { 
+                try {
+                    this.connection.commit(); 
+                } catch (SQLException ex) {
+                    LOG.log(Level.SEVERE, " nepodařil se commit u vlastní transakce");
+                }
+            }
         }
 
     }
