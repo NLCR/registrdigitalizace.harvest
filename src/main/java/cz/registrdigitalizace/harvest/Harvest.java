@@ -1413,135 +1413,169 @@ public final class Harvest {
         try {
             if (!Utils.jePrazdne(krameriusEntry.getUuid())) {
                 int pocetZaznamuDigKnihovna = 0;
+                Boolean nezpracovavat = false;
                 Statement stmt = null;
                 ResultSet rsDigKnihovnaKontrola = null;
                 try {
                     stmt = this.connection.createStatement();
                     rsDigKnihovnaKontrola = stmt.
-                        executeQuery("select count(*) as pocet from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and (rucni spojeni is null or rucnispojeni=0) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
+                        executeQuery("select count(*) as pocet from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and ((rucnispojeni=1) or (nespojovat=1)) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
                     rsDigKnihovnaKontrola.next();
-                    pocetZaznamuDigKnihovna = rsDigKnihovnaKontrola.getInt("POCET");
+                    if (rsDigKnihovnaKontrola.getInt("POCET")>0) { nezpracovavat = true; }
                 } catch (SQLException ex) {
-                    LOG.log(Level.SEVERE, " nepodařilo se zjistit počet záznamů v tabulce DigObjekt pro uuid: " + krameriusEntry.getUuid() + " " + ex.getMessage());
+                    LOG.log(Level.SEVERE, " nepodařilo se zjistit počet záznamů, s nastavením 'ručního spojení', v DigObjekt pro uuid: " + krameriusEntry.getUuid() + " " + ex.getMessage());
                 } finally {
                     Utils.tryClose(rsDigKnihovnaKontrola);
                     Utils.tryClose(stmt);
                 }
-                PreparedStatement pstmtDigObjekt = null;
-                PreparedStatement pstmtMetadata = null;
-                ResultSet rsDigObjekt = null;
-                ResultSet rsMetadata = null;
-                try {
-                    stmt = this.connection.createStatement();
-                    if (pocetZaznamuDigKnihovna>0) {
-                        String podminkaDigObjekt = " where uuid='" + krameriusEntry.getUuid() + "' and (rucnispojeni is null or rucnispojeni=0) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId();
-                        String podminkaMetadata = "";
-                        
-                        rsDigObjekt = stmt.executeQuery("select LISTAGG(id, ',') WITHIN GROUP (ORDER BY id) as ids from digobjekt " + podminkaDigObjekt);
-                        LOG.log(Level.INFO, "sql: " + "select LISTAGG(id, ',') WITHIN GROUP (ORDER BY id) as ids from digobjekt " + podminkaDigObjekt);
-                        rsDigObjekt.next();
-                        String nactenaId = rsDigObjekt.getString("IDS").replace(",","','");
-                        podminkaMetadata = " where rdigobjekt_metadata in ('" + nactenaId + "')";
-                        podminkaDigObjekt = " where id in ('" + nactenaId + "')";
-                        //bohužel to nejde takto jednoduše, takže info o vymazaných záznamech vynecháme
-                        //stmt.execute("select * into metadata_smazano from metadata " + podminkaMetadata);
-                        //stmt.execute("select * into digobjekt_smazano from digobjekt " + podminkaDigObjekt);
-                        //konec bohužel.....
-                        stmt.execute("delete metadata " + podminkaMetadata);
-                        LOG.log(Level.INFO, "mažu: " + "delete metadata " + podminkaMetadata);
-                        stmt.execute("delete digobjekt " + podminkaDigObjekt);
-                        LOG.log(Level.INFO, " mažu: " + "delete digobjekt " + podminkaDigObjekt);
+                
+                if (nezpracovavat) {
+                    LOG.log(Level.INFO, " záznam digObjekt uuid: " + krameriusEntry.getUuid() + " má nastaveno ruční spojení či nespojovat, proto nelze smazat a regenerovat.");
+                    
+                    try {
+                        stmt = this.connection.createStatement();
+                        rsDigKnihovnaKontrola = stmt.
+                            executeQuery("select * from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and ((rucnispojeni=1) or (nespojovat=1)) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
+                        rsDigKnihovnaKontrola.next();
+                        krameriusEntry.setId(rsDigKnihovnaKontrola.getString("ID"));
+                        krameriusEntry.setPredlohaId(rsDigKnihovnaKontrola.getString("RPREDLOHA_DIGOBJEKT"));
+                    } catch (SQLException ex) {
+                        LOG.log(Level.SEVERE, " nepodařilo se zjistit počet záznamů, s nastavením 'ručního spojení', v DigObjekt pro uuid: " + krameriusEntry.getUuid() + " " + ex.getMessage());
+                    } finally {
+                        Utils.tryClose(rsDigKnihovnaKontrola);
+                        Utils.tryClose(stmt);
                     }
+                    
+                } else {
+                    pocetZaznamuDigKnihovna = 0;
+                    try {
+                        stmt = this.connection.createStatement();
+                        rsDigKnihovnaKontrola = stmt.
+                            executeQuery("select count(*) as pocet from digobjekt where uuid='" + krameriusEntry.getUuid() + "' and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId());
+                        rsDigKnihovnaKontrola.next();
+                        pocetZaznamuDigKnihovna = rsDigKnihovnaKontrola.getInt("POCET");
+                    } catch (SQLException ex) {
+                        LOG.log(Level.SEVERE, " nepodařilo se zjistit počet záznamů v DigObjekt pro uuid: " + krameriusEntry.getUuid() + " " + ex.getMessage());
+                    } finally {
+                        Utils.tryClose(rsDigKnihovnaKontrola);
+                        Utils.tryClose(stmt);
+                    }
+                    PreparedStatement pstmtDigObjekt = null;
+                    PreparedStatement pstmtMetadata = null;
+                    ResultSet rsDigObjekt = null;
+                    ResultSet rsMetadata = null;
+                    try {
+                        stmt = this.connection.createStatement();
+                        if (pocetZaznamuDigKnihovna>0) {
+                            String podminkaDigObjekt = " where uuid='" + krameriusEntry.getUuid() + "' and (rucnispojeni is null or rucnispojeni=0) and rdigknihovna_digobjekt=" + krameriusEntry.getLibraryId();
+                            String podminkaMetadata = "";
 
-                    pstmtDigObjekt = this.connection.prepareStatement(
-                        "insert into DIGOBJEKT"
-                        + " (ID, UUID, DRUHDOKUMENTU, JSON, ZALDATE, EDIDATE, RDIGKNIHOVNA_DIGOBJEKT)"
-                        + " values (?, ?, ?, ?, sysdate, sysdate, ?)");
-                    pstmtMetadata = this.connection.prepareStatement(
-                        "insert into METADATA"
-                        + " (ID, RELIEFNAME, VALID, VALUE, RDIGOBJEKT_METADATA)"
-                        + " values (?, ?, ?, ?, ?)");
+                            rsDigObjekt = stmt.executeQuery("select LISTAGG(id, ',') WITHIN GROUP (ORDER BY id) as ids from digobjekt " + podminkaDigObjekt);
+                            LOG.log(Level.INFO, "sql: " + "select LISTAGG(id, ',') WITHIN GROUP (ORDER BY id) as ids from digobjekt " + podminkaDigObjekt);
+                            rsDigObjekt.next();
+                            String nactenaId = rsDigObjekt.getString("IDS").replace(",","','");
+                            podminkaMetadata = " where rdigobjekt_metadata in ('" + nactenaId + "')";
+                            podminkaDigObjekt = " where id in ('" + nactenaId + "')";
+                            //bohužel to nejde takto jednoduše, takže info o vymazaných záznamech vynecháme
+                            //stmt.execute("select * into metadata_smazano from metadata " + podminkaMetadata);
+                            //stmt.execute("select * into digobjekt_smazano from digobjekt " + podminkaDigObjekt);
+                            //konec bohužel.....
+                            stmt.execute("delete metadata " + podminkaMetadata);
+                            LOG.log(Level.INFO, "mažu: " + "delete metadata " + podminkaMetadata);
+                            stmt.execute("delete digobjekt " + podminkaDigObjekt);
+                            LOG.log(Level.INFO, " mažu: " + "delete digobjekt " + podminkaDigObjekt);
+                        }
 
-                    idZaznamuStr = vratId("DigObjekt");
-                    krameriusEntry.setId(idZaznamuStr);
-                    if (!"".equals(idZaznamuStr)) {
-                        idZaznamu = 0;
-                        try {
-                            if (pocetZaznamuDigKnihovna==0) {
-                                idZaznamu = Integer.decode(idZaznamuStr);
-                                pstmtDigObjekt.setInt(1, idZaznamu);
-                                pstmtDigObjekt.setString(2, krameriusEntry.getUuid());
-                                pstmtDigObjekt.setString(3, krameriusEntry.getDruhDokumentu());
-                                pstmtDigObjekt.setString(4, Utils.toJson(krameriusEntry));
-                                pstmtDigObjekt.setBigDecimal(5, library.getId());
-                            }
-                            if (this.zapisDoDatabaze) {
-                                pstmtDigObjekt.execute();
-                                LOG.log(Level.INFO, " sql DigObjekt: " + ((oracle.jdbc.driver.OraclePreparedStatement) pstmtDigObjekt).getOriginalSql().replace(" values (?, ?, ?, ?, sysdate, sysdate, ?)", " ") + " values (" + idZaznamu + ", " + krameriusEntry.getUuid() + ", " + krameriusEntry.getDruhDokumentu() + ", " + Utils.toJson(krameriusEntry) + ", " + library.getId() + "); \n");
-                                LOG.log(Level.INFO, " záznam digObjekt založen - pokračuj: " + pokracuj);
-                            } else {
-                                bwSqlPrikazy.write("digObjekt: \n");
-                                bwSqlPrikazy.write("  " + ((oracle.jdbc.driver.OraclePreparedStatement) pstmtDigObjekt).getOriginalSql().replace(" values (?, ?, ?, ?, sysdate, sysdate, ?)", " ") + " values (" + idZaznamu + ", '" + krameriusEntry.getUuid() + "', '" + krameriusEntry.getDruhDokumentu() + "', '" + /*Utils.toJson(krameriusEntry) +*/ "', sysdate, sysdate, " + library.getId() + "); \n");
-                                bwSqlPrikazy.write(" metadata: \n");
-                            }
-                            
-                           // zakládám záznamy v Metadata 
-                            zpracujMetadataList(pstmtMetadata, "urnnbn", krameriusEntry.getUrnnbn(), idZaznamu, 1);
-                           //autor
-                            List<AutorEntry> autorList = krameriusEntry.getAutor();
-                            for (int i=0; i<autorList.size(); i++) {
-                                zpracujMetadata(pstmtMetadata, "autor", autorList.get(i).getFullAutor(), idZaznamu, 1);
-                            }
-                           //autor konec
-                            zpracujMetadata(pstmtMetadata, "siglaBibUdaju", krameriusEntry.getSiglaBibUdaju(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "cislo", krameriusEntry.getCisloPeriodika(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "siglaFyzJednotky", krameriusEntry.getSigla(), idZaznamu, 1);
-                           //nazev
-                            zpracujMetadata(pstmtMetadata, "nazev", krameriusEntry.getIssueTitle(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "nazev", krameriusEntry.getVolumeTitle(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "nazev", krameriusEntry.getUnitTitle(), idZaznamu, 1);
-                            List<NazevEntry> nazevList = krameriusEntry.getNazev();
-                            for (int i=0; i<nazevList.size(); i++) {
-                                zpracujMetadata(pstmtMetadata, "nazev", nazevList.get(i).getFullTitle(), idZaznamu, 1);
-                            }
-                           //nazev konec
-                            zpracujMetadata(pstmtMetadata, "barcode", krameriusEntry.getCarKod(), idZaznamu, 1);
-                            zpracujMetadataList(pstmtMetadata, "rokVydani", krameriusEntry.getDatumVydani(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "katalog", krameriusEntry.getKatalog(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "pole001", krameriusEntry.getPole001(), idZaznamu, 1);
-                            zpracujMetadata(pstmtMetadata, "signatura", krameriusEntry.getSignatura(), idZaznamu, 1);
-                            zpracujMetadataList(pstmtMetadata, "isbn", krameriusEntry.getIsbn(), idZaznamu, 1);
-                            zpracujMetadataList(pstmtMetadata, "isbn", krameriusEntry.getNepIsbn(), idZaznamu, 0);
-                            zpracujMetadataList(pstmtMetadata, "issn", krameriusEntry.getIssn(), idZaznamu, 1);
-                            zpracujMetadataList(pstmtMetadata, "issn", krameriusEntry.getNepIssn(), idZaznamu, 0);
-                            zpracujMetadataList(pstmtMetadata, "ccnb", krameriusEntry.getCcnb(), idZaznamu, 1);
-                            zpracujMetadataList(pstmtMetadata, "ccnb", krameriusEntry.getNepCcnb(), idZaznamu, 0);
-                            zpracujMetadataList(pstmtMetadata, "oclc", krameriusEntry.getOclc(), idZaznamu, 1);
+                        pstmtDigObjekt = this.connection.prepareStatement(
+                            "insert into DIGOBJEKT"
+                            + " (ID, UUID, DRUHDOKUMENTU, JSON, ZALDATE, EDIDATE, RDIGKNIHOVNA_DIGOBJEKT)"
+                            + " values (?, ?, ?, ?, sysdate, sysdate, ?)");
+                        pstmtMetadata = this.connection.prepareStatement(
+                            "insert into METADATA"
+                            + " (ID, RELIEFNAME, VALID, VALUE, RDIGOBJEKT_METADATA)"
+                            + " values (?, ?, ?, ?, ?)");
 
-                            if (this.zapisDoDatabaze) {
-                                LOG.log(Level.INFO, " potvrzuji změny - commit");
-                                this.connection.commit();
-                            }
-                            krameriusEntry.setId("" + idZaznamu);
-                        } catch (Exception ex) {
-                            System.out.println(" chyba : " + ex.getMessage());
-                            if (this.zapisDoDatabaze) { this.connection.rollback(); }
-                            vystup = false;
-                        } finally {
-                            Utils.tryClose(pstmtMetadata);
-                            Utils.tryClose(pstmtDigObjekt);
+                        idZaznamuStr = vratId("DigObjekt");
+                        krameriusEntry.setId(idZaznamuStr);
+                        if (!"".equals(idZaznamuStr)) {
+                            idZaznamu = 0;
+                            try {
+                                if (pocetZaznamuDigKnihovna==0) {
+                                    idZaznamu = Integer.decode(idZaznamuStr);
+                                    pstmtDigObjekt.setInt(1, idZaznamu);
+                                    pstmtDigObjekt.setString(2, krameriusEntry.getUuid());
+                                    pstmtDigObjekt.setString(3, krameriusEntry.getDruhDokumentu());
+                                    pstmtDigObjekt.setString(4, Utils.toJson(krameriusEntry));
+                                    pstmtDigObjekt.setBigDecimal(5, library.getId());
+                                }
+                                if (this.zapisDoDatabaze) {
+                                    pstmtDigObjekt.execute();
+                                    LOG.log(Level.INFO, " sql DigObjekt: " + ((oracle.jdbc.driver.OraclePreparedStatement) pstmtDigObjekt).getOriginalSql().replace(" values (?, ?, ?, ?, sysdate, sysdate, ?)", " ") + " values (" + idZaznamu + ", " + krameriusEntry.getUuid() + ", " + krameriusEntry.getDruhDokumentu() + ", " + Utils.toJson(krameriusEntry) + ", " + library.getId() + "); \n");
+                                    LOG.log(Level.INFO, " záznam digObjekt založen - pokračuj: " + pokracuj);
+                                } else {
+                                    bwSqlPrikazy.write("digObjekt: \n");
+                                    bwSqlPrikazy.write("  " + ((oracle.jdbc.driver.OraclePreparedStatement) pstmtDigObjekt).getOriginalSql().replace(" values (?, ?, ?, ?, sysdate, sysdate, ?)", " ") + " values (" + idZaznamu + ", '" + krameriusEntry.getUuid() + "', '" + krameriusEntry.getDruhDokumentu() + "', '" + /*Utils.toJson(krameriusEntry) +*/ "', sysdate, sysdate, " + library.getId() + "); \n");
+                                    bwSqlPrikazy.write(" metadata: \n");
+                                }
+
+                               // zakládám záznamy v Metadata 
+                                zpracujMetadataList(pstmtMetadata, "urnnbn", krameriusEntry.getUrnnbn(), idZaznamu, 1);
+                               //autor
+                                List<AutorEntry> autorList = krameriusEntry.getAutor();
+                                for (int i=0; i<autorList.size(); i++) {
+                                    zpracujMetadata(pstmtMetadata, "autor", autorList.get(i).getFullAutor(), idZaznamu, 1);
+                                }
+                               //autor konec
+                                zpracujMetadata(pstmtMetadata, "siglaBibUdaju", krameriusEntry.getSiglaBibUdaju(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "cislo", krameriusEntry.getCisloPeriodika(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "siglaFyzJednotky", krameriusEntry.getSigla(), idZaznamu, 1);
+                               //nazev
+                                zpracujMetadata(pstmtMetadata, "nazev", krameriusEntry.getIssueTitle(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "nazev", krameriusEntry.getVolumeTitle(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "nazev", krameriusEntry.getUnitTitle(), idZaznamu, 1);
+                                List<NazevEntry> nazevList = krameriusEntry.getNazev();
+                                for (int i=0; i<nazevList.size(); i++) {
+                                    zpracujMetadata(pstmtMetadata, "nazev", nazevList.get(i).getFullTitle(), idZaznamu, 1);
+                                }
+                               //nazev konec
+                                zpracujMetadata(pstmtMetadata, "barcode", krameriusEntry.getCarKod(), idZaznamu, 1);
+                                zpracujMetadataList(pstmtMetadata, "rokVydani", krameriusEntry.getDatumVydani(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "katalog", krameriusEntry.getKatalog(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "pole001", krameriusEntry.getPole001(), idZaznamu, 1);
+                                zpracujMetadata(pstmtMetadata, "signatura", krameriusEntry.getSignatura(), idZaznamu, 1);
+                                zpracujMetadataList(pstmtMetadata, "isbn", krameriusEntry.getIsbn(), idZaznamu, 1);
+                                zpracujMetadataList(pstmtMetadata, "isbn", krameriusEntry.getNepIsbn(), idZaznamu, 0);
+                                zpracujMetadataList(pstmtMetadata, "issn", krameriusEntry.getIssn(), idZaznamu, 1);
+                                zpracujMetadataList(pstmtMetadata, "issn", krameriusEntry.getNepIssn(), idZaznamu, 0);
+                                zpracujMetadataList(pstmtMetadata, "ccnb", krameriusEntry.getCcnb(), idZaznamu, 1);
+                                zpracujMetadataList(pstmtMetadata, "ccnb", krameriusEntry.getNepCcnb(), idZaznamu, 0);
+                                zpracujMetadataList(pstmtMetadata, "oclc", krameriusEntry.getOclc(), idZaznamu, 1);
+
+                                if (this.zapisDoDatabaze) {
+                                    LOG.log(Level.INFO, " potvrzuji změny - commit");
+                                    this.connection.commit();
+                                }
+                                krameriusEntry.setId("" + idZaznamu);
+                            } catch (Exception ex) {
+                                System.out.println(" chyba : " + ex.getMessage());
+                                if (this.zapisDoDatabaze) { this.connection.rollback(); }
+                                vystup = false;
+                            } finally {
+                                Utils.tryClose(pstmtMetadata);
+                                Utils.tryClose(pstmtDigObjekt);
+                            }         
                         }         
-                    }         
-                } catch (SQLException ex) {
-                    String pomocnyText = "";
-                    if (pocetZaznamuDigKnihovna==0) { pomocnyText = "založit"; } else { pomocnyText = "upravit"; }
-                    LOG.log(Level.SEVERE, " nepodařilo se " + pomocnyText + " záznam " + ex.getMessage());
-                } finally {
-                    Utils.tryClose(rsMetadata);
-                    Utils.tryClose(rsDigObjekt);
-                    Utils.tryClose(pstmtMetadata);
-                    Utils.tryClose(pstmtDigObjekt);
-                    Utils.tryClose(stmt);
+                    } catch (SQLException ex) {
+                        String pomocnyText = "";
+                        if (pocetZaznamuDigKnihovna==0) { pomocnyText = "založit"; } else { pomocnyText = "upravit"; }
+                        LOG.log(Level.SEVERE, " nepodařilo se " + pomocnyText + " záznam " + ex.getMessage());
+                    } finally {
+                        Utils.tryClose(rsMetadata);
+                        Utils.tryClose(rsDigObjekt);
+                        Utils.tryClose(pstmtMetadata);
+                        Utils.tryClose(pstmtDigObjekt);
+                        Utils.tryClose(stmt);
+                    }
                 }
             } else {
                 LOG.log(Level.INFO, " zázname nemá vyplněn uuid");
@@ -1649,10 +1683,7 @@ public final class Harvest {
                 ResultSet rs = pstmtDigObjekt.executeQuery();
                 rs.next();
                 String idPredlohaStr = rs.getString("RPREDLOHA_DIGOBJEKT");
-                if (Utils.jePrazdne(idPredlohaStr)) {
-//                    vystup = HledejPredlohu(library, krameriusEntry);
-                    vystup = HledejPredlohu(krameriusEntry);
-                }
+                if (Utils.jePrazdne(idPredlohaStr)) { vystup = HledejPredlohu(krameriusEntry); }
             }
             
         } catch (Exception ex) {
@@ -1669,14 +1700,11 @@ public final class Harvest {
         String druhDokumentu = krameriusEntry.getDruhDokumentu();
         if (("MONOGRAPH".equals(druhDokumentu)) || ("MONOGRAPHUNIT".equals(druhDokumentu))) {
             LOG.log(Level.INFO, " hledám monografii");
-//            vystup = HledejMonografii(library, krameriusEntry);
             vystup = HledejMonografii(krameriusEntry);
         } else if ("PERIODICAL".equals(druhDokumentu)) {
             LOG.log(Level.INFO, " hledám periodikum");
-//            vystup = HledejPeriodikum(library, krameriusEntry);
             vystup = HledejPeriodikum(krameriusEntry);
         }
-        
         return vystup;
     }
     

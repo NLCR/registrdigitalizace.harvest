@@ -15,6 +15,7 @@ import java.util.List;
  */
 public class KrameriusEntry {
     private String id;
+    private String predlohaId;
     private String uuid;
     private String druhDokumentu;
     //private String datumVydani;
@@ -46,6 +47,7 @@ public class KrameriusEntry {
     
     public KrameriusEntry() {
         this.id = "";
+        this.predlohaId = "";
         this.uuid = "";
         this.druhDokumentu = "";
         //this.datumVydani = "";
@@ -87,6 +89,16 @@ public class KrameriusEntry {
         }
     }
 
+    public String getPredlohaId() {
+        return this.predlohaId;
+    }
+    
+    public void setPredlohaId(String valueLocal) {
+        if ((!Utils.jePrazdne(valueLocal)) && (!"0".equals(valueLocal))) {
+            this.predlohaId = valueLocal;
+        }
+    }
+    
     public String getLibraryId() {
         return this.libraryId;
     }
