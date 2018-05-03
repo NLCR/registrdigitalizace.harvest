@@ -1766,6 +1766,31 @@ public final class Harvest {
                 pokracuj = false;
             } else if (Utils.parseInteger(hMap.get("pocet"))>0) {
                 if (!Utils.jePrazdne(hMap.get("podminka"))) dalsiPodminka = hMap.get("podminka");
+            } else if (Utils.parseInteger(hMap.get("pocet"))==0) {
+                String signaturaPomocna = krameriusEntry.getSignatura();
+                String hledanyText1 = "/Přív";
+                String hledanyText2 = "/přív";
+                String hledanyText3 = " Přív";
+                String hledanyText4 = " přív";
+                if ((signaturaPomocna.contains(hledanyText1)) || (signaturaPomocna.contains(hledanyText2)) ||
+                        (signaturaPomocna.contains(hledanyText3)) || (signaturaPomocna.contains(hledanyText4))) {
+                    if (signaturaPomocna.contains(hledanyText1)) {
+                        signaturaPomocna = signaturaPomocna.substring(0, signaturaPomocna.indexOf(hledanyText1));
+                    } else if (signaturaPomocna.contains(hledanyText2)) {
+                        signaturaPomocna = signaturaPomocna.substring(0, signaturaPomocna.indexOf(hledanyText2));
+                    } else if (signaturaPomocna.contains(hledanyText3)) {
+                        signaturaPomocna = signaturaPomocna.substring(0, signaturaPomocna.indexOf(hledanyText3));
+                    } else if (signaturaPomocna.contains(hledanyText4)) {
+                        signaturaPomocna = signaturaPomocna.substring(0, signaturaPomocna.indexOf(hledanyText4));
+                    }
+
+                    HashMap<String, String> hMapPom = new HashMap<String, String>(hMap);
+                    hMapPom = HledejZaznamPredlohy("signatura", signaturaPomocna, dalsiPodminka);
+                    if ("1".equals(hMapPom.get("pocet"))) {
+                        hMap = hMapPom;
+                        pokracuj = false;
+                    }
+                }
 /* 
     -- po dohodě tato možnost zablokována: email z 2018.03.19-13:14 p. Dvořáková. Zprovozněno v cca 11:00 stejného dne pouze pro testy
     -- nikdy nenasazeno na ostrý provoz. Zde ponecháno pro případ opětovného požadavku na zprovoznění                 
